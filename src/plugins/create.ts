@@ -3,19 +3,19 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
-import { upperCase } from 'lodash';
+import { upperFirst } from 'lodash';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
   const content: string[] = [];
   field.getFields().forEach(nestedField => {
-    if (field.isScalar()) {
-      content.push(`${nestedField.getName()}: ${field.getTypename()}`);
+    if (nestedField.isScalar()) {
+      content.push(`${nestedField.getName()}: ${nestedField.getTypename()}`);
       return;
     }
 
     if (nestedField instanceof ObjectField) {
-      const fieldWithPrefix = `${prefix}${upperCase(nestedField.getName())}`;
+      const fieldWithPrefix = `${prefix}${upperFirst(nestedField.getName())}`;
       const typeFields = createObjectInputField(fieldWithPrefix, nestedField, context);
       const objectInputName = `${fieldWithPrefix}CreateInput`;
       root.addInput(objectInputName, `input ${objectInputName} {${typeFields.join(' ')}}`);
@@ -44,7 +44,7 @@ const createInputField = (model: Model, context) => {
 
     if (field instanceof ObjectField) {
       // create input for nested object
-      const fieldWithPrefix = `${model.getNamings().capitalSingular}${upperCase(field.getName())}`;
+      const fieldWithPrefix = `${model.getNamings().capitalSingular}${upperFirst(field.getName())}`;
       const typeFields = createObjectInputField(fieldWithPrefix, field, context);
       const objectInputName = `${fieldWithPrefix}CreateInput`;
       root.addInput(objectInputName, `input ${objectInputName} {${typeFields.join(' ')}}`);
@@ -80,7 +80,7 @@ export default class CreatePlugin implements Plugin {
   }
 
   private generateCreateInput(model: Model, context: Context) {
-    const inputName = `Create${model.getNamings().capitalSingular}Input`;
+    const inputName = `${model.getNamings().capitalSingular}CreateInput`;
     const input = `input ${inputName} {
       ${createInputField(model, context)}
     }`;
