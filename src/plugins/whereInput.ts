@@ -2,7 +2,11 @@ import Model from '../dataModel/model';
 import { Context, Plugin } from './interface';
 import Field from '../dataModel/field';
 import { GraphqlType } from '../dataModel/type';
-import { isEmpty } from 'lodash';
+import { isEmpty, reduce, mapValues } from 'lodash';
+import { Where, Operator } from '../dataSource/interface';
+
+// constants
+const UNDERSCORE = '_';
 
 export default class WhereInputPlugin implements Plugin {
   public visitModel(model: Model, context: Context) {
@@ -31,6 +35,49 @@ export default class WhereInputPlugin implements Plugin {
 
   public getWhereUniqueInputName(model: Model): string {
     return `${model.getNamings().capitalSingular}WhereUniqueInput`;
+  }
+
+  public parseUniqueWhere(where: Record<string, any>): Where {
+    return mapValues(where, value => {
+      return {[Operator.eq]: value};
+    }) as Where;
+  }
+
+  public parseWhere(where: Record<string, any>): Where {
+    // parse where: {name: value, price_gt: value}
+    // to {name: {eq: value}, price: {gt: value}}
+    return reduce(where, (result, value, key) => {
+      const {fieldName, operator} = this.getNameAndOperator(key);
+
+      if (!result[fieldName]) {
+        result[fieldName] = {};
+      }
+      result[fieldName][operator] = value;
+    }, {} as any);
+  }
+
+  private getNameAndOperator(field: string): {fieldName: string, operator: Operator} {
+    // split field name and operator from 'price_gt'
+    const lastUnderscoreIndex = field.lastIndexOf(UNDERSCORE);
+
+    // no underscore in field, it's a equal operator
+    if (lastUnderscoreIndex < 0) {
+      return {
+        fieldName: field,
+        operator: Operator.eq,
+      };
+    }
+
+    // slice the operator
+    const operator = field.slice(lastUnderscoreIndex + 1);
+
+    // validate the operator
+    const validOperator: Operator = Operator[operator];
+    if (!validOperator) {
+      throw new Error(`Operator ${operator} no support`);
+    }
+    const fieldName = field.slice(0, lastUnderscoreIndex);
+    return {fieldName, operator: validOperator};
   }
 
   private createWhereFilter(fields: Field[]) {
