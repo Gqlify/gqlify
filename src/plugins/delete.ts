@@ -38,7 +38,7 @@ export default class DeletePlugin implements Plugin {
 
   private createUniqueReturnType(model: Model, context: Context) {
     const uniqueFields = model.getUniqueFields();
-    const typename = `${model.getNamings().capitalSingular}WithUniqueFields`;
+    const typename = this.getReturnTypename(model);
     const fields = uniqueFields.map(field => `${field.getName()}: ${field.getTypename()}`).join(' ');
     const type = `type ${typename} {
       ${fields}
@@ -49,5 +49,9 @@ export default class DeletePlugin implements Plugin {
 
   private getInputName(model: Model) {
     return `delete${model.getNamings().capitalSingular}`;
+  }
+
+  private getReturnTypename(model: Model) {
+    return `${model.getNamings().capitalSingular}WithUniqueFields`;
   }
 }
