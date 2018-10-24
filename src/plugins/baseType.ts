@@ -13,6 +13,16 @@ export default class BaseTypePlugin implements Plugin {
     }`);
   }
 
+  public resolveInRoot({model}: {model: Model}) {
+    const modelTypename = this.getTypename(model);
+    const resolver = model.getResolver();
+    if (resolver) {
+      return {
+        [modelTypename]: resolver,
+      };
+    }
+  }
+
   public getTypename(model: Model) {
     return model.getTypename();
   }

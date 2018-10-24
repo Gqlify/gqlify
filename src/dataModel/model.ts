@@ -1,6 +1,7 @@
 import Field from './field';
 import * as pluralize from 'pluralize';
-import { capitalize } from 'lodash';
+import { capitalize, isEmpty } from 'lodash';
+import { IResolverObject } from 'graphql-tools';
 
 export default class Model {
   private name: string;
@@ -10,6 +11,12 @@ export default class Model {
     singular: string;
     capitalSingular: string;
   };
+
+  // resolver
+  private resolver: IResolverObject = {};
+
+  // other metadata
+  private metadata: Record<string, any> = {};
 
   constructor({
     name,
@@ -52,5 +59,21 @@ export default class Model {
 
   public getUniqueFields() {
     return this.fields.filter(field => field.isUnique());
+  }
+
+  public getMetadata(key: string) {
+    return this.metadata[key];
+  }
+
+  public setMetadata(key: string, value: any) {
+    return this.metadata[key] = value;
+  }
+
+  public setFieldResolver(field: string, resolver: any) {
+    this.resolver[field] = resolver;
+  }
+
+  public getResolver() {
+    return isEmpty(this.resolver) ? null : this.resolver;
   }
 }
