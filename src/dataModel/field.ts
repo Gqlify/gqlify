@@ -15,6 +15,9 @@ export default class Field {
   protected readOnly: boolean;
   protected autoGen: boolean;
 
+  // other metadata
+  protected metadata: Record<string, any> = {};
+
   constructor({
     name,
     type,
@@ -95,5 +98,13 @@ export default class Field {
       value = `${value}!`;
     }
     return `${this.getName()}: ${value}`;
+  }
+
+  public getMetadata(key: string) {
+    return this.metadata[key];
+  }
+
+  public setMetadata(key: string, value: any) {
+    return this.metadata[key] = value;
   }
 }

@@ -4,6 +4,7 @@ import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
 import { upperFirst } from 'lodash';
+import { ListMutable } from '../dataSource/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -74,10 +75,20 @@ export default class UpdatePlugin implements Plugin {
     const modelType = this.baseTypePlugin.getTypename(model);
 
     // update
-    const mutationName = `update${model.getNamings().capitalSingular}`;
+    const mutationName = this.getInputName(model);
     const inputName = this.generateUpdateInput(model, context);
     const whereUniqueInput = this.whereInputPlugin.getWhereUniqueInputName(model);
     root.addMutation(mutationName, `${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${modelType}`);
+  }
+
+  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+    const mutationName = this.getInputName(model);
+    return {
+      [mutationName]: async (root, args, context) => {
+        const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
+        return dataSource.update(whereUnique, args.data);
+      },
+    };
   }
 
   private generateUpdateInput(model: Model, context: Context) {
@@ -87,5 +98,9 @@ export default class UpdatePlugin implements Plugin {
     }`;
     context.root.addInput(inputName, input);
     return inputName;
+  }
+
+  private getInputName(model: Model) {
+    return `update${model.getNamings().capitalSingular}`;
   }
 }

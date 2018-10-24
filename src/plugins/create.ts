@@ -4,6 +4,7 @@ import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
 import { upperFirst } from 'lodash';
+import { ListMutable } from '../dataSource/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -74,9 +75,18 @@ export default class CreatePlugin implements Plugin {
     const modelType = this.baseTypePlugin.getTypename(model);
 
     // create
-    const mutationName = `create${model.getNamings().capitalSingular}`;
+    const mutationName = this.getInputName(model);
     const inputName = this.generateCreateInput(model, context);
     root.addMutation(mutationName, `${mutationName}(data: ${inputName}!): ${modelType}`);
+  }
+
+  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+    const mutationName = this.getInputName(model);
+    return {
+      [mutationName]: async (root, args, context) => {
+        return dataSource.create(args.data);
+      },
+    };
   }
 
   private generateCreateInput(model: Model, context: Context) {
@@ -86,5 +96,9 @@ export default class CreatePlugin implements Plugin {
     }`;
     context.root.addInput(inputName, input);
     return inputName;
+  }
+
+  private getInputName(model: Model) {
+    return `create${model.getNamings().capitalSingular}`;
   }
 }

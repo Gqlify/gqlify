@@ -20,6 +20,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
+    "graphql-tools": "^4.0.2",
     "lodash": "^4.17.10",
     "pluralize": "^7.0.0"
   },

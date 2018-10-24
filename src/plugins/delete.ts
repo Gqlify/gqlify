@@ -2,6 +2,7 @@ import Model from '../dataModel/model';
 import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
+import { ListMutable } from '../dataSource/interface';
 
 export default class DeletePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
@@ -19,10 +20,20 @@ export default class DeletePlugin implements Plugin {
     const modelType = this.baseTypePlugin.getTypename(model);
 
     // create
-    const mutationName = `delete${model.getNamings().capitalSingular}`;
+    const mutationName = this.getInputName(model);
     const where = this.whereInputPlugin.getWhereUniqueInputName(model);
     const returnType = this.createUniqueReturnType(model, context);
     root.addMutation(mutationName, `${mutationName}(where: ${where}!): ${returnType}`);
+  }
+
+  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+    const inputName = this.getInputName(model);
+    return {
+      [inputName]: async (root, args, context) => {
+        const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
+        return dataSource.delete(whereUnique);
+      },
+    };
   }
 
   private createUniqueReturnType(model: Model, context: Context) {
@@ -34,5 +45,9 @@ export default class DeletePlugin implements Plugin {
     }`;
     context.root.addType(typename, type);
     return typename;
+  }
+
+  private getInputName(model: Model) {
+    return `delete${model.getNamings().capitalSingular}`;
   }
 }
