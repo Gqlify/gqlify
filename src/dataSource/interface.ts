@@ -27,23 +27,21 @@ export enum Operator {
   lte = 'lte',
 }
 
-export type Where = Record<string, Record<Operator, any>>;
+export type Where = Record<string, Record<string /** Operator */, any>>;
 
 export interface OrderBy {
   field: string;
   value: 1 | -1;
 }
 
+export interface ListFindQuery {
+  pagination?: Pagination;
+  where?: Where;
+  orderBy?: OrderBy;
+}
+
 export interface ListReadable {
-  find({
-    pagination,
-    where,
-    orderBy,
-  }: {
-    pagination?: Pagination,
-    where?: Where,
-    orderBy?: OrderBy,
-  }): Promise<PaginatedResponse>;
+  find(query?: ListFindQuery): Promise<PaginatedResponse>;
 
   findOne({
     where,
@@ -57,3 +55,5 @@ export interface ListMutable {
   update(where: Where, payload: any): Promise<any>;
   delete(where: Where): Promise<any>;
 }
+
+export type DataSource = ListReadable & ListMutable;

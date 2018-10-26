@@ -18,6 +18,7 @@
     "prepublishOnly": "npm run clean && npm run build"
   },
   "dependencies": {
+    "apollo-server": "^2.1.0",
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
     "graphql": "^14.0.2",

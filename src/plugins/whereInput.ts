@@ -53,6 +53,7 @@ export default class WhereInputPlugin implements Plugin {
         result[fieldName] = {};
       }
       result[fieldName][operator] = value;
+      return result;
     }, {} as any);
   }
 

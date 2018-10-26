@@ -2,6 +2,7 @@ import Field from './field';
 import * as pluralize from 'pluralize';
 import { capitalize, isEmpty } from 'lodash';
 import { IResolverObject } from 'graphql-tools';
+import { DataSource } from '../dataSource/interface';
 
 export default class Model {
   private name: string;
@@ -11,6 +12,9 @@ export default class Model {
     singular: string;
     capitalSingular: string;
   };
+
+  // data
+  private dataSource: DataSource;
 
   // resolver
   private resolver: IResolverObject = {};
@@ -75,5 +79,13 @@ export default class Model {
 
   public getResolver() {
     return isEmpty(this.resolver) ? null : this.resolver;
+  }
+
+  public setDataSource(dataSource: DataSource) {
+    this.dataSource = dataSource;
+  }
+
+  public getDataSource() {
+    return this.dataSource;
   }
 }

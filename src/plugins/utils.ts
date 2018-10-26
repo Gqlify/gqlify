@@ -6,6 +6,19 @@ import ObjectField from '../dataModel/objectField';
 import RelationField from '../dataModel/relationField';
 import { upperFirst } from 'lodash';
 
+const graphqlType = (field: Field) => {
+  let value = field.getTypename();
+
+  if (field.isList()) {
+    value = field.isNonNullItem() ? `[${value}!]` : `[${value}]`;
+  }
+
+  if (field.isNonNull()) {
+    value = `${value}!`;
+  }
+  return value;
+};
+
 export const recursiveCreateType = (fields: Field[], context: Context): string[] => {
   const { root } = context;
   const content: string[] = [];
@@ -25,7 +38,7 @@ export const recursiveCreateType = (fields: Field[], context: Context): string[]
       root.addType(objectTypename, `type ${objectTypename} {${typeFields.join(' ')}}`);
     }
 
-    content.push(`${field.getName()}: ${field.getTypename()}`);
+    content.push(`${field.getName()}: ${graphqlType(field)}`);
   });
 
   return content;

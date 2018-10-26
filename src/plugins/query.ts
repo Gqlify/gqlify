@@ -27,7 +27,7 @@ export default class QueryPlugin implements Plugin {
     // find many query
     const findManyQueryName = this.createFindQueryName(model);
     const whereInputName = this.whereInputPlugin.getWhereInputName(model);
-    root.addQuery(findManyQueryName, `${findManyQueryName}(where: ${whereInputName}!): [${modelType}]`);
+    root.addQuery(findManyQueryName, `${findManyQueryName}(where: ${whereInputName}): [${modelType}]`);
   }
 
   public resolveInQuery({
@@ -46,16 +46,17 @@ export default class QueryPlugin implements Plugin {
       },
       [findManyQueryName]: async (root, args, context) => {
         const where = this.whereInputPlugin.parseWhere(args.where);
-        return dataSource.find({where});
+        const response = await dataSource.find({where});
+        return response.data;
       },
     };
   }
 
   private createFindQueryName(model: Model) {
-    return model.getNamings().singular;
+    return model.getNamings().plural;
   }
 
   private createFindOneQueryName(model: Model) {
-    return model.getNamings().plural;
+    return model.getNamings().singular;
   }
 }

@@ -1,5 +1,5 @@
 import { get, forEach } from 'lodash';
-import { eq, gt, gte, lt, lte, placeholder, flow } from 'lodash/fp';
+import { eq, gt, gte, lt, lte, placeholder, filter as fpFilter, flow } from 'lodash/fp';
 import { Operator, Where } from '../dataSource/interface';
 
 const createFilterFromOperator = (value, op) => {
@@ -35,7 +35,7 @@ export const createFilter = (where: Where) => {
     const opFilter = createFilterFromOperator(value, op);
     funcs.push(row => opFilter(get(row, field)));
   });
-  return flow(funcs);
+  return fpFilter<any[]>(flow(funcs));
 };
 
 export const filter = (rows: any[], where: Where) => {

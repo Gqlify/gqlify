@@ -4,7 +4,8 @@ import {
   Pagination,
   OrderBy,
   Where,
-  PaginatedResponse
+  PaginatedResponse,
+  ListFindQuery
 } from '../../src/dataSource/interface';
 import { filter, createFilter } from '../../src/helper/filter';
 import { paginate } from '../../src/helper/paginator';
@@ -18,9 +19,9 @@ export default class MemoryApi implements ListReadable, ListMutable {
     this.defaultData = defaultData;
   }
 
-  public async find({ pagination, where, orderBy }:
-    { pagination?: Pagination; where?: Where; orderBy?: OrderBy; }): Promise<PaginatedResponse> {
-    const filteredData = sort(filter(this.defaultData, where), orderBy.field, orderBy.value);
+  public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
+    const { pagination, where, orderBy = {} } = args || {} as any;
+    const filteredData = sort(filter(this.defaultData, where), orderBy);
     return paginate(filteredData, pagination);
   }
 
