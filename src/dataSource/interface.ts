@@ -1,11 +1,21 @@
 
 export interface Pagination {
+  // cursor base
   last: number;
   first: number;
   before: string;
   after: string;
-  skip: number;
-  limit: number;
+
+  // number based
+  perPage: number;
+  page: number;
+}
+
+export interface PaginatedResponse {
+  data: any[];
+  total: number;
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
 }
 
 export enum Operator {
@@ -33,7 +43,7 @@ export interface ListReadable {
     pagination?: Pagination,
     where?: Where,
     orderBy?: OrderBy,
-  }): Promise<any[]>;
+  }): Promise<PaginatedResponse>;
 
   findOne({
     where,
