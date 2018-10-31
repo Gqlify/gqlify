@@ -7,9 +7,9 @@ export enum SdlFieldType {
   OBJECT = 'OBJECT',
 }
 
-export interface Field {
-  getName(): string;
-  getType(): SdlFieldType;
+export interface SdlField {
+  getTypeName(): string;
+  getFieldType(): SdlFieldType;
   isNonNull(): boolean;
   isList(): boolean;
   isItemNonNull(): boolean;
