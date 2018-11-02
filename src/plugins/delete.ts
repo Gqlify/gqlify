@@ -23,7 +23,7 @@ export default class DeletePlugin implements Plugin {
     const mutationName = this.getInputName(model);
     const where = this.whereInputPlugin.getWhereUniqueInputName(model);
     const returnType = this.createUniqueReturnType(model, context);
-    root.addMutation(mutationName, `${mutationName}(where: ${where}!): ${returnType}`);
+    root.addMutation(`${mutationName}(where: ${where}!): ${returnType}`);
   }
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
@@ -43,7 +43,7 @@ export default class DeletePlugin implements Plugin {
     const type = `type ${typename} {
       ${fields}
     }`;
-    context.root.addType(typename, type);
+    context.root.addObjectType(type);
     return typename;
   }
 

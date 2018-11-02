@@ -7,7 +7,7 @@ export default class BaseTypePlugin implements Plugin {
     const { root } = context;
     const modelTypename = this.getTypename(model);
     const fields: string[] = recursiveCreateType(model.getFields(), context);
-    root.addType(modelTypename, `
+    root.addObjectType(`
     type ${modelTypename} {
       ${fields.join(' ')}
     }`);

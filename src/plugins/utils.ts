@@ -28,14 +28,14 @@ export const recursiveCreateType = (fields: Field[], context: Context): string[]
     }
 
     if (field instanceof EnumField) {
-      root.addEnum(field.getTypename(), field.getValues());
+      root.addEnum(`enum ${field.getTypename()} {${field.getValues().join(',')}}`);
     }
 
     if (field instanceof ObjectField) {
       // create type for nested object
       const typeFields = recursiveCreateType(field.getFields(), context);
       const objectTypename = upperFirst(field.getName());
-      root.addType(objectTypename, `type ${objectTypename} {${typeFields.join(' ')}}`);
+      root.addObjectType(`type ${objectTypename} {${typeFields.join(' ')}}`);
     }
 
     content.push(`${field.getName()}: ${graphqlType(field)}`);

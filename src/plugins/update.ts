@@ -19,7 +19,7 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
       const fieldWithPrefix = `${prefix}${upperFirst(nestedField.getName())}`;
       const typeFields = createObjectInputField(fieldWithPrefix, nestedField, context);
       const objectInputName = `${fieldWithPrefix}UpdateInput`;
-      root.addInput(objectInputName, `input ${objectInputName} {${typeFields.join(' ')}}`);
+      root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
       content.push(`${nestedField.getName()}: ${objectInputName}`);
       return;
     }
@@ -78,7 +78,7 @@ export default class UpdatePlugin implements Plugin {
     const mutationName = this.getInputName(model);
     const inputName = this.generateUpdateInput(model, context);
     const whereUniqueInput = this.whereInputPlugin.getWhereUniqueInputName(model);
-    root.addMutation(mutationName, `${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${modelType}`);
+    root.addMutation(`${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${modelType}`);
   }
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
@@ -96,7 +96,7 @@ export default class UpdatePlugin implements Plugin {
     const input = `input ${inputName} {
       ${createInputField(model, context)}
     }`;
-    context.root.addInput(inputName, input);
+    context.root.addInput(input);
     return inputName;
   }
 

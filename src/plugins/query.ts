@@ -22,12 +22,12 @@ export default class QueryPlugin implements Plugin {
     // find one query
     const findOneQueryName = this.createFindOneQueryName(model);
     const whereUniqueInputName = this.whereInputPlugin.getWhereUniqueInputName(model);
-    root.addQuery(findOneQueryName, `${findOneQueryName}(where: ${whereUniqueInputName}!): ${modelType}`);
+    root.addQuery(`${findOneQueryName}(where: ${whereUniqueInputName}!): ${modelType}`);
 
     // find many query
     const findManyQueryName = this.createFindQueryName(model);
     const whereInputName = this.whereInputPlugin.getWhereInputName(model);
-    root.addQuery(findManyQueryName, `${findManyQueryName}(where: ${whereInputName}): [${modelType}]`);
+    root.addQuery(`${findManyQueryName}(where: ${whereInputName}): [${modelType}]`);
   }
 
   public resolveInQuery({

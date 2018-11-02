@@ -18,7 +18,7 @@ export default class WhereInputPlugin implements Plugin {
     const whereInput = `input ${modelWhereInputName} {
       ${this.createWhereFilter(model.getFields())}
     }`;
-    root.addInput(modelWhereInputName, whereInput);
+    root.addInput(whereInput);
 
     // add where unique input
     // only use the unique field
@@ -26,7 +26,7 @@ export default class WhereInputPlugin implements Plugin {
     const whereUniqueInput = `input ${modelWhereUniqueInputName} {
       ${this.createWhereUniqueFilter(model.getName(), model.getFields())}
     }`;
-    root.addInput(modelWhereUniqueInputName, whereUniqueInput);
+    root.addInput(whereUniqueInput);
   }
 
   public getWhereInputName(model: Model): string {

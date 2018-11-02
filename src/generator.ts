@@ -34,6 +34,6 @@ export default class Generator {
     );
 
     // build graphql
-    return this.context.root.buildRoot();
+    return this.context.root.print();
   }
 }
