@@ -77,9 +77,8 @@ export default class RootNode {
     this.inputMap[name] = this.buildInputTypeConfig(def);
   }
 
-  public addScalar(scalar: string | ScalarTypeDefinitionNode) {
-    const {name, def} = this.buildType<ScalarTypeDefinitionNode>(scalar);
-    this.scalarMap[name] = this.buildScalarTypeConfig(def);
+  public addScalar(name: string, scalar: GraphQLScalarType) {
+    this.scalarMap[name] = scalar;
   }
 
   public addInterface(interfaceDef: string) {
@@ -157,7 +156,7 @@ export default class RootNode {
       // typed values, that would throw immediately while type system
       // validation with validateSchema() will produce more actionable results.
       interfaces: interfaces
-        ? interfaces.map(ref => this.defBuilder.buildType(ref))
+        ? () => interfaces.map(ref => this.defBuilder.buildType(ref))
         : [],
       astNode: typeDef,
     };
@@ -172,20 +171,11 @@ export default class RootNode {
     };
   }
 
-  private buildScalarTypeConfig(def: ScalarTypeDefinitionNode): GraphQLScalarTypeConfig<any, any> {
-    return {
-      name: def.name.value,
-      description: getDescription(def, {}),
-      astNode: def,
-      serialize: value => value,
-    };
-  }
-
   private buildInterfaceTypeConfig(def: InterfaceTypeDefinitionNode): GraphQLInterfaceTypeConfig<any, any> {
     return {
       name: def.name.value,
       description: getDescription(def, {}),
-      fields: this.defBuilder._makeFieldDefMap(def),
+      fields: () => this.defBuilder._makeFieldDefMap(def),
       astNode: def,
     };
   }
@@ -207,7 +197,7 @@ export default class RootNode {
       // Note: While this could make assertions to get the correctly typed
       // values below, that would throw immediately while type system
       // validation with validateSchema() will produce more actionable results.
-      types: types ? types.map(ref => (this.defBuilder.buildType(ref) as any)) : [],
+      types: types ? () => types.map(ref => (this.defBuilder.buildType(ref) as any)) : [],
       astNode: def,
     };
   }

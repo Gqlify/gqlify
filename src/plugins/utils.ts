@@ -23,10 +23,6 @@ export const recursiveCreateType = (fields: Field[], context: Context): string[]
   const { root } = context;
   const content: string[] = [];
   fields.forEach(field => {
-    if (field instanceof CustomScalarField) {
-      root.addScalar(field.getTypename());
-    }
-
     if (field instanceof EnumField) {
       root.addEnum(`enum ${field.getTypename()} {${field.getValues().join(',')}}`);
     }
