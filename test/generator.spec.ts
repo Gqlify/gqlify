@@ -12,7 +12,7 @@ import DeletePlugin from '../src/plugins/delete';
 import Generator from '../src/generator';
 
 // fixtures
-import { userModel } from './fixtures/simple';
+import { userModel, bookModel, groupModel } from './fixtures/simple';
 
 const expect = chai.expect;
 
@@ -29,7 +29,7 @@ const generator = new Generator({ plugins });
 
 describe('generator', () => {
   it('should generate graphql for simple model', () => {
-    let graphql = generator.generate([userModel]);
+    let graphql = generator.generate([userModel, bookModel, groupModel]);
     graphql = prettier.format(graphql, { parser: 'graphql' });
     // tslint:disable-next-line:no-console
     console.log(graphql);
