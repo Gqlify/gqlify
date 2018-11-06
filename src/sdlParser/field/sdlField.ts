@@ -45,6 +45,10 @@ export default abstract class AbstractSdlField implements SdlField {
     return this.description;
   }
 
+  public getDirective(name: string): Record<string, InputValue<any>> {
+    return this.directives[name];
+  }
+
   public getDirectives(): Record<string, Record<string, InputValue<any>>> {
     return this.directives;
   }

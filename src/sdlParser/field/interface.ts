@@ -14,5 +14,6 @@ export interface SdlField {
   isList(): boolean;
   isItemNonNull(): boolean;
   getDescription(): string;
+  getDirective(name: string): Record<string, InputValue>;
   getDirectives(): Record<string, Record<string, InputValue>>;
 }

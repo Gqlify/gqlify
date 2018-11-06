@@ -50,5 +50,11 @@ export class EnumValue extends SimpleValue<any> {
   }
 }
 
+export class EmptyValue extends SimpleValue<null> {
+  public getType() {
+    return null;
+  }
+}
+
 export { default as ObjectValue } from './objectValue';
 export { default as ListValue } from './listValue';
