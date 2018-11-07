@@ -8,7 +8,7 @@ export default abstract class AbstractSdlField implements SdlField {
   private list: boolean;
   private itemNonNull: boolean;
   private description: string;
-  private directives: Record<string, Record<string, InputValue>>;
+  private directives: Record<string, Record<string, InputValue>> = {};
 
   constructor({
     typename,

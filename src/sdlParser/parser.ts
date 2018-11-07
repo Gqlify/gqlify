@@ -16,6 +16,7 @@ import { createSdlField, parseDirectiveNode, createDataModelFromSdlObjectType } 
 import SdlEnumType from './namedType/enumType';
 import { SdlNamedType } from './namedType/interface';
 import { API_DIRECTIVE } from './constants';
+import { BasicFieldMiddware, SdlMiddleware } from './middlewares';
 
 // check of typeDefNode has api directive and is objectTypeDefintionNode
 const isApiObjectType = (node: TypeDefinitionNode): boolean => {
@@ -134,6 +135,38 @@ export class SdlParser {
     forEach(this.apiObjectTypeMap, (sdlObjectType, key) => {
       const model = createDataModelFromSdlObjectType(sdlObjectType, this.isApiObjectType, this.getModel);
       this.modelMap[key] = model;
+    });
+
+    // go through middlewares
+    const middlewares: SdlMiddleware[] = [
+      new BasicFieldMiddware(),
+    ];
+
+    // visit objectType
+    forEach(this.namedTypeMap, namedType => {
+      if (namedType instanceof SdlObjectType) {
+        middlewares.forEach(mid => mid.visitObjectType && mid.visitObjectType(namedType));
+      }
+    });
+
+    // visit model & fields
+    forEach(this.modelMap, (model, key) => {
+      const sdlObjectType = this.getSdlNamedType(key) as SdlObjectType;
+      middlewares.forEach(mid =>  mid.visitApiObjectType && mid.visitApiObjectType({
+        model,
+        sdlObjectType,
+      }));
+
+      // visit fields
+      model.getFields().forEach(dataModelField => {
+        const sdlField = sdlObjectType.getField(dataModelField.getName());
+        middlewares.forEach(mid => mid.visitField && mid.visitField({
+          model,
+          field: dataModelField,
+          sdlObjectType,
+          sdlField,
+        }));
+      });
     });
 
     return {rootNode, models: values(this.modelMap)};
