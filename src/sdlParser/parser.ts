@@ -1,5 +1,5 @@
 import Model from '../dataModel/model';
-import { find, isUndefined, reduce, forEach, values } from 'lodash';
+import { find, isUndefined, reduce, forEach, values, get } from 'lodash';
 import {
   parse,
   visit,
@@ -39,7 +39,7 @@ const parseNodeToSdlObjectType = (
   // create SdlObjectType
   const objectType = new SdlObjectType({
     name: node.name.value,
-    description: node.description.value,
+    description: get(node, 'description.value'),
     directives,
     fields,
   });
@@ -49,7 +49,7 @@ const parseNodeToSdlObjectType = (
 const parseNodeToSdlEnumType = (node: EnumTypeDefinitionNode) => {
   return new SdlEnumType({
     name: node.name.value,
-    description: node.description.value,
+    description: get(node, 'description.value'),
     values: node.values.map(valueDefNode => valueDefNode.name.value),
   });
 };
@@ -58,7 +58,7 @@ export class SdlParser {
   private scalars: Record<string, GraphQLScalarType>;
   private namedTypeMap: Record<string, SdlNamedType> = {};
   private apiObjectTypeMap: Record<string, SdlObjectType> = {};
-  private modelMap: Record<string, Model>;
+  private modelMap: Record<string, Model> = {};
 
   constructor({scalars}: {scalars?: Record<string, GraphQLScalarType>}) {
     this.scalars = scalars || {};

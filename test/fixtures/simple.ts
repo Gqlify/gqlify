@@ -1,6 +1,6 @@
 import Model from '../../src/dataModel/model';
 import ScalarField from '../../src/dataModel/scalarField';
-import { GraphqlType } from '../../src/dataModel/type';
+import { DataModelType } from '../../src/dataModel/type';
 import ObjectField from '../../src/dataModel/objectField';
 import RelationField from '../../src/dataModel/relationField';
 import { DataSource, Operator } from '../../src/dataSource/interface';
@@ -16,25 +16,25 @@ interface Context {
 export const userModel = new Model({
   name: 'user',
   fields: [
-    new ScalarField({name: 'id', type: GraphqlType.ID, unique: true, autoGen: true}),
-    new ScalarField({name: 'username', type: GraphqlType.STRING}),
-    new ScalarField({name: 'email', type: GraphqlType.STRING}),
+    new ScalarField({name: 'id', type: DataModelType.ID, unique: true, autoGen: true}),
+    new ScalarField({name: 'username', type: DataModelType.STRING}),
+    new ScalarField({name: 'email', type: DataModelType.STRING}),
   ],
 });
 
 export const bookModel = new Model({
   name: 'book',
   fields: [
-    new ScalarField({name: 'id', type: GraphqlType.ID, unique: true, autoGen: true}),
-    new ScalarField({name: 'name', type: GraphqlType.STRING}),
+    new ScalarField({name: 'id', type: DataModelType.ID, unique: true, autoGen: true}),
+    new ScalarField({name: 'name', type: DataModelType.STRING}),
   ],
 });
 
 export const groupModel = new Model({
   name: 'group',
   fields: [
-    new ScalarField({name: 'id', type: GraphqlType.ID, unique: true, autoGen: true}),
-    new ScalarField({name: 'name', type: GraphqlType.STRING}),
+    new ScalarField({name: 'id', type: DataModelType.ID, unique: true, autoGen: true}),
+    new ScalarField({name: 'name', type: DataModelType.STRING}),
   ],
 });
 

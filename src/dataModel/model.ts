@@ -7,7 +7,7 @@ import { DataSource } from '../dataSource/interface';
 export default class Model {
   private name: string;
   private fields: Field[];
-  private fieldMap: Record<string, Field>;
+  private fieldMap: Record<string, Field> = {};
   private namings: {
     plural: string;
     singular: string;

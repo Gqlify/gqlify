@@ -38,16 +38,26 @@ import {
   RelationField as DataRelationField,
 } from '../dataModel';
 import { InputValue } from './inputValue/interface';
-import { reduce, last, forEach } from 'lodash';
+import { reduce, last, forEach, get } from 'lodash';
 import { SdlField, SdlFieldType } from './field/interface';
 import SdlObjectType from './namedType/objectType';
 import { SdlDirective } from './interface';
 import { DataModelType } from '../dataModel/type';
 import { SdlNamedType } from './namedType/interface';
 import SdlEnumType from './namedType/enumType';
-import { API_DIRECTIVE_RELATION_TO_FIELD, API_DIRECTIVE } from './constants';
-// tslint:disable-next-line:no-var-requires
-const { isSpecifiedScalarType } = require('graphql/type/scalars');
+
+const isSpecifiedScalar = (type: string) => {
+  if (!type) {
+    return false;
+  }
+  return (
+    type === GraphQLString.name ||
+    type === GraphQLInt.name ||
+    type === GraphQLFloat.name ||
+    type === GraphQLBoolean.name ||
+    type === GraphQLID.name
+  );
+};
 
 export const parseDirectiveInput = (node: ValueNode): InputValue => {
   switch (node.kind) {
@@ -103,7 +113,7 @@ export const findTypeInDocumentAst = (node: DocumentNode, name: string) => {
   return foundNode ? foundNode.kind : null;
 };
 
-export const parseWrappedType = (node: TypeNode, typeWrapped: string[] = []) => {
+export const parseWrappedType = (node: TypeNode, typeWrapped: string[] = []): {type: string, wrapped: string[]} => {
   if (node.kind === Kind.NON_NULL_TYPE) {
     return parseWrappedType(node.type, typeWrapped.concat(Kind.NON_NULL_TYPE));
   }
@@ -120,15 +130,15 @@ export const createSdlField = (
   node: FieldDefinitionNode,
   getSdlNamedType: (name: string) => SdlNamedType,
   ): SdlField => {
-  const namedType = node.type as NamedTypeNode;
-  const {type, wrapped} = parseWrappedType(namedType);
+  const typeNode = node.type;
+  const {type, wrapped} = parseWrappedType(typeNode);
   // not dealing with nested list for now
   const nonNull = wrapped[0] === Kind.NON_NULL_TYPE;
   const list = (wrapped[0] === Kind.LIST_TYPE || wrapped[1] === Kind.LIST_TYPE);
   const itemNonNull = (list && last(wrapped) === Kind.NON_NULL_TYPE);
   const fieldConfigs = {typename: type, nonNull, list, itemNonNull};
 
-  if (isSpecifiedScalarType(namedType)) {
+  if (isSpecifiedScalar(type)) {
     return new ScalarField(fieldConfigs);
   }
 
