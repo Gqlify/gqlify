@@ -1,5 +1,5 @@
 import Field from './field';
-import { GraphqlType } from './type';
+import { DataModelType } from './type';
 import { capitalize } from 'lodash';
 
 export default class ObjectField extends Field {
@@ -25,7 +25,7 @@ export default class ObjectField extends Field {
   }) {
     super({
       name,
-      type: GraphqlType.OBJECT,
+      type: DataModelType.OBJECT,
       nonNull,
       list,
       nonNullItem,

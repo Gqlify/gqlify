@@ -1,9 +1,12 @@
 import Field from './field';
 import Model from './model';
-import { GraphqlType } from './type';
+import { DataModelType } from './type';
+import { isFunction } from 'lodash';
+
+export type ModelOrThunk = Model | (() => Model);
 
 export default class RelationField extends Field {
-  private relationTo: Model;
+  private relationTo: ModelOrThunk;
 
   constructor({
     name,
@@ -14,7 +17,7 @@ export default class RelationField extends Field {
     readOnly,
   }: {
     name: string,
-    relationTo: Model,
+    relationTo: ModelOrThunk,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,
@@ -22,7 +25,7 @@ export default class RelationField extends Field {
   }) {
     super({
       name,
-      type: GraphqlType.RELATION,
+      type: DataModelType.RELATION,
       nonNull,
       list,
       nonNullItem,
@@ -38,10 +41,10 @@ export default class RelationField extends Field {
   }
 
   public getRelationTo() {
-    return this.relationTo;
+    return isFunction(this.relationTo) ? this.relationTo() : this.relationTo;
   }
 
   public getFields() {
-    return this.relationTo.getFields();
+    return this.getRelationTo().getFields();
   }
 }

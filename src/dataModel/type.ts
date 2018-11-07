@@ -1,5 +1,5 @@
 
-export enum GraphqlType {
+export enum DataModelType {
   STRING = 'String',
   BOOLEAN = 'Boolean',
   INT = 'Int',
@@ -20,15 +20,15 @@ export enum GraphqlType {
 }
 
 const scalarList = [
-  GraphqlType.STRING,
-  GraphqlType.BOOLEAN,
-  GraphqlType.INT,
-  GraphqlType.FLOAT,
-  GraphqlType.ID,
-  GraphqlType.ENUM,
-  GraphqlType.CUSTOM_SCALAR,
+  DataModelType.STRING,
+  DataModelType.BOOLEAN,
+  DataModelType.INT,
+  DataModelType.FLOAT,
+  DataModelType.ID,
+  DataModelType.ENUM,
+  DataModelType.CUSTOM_SCALAR,
 ];
 
-export const isScalarType = (type: GraphqlType) => {
+export const isScalarType = (type: DataModelType) => {
   return scalarList.indexOf(type) >= 0;
 };

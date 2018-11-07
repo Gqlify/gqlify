@@ -1,7 +1,7 @@
 import Model from '../dataModel/model';
 import { Context, Plugin } from './interface';
 import Field from '../dataModel/field';
-import { GraphqlType } from '../dataModel/type';
+import { DataModelType } from '../dataModel/type';
 import { isEmpty, reduce, mapValues } from 'lodash';
 import { Where, Operator } from '../dataSource/interface';
 
@@ -86,12 +86,12 @@ export default class WhereInputPlugin implements Plugin {
     const inputFields: Array<{fieldName: string, type: string}> = [];
     fields.forEach(field => {
       switch (field.getType()) {
-        case GraphqlType.STRING:
-        case GraphqlType.INT:
-        case GraphqlType.FLOAT:
-        case GraphqlType.ENUM:
-        case GraphqlType.ID:
-        case GraphqlType.BOOLEAN:
+        case DataModelType.STRING:
+        case DataModelType.INT:
+        case DataModelType.FLOAT:
+        case DataModelType.ENUM:
+        case DataModelType.ID:
+        case DataModelType.BOOLEAN:
           inputFields.push({
             fieldName: field.getName(),
             type: field.getTypename(),

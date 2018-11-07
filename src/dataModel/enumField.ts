@@ -1,5 +1,5 @@
 import Field from './field';
-import { GraphqlType } from './type';
+import { DataModelType } from './type';
 
 export default class EnumField extends Field {
   private enumName: string;
@@ -26,7 +26,7 @@ export default class EnumField extends Field {
   }) {
     super({
       name,
-      type: GraphqlType.ENUM,
+      type: DataModelType.ENUM,
       nonNull,
       list,
       nonNullItem,

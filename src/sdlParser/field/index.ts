@@ -1,6 +1,8 @@
 // tslint:disable:max-classes-per-file
 import AbstractSdlField from './sdlField';
 import { SdlFieldType, SdlField } from './interface';
+import SdlObjectType from '../namedType/objectType';
+import SdlEnumType from '../namedType/enumType';
 
 export { SdlFieldType };
 
@@ -17,22 +19,31 @@ export class CustomScalarField extends AbstractSdlField {
 }
 
 export class EnumField extends AbstractSdlField {
+  private enumTypeThunk: () => SdlEnumType;
   public getFieldType() {
     return SdlFieldType.ENUM;
+  }
+
+  public setEnumType(enumTypeThunk: () => SdlEnumType) {
+    this.enumTypeThunk = enumTypeThunk;
+  }
+
+  public getEnumType() {
+    return this.enumTypeThunk();
   }
 }
 
 export class ObjectField extends AbstractSdlField {
-  private fields: Record<string, SdlField> = {};
+  private objectTypeThunk: () => SdlObjectType;
   public getFieldType() {
     return SdlFieldType.OBJECT;
   }
 
-  public addField(name: string, field: SdlField) {
-    this.fields[name] = field;
+  public setObjectType(objectTypeThunk: () => SdlObjectType) {
+    this.objectTypeThunk = objectTypeThunk;
   }
 
-  public getFields() {
-    return this.fields;
+  public getObjectType() {
+    return this.objectTypeThunk();
   }
 }

@@ -1,9 +1,9 @@
-import { GraphqlType, isScalarType } from './type';
+import { DataModelType, isScalarType } from './type';
 import { defaultTo } from 'lodash';
 
 export default class Field {
   protected name: string;
-  protected type: GraphqlType;
+  protected type: DataModelType;
 
   // type related fields
   protected nonNull: boolean;
@@ -29,7 +29,7 @@ export default class Field {
     autoGen,
   }: {
     name: string,
-    type: GraphqlType,
+    type: DataModelType,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,

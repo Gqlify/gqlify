@@ -7,6 +7,7 @@ import { DataSource } from '../dataSource/interface';
 export default class Model {
   private name: string;
   private fields: Field[];
+  private fieldMap: Record<string, Field>;
   private namings: {
     plural: string;
     singular: string;
@@ -38,10 +39,18 @@ export default class Model {
       capitalSingular: capitalize(key),
     };
     this.fields = fields || [];
+    this.fields.forEach(field => {
+      this.fieldMap[field.getName()] = field;
+    });
   }
 
   public appendField(field: Field) {
+    this.fieldMap[field.getName()] = field;
     this.fields.push(field);
+  }
+
+  public getField(name: string) {
+    return this.fieldMap[name];
   }
 
   public getFields() {

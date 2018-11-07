@@ -1,5 +1,5 @@
 import Field from './field';
-import { GraphqlType } from './type';
+import { DataModelType } from './type';
 
 export default class CustomScalarField extends Field {
   private typename: string;
@@ -25,7 +25,7 @@ export default class CustomScalarField extends Field {
   }) {
     super({
       name,
-      type: GraphqlType.CUSTOM_SCALAR,
+      type: DataModelType.CUSTOM_SCALAR,
       nonNull,
       list,
       nonNullItem,

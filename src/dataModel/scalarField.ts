@@ -1,5 +1,5 @@
 import Field from './field';
-import { GraphqlType } from './type';
+import { DataModelType } from './type';
 
 export default class ScalarField extends Field {
   constructor({
@@ -13,7 +13,7 @@ export default class ScalarField extends Field {
     autoGen,
   }: {
     name: string,
-    type: GraphqlType,
+    type: DataModelType,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,
