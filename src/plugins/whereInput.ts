@@ -18,6 +18,7 @@ export default class WhereInputPlugin implements Plugin {
     const whereInput = `input ${modelWhereInputName} {
       ${this.createWhereFilter(model.getFields())}
     }`;
+
     root.addInput(whereInput);
 
     // add where unique input

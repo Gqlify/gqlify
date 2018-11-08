@@ -29,7 +29,7 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
   return content;
 };
 
-const createInputField = (model: Model, context) => {
+const createInputField = (model: Model, context: Context) => {
   const { root } = context;
   const fields = model.getFields();
   const content: string[] = [];
@@ -48,7 +48,7 @@ const createInputField = (model: Model, context) => {
       const fieldWithPrefix = `${model.getNamings().capitalSingular}${upperFirst(field.getName())}`;
       const typeFields = createObjectInputField(fieldWithPrefix, field, context);
       const objectInputName = `${fieldWithPrefix}CreateInput`;
-      root.addInput(objectInputName, `input ${objectInputName} {${typeFields.join(' ')}}`);
+      root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
       content.push(`${field.getName()}: ${objectInputName}`);
       return;
     }

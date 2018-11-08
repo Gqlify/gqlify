@@ -8,12 +8,14 @@ export default class Generator {
 
   constructor({
     plugins,
+    rootNode,
   }: {
     plugins: Plugin[],
+    rootNode?: RootNode,
   }) {
     this.plugins = plugins;
     this.context = {
-      root: new RootNode(),
+      root: rootNode || new RootNode(),
     };
   }
 

@@ -1,4 +1,5 @@
 import { InputValue } from '../inputValue/interface';
+import { SdlDirective } from '../interface';
 
 export enum SdlFieldType {
   SCALAR = 'SCALAR',
@@ -14,6 +15,6 @@ export interface SdlField {
   isList(): boolean;
   isItemNonNull(): boolean;
   getDescription(): string;
-  getDirective(name: string): Record<string, InputValue>;
-  getDirectives(): Record<string, Record<string, InputValue>>;
+  getDirective(name: string): SdlDirective;
+  getDirectives(): Record<string, SdlDirective>;
 }

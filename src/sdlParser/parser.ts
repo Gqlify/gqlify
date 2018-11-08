@@ -30,13 +30,14 @@ const parseNodeToSdlObjectType = (
   getSdlNamedType: (name: string) => SdlNamedType,
   ): SdlObjectType => {
   const fields = reduce(node.fields, (result, fieldNode) => {
-    result[node.name.value] = createSdlField(documentNode, fieldNode, getSdlNamedType);
+    result[fieldNode.name.value] = createSdlField(documentNode, fieldNode, getSdlNamedType);
     return result;
   }, {});
   const directives = reduce(node.directives, (result, directiveNode) => {
     result[directiveNode.name.value] = parseDirectiveNode(directiveNode);
     return result;
   }, {});
+
   // create SdlObjectType
   const objectType = new SdlObjectType({
     name: node.name.value,

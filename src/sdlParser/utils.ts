@@ -98,7 +98,6 @@ export const parseDirectiveInput = (node: ValueNode): InputValue => {
 
 export const parseDirectiveNode = (node: DirectiveNode): SdlDirective => {
   return {
-    name: node.name.value,
     args: reduce(node.arguments, (result, argNode) => {
       result[argNode.name.value] = parseDirectiveInput(argNode.value);
       return result;
@@ -136,7 +135,14 @@ export const createSdlField = (
   const nonNull = wrapped[0] === Kind.NON_NULL_TYPE;
   const list = (wrapped[0] === Kind.LIST_TYPE || wrapped[1] === Kind.LIST_TYPE);
   const itemNonNull = (list && last(wrapped) === Kind.NON_NULL_TYPE);
-  const fieldConfigs = {typename: type, nonNull, list, itemNonNull};
+
+  // construct directives
+  const directives = reduce(node.directives, (result, directiveNode) => {
+    result[directiveNode.name.value] = parseDirectiveNode(directiveNode);
+    return result;
+  }, {});
+  // field configs
+  const fieldConfigs = {typename: type, nonNull, list, itemNonNull, directives};
 
   if (isSpecifiedScalar(type)) {
     return new ScalarField(fieldConfigs);
@@ -155,7 +161,7 @@ export const createSdlField = (
     case Kind.ENUM_TYPE_DEFINITION:
       const enumField = new EnumField(fieldConfigs);
       enumField.setEnumType(
-        () => getSdlNamedType(field.getTypeName()) as SdlEnumType,
+        () => getSdlNamedType(enumField.getTypeName()) as SdlEnumType,
       );
       return enumField;
 
