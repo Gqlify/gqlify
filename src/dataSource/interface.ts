@@ -56,4 +56,17 @@ export interface ListMutable {
   delete(where: Where): Promise<any>;
 }
 
+export interface RelationReadable {
+  findOneByRelation(key: string, id: string): Promise<any>;
+  findManyByRelation(key: string, id: string): Promise<any[]>;
+}
+
+export interface RelationMutable {
+  setToOne(data: any, key: string, id: string): Promise<any>;
+  unsetToOne(data: any, key: string): Promise<any>;
+  setOneToMany(data: any, key: string, ids: string[]): Promise<any>;
+  setManyToOne(data: any, key: string, id: string): Promise<any>;
+  setManyToMany(data: any, key: string, ids: string[]): Promise<any>;
+}
+
 export type DataSource = ListReadable & ListMutable;
