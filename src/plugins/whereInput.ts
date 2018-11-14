@@ -2,7 +2,7 @@ import Model from '../dataModel/model';
 import { Context, Plugin } from './interface';
 import Field from '../dataModel/field';
 import { DataModelType } from '../dataModel/type';
-import { isEmpty, reduce, mapValues } from 'lodash';
+import { isEmpty, reduce, mapValues, forEach } from 'lodash';
 import { Where, Operator } from '../dataSource/interface';
 
 // constants
@@ -82,10 +82,10 @@ export default class WhereInputPlugin implements Plugin {
     return {fieldName, operator: validOperator};
   }
 
-  private createWhereFilter(fields: Field[]) {
+  private createWhereFilter(fields: Record<string, Field>) {
     // create equals on scalar fields
     const inputFields: Array<{fieldName: string, type: string}> = [];
-    fields.forEach(field => {
+    forEach(fields, (field, name) => {
       switch (field.getType()) {
         case DataModelType.STRING:
         case DataModelType.INT:
@@ -94,7 +94,7 @@ export default class WhereInputPlugin implements Plugin {
         case DataModelType.ID:
         case DataModelType.BOOLEAN:
           inputFields.push({
-            fieldName: field.getName(),
+            fieldName: name,
             type: field.getTypename(),
           });
           break;
@@ -104,13 +104,13 @@ export default class WhereInputPlugin implements Plugin {
     return inputFields.map(({fieldName, type}) => `${fieldName}: ${type}`).join(' ');
   }
 
-  private createWhereUniqueFilter(modelName: string, fields: Field[]) {
+  private createWhereUniqueFilter(modelName: string, fields: Record<string, Field>) {
     // create equals on scalar fields
     const inputFields: Array<{fieldName: string, type: string}> = [];
-    fields.forEach(field => {
+    forEach(fields, (field, name) => {
       if (field.isUnique()) {
         inputFields.push({
-          fieldName: field.getName(),
+          fieldName: name,
           type: field.getTypename(),
         });
       }

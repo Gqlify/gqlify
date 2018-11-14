@@ -4,7 +4,7 @@ import CustomScalarField from '../dataModel/customScalarField';
 import EnumField from '../dataModel/enumField';
 import ObjectField from '../dataModel/objectField';
 import RelationField from '../dataModel/relationField';
-import { upperFirst } from 'lodash';
+import { upperFirst, forEach } from 'lodash';
 
 const graphqlType = (field: Field) => {
   let value = field.getTypename();
@@ -19,10 +19,10 @@ const graphqlType = (field: Field) => {
   return value;
 };
 
-export const recursiveCreateType = (fields: Field[], context: Context): string[] => {
+export const recursiveCreateType = (fields: Record<string, Field>, context: Context): string[] => {
   const { root } = context;
   const content: string[] = [];
-  fields.forEach(field => {
+  forEach(fields, (field, name) => {
     if (field instanceof EnumField) {
       root.addEnum(`enum ${field.getTypename()} {${field.getValues().join(',')}}`);
     }
@@ -30,11 +30,11 @@ export const recursiveCreateType = (fields: Field[], context: Context): string[]
     if (field instanceof ObjectField) {
       // create type for nested object
       const typeFields = recursiveCreateType(field.getFields(), context);
-      const objectTypename = upperFirst(field.getName());
+      const objectTypename = upperFirst(name);
       root.addObjectType(`type ${objectTypename} {${typeFields.join(' ')}}`);
     }
 
-    content.push(`${field.getName()}: ${graphqlType(field)}`);
+    content.push(`${name}: ${graphqlType(field)}`);
   });
 
   return content;

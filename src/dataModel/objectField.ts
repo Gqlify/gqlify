@@ -3,7 +3,7 @@ import { DataModelType } from './type';
 import { capitalize } from 'lodash';
 
 export default class ObjectField extends Field {
-  private fields: Field[];
+  private fields: Record<string, Field>;
   private typename?: string;
 
   constructor({
@@ -15,7 +15,7 @@ export default class ObjectField extends Field {
     readOnly,
   }: {
     typename?: string,
-    fields: Field[],
+    fields: Record<string, Field>,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,

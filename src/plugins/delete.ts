@@ -3,6 +3,7 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListMutable } from '../dataSource/interface';
+import { reduce } from 'lodash';
 
 export default class DeletePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
@@ -39,7 +40,11 @@ export default class DeletePlugin implements Plugin {
   private createUniqueReturnType(model: Model, context: Context) {
     const uniqueFields = model.getUniqueFields();
     const typename = this.getReturnTypename(model);
-    const fields = uniqueFields.map(field => `${field.getName()}: ${field.getTypename()}`).join(' ');
+    const fields = reduce(uniqueFields,
+      (arr, field, name) => {
+        arr.push(`${name}: ${field.getTypename()}`);
+        return arr;
+      }, []).join(' ');
     const type = `type ${typename} {
       ${fields}
     }`;
