@@ -15,33 +15,32 @@ interface Context {
 
 export const userModel = new Model({
   name: 'user',
-  fields: [
-    new ScalarField({name: 'id', type: DataModelType.ID, unique: true, autoGen: true}),
-    new ScalarField({name: 'username', type: DataModelType.STRING}),
-    new ScalarField({name: 'email', type: DataModelType.STRING}),
-  ],
+  fields: {
+    id: new ScalarField({type: DataModelType.ID, unique: true, autoGen: true}),
+    username: new ScalarField({type: DataModelType.STRING}),
+    email: new ScalarField({type: DataModelType.STRING}),
+  },
 });
 
 export const bookModel = new Model({
   name: 'book',
-  fields: [
-    new ScalarField({name: 'id', type: DataModelType.ID, unique: true, autoGen: true}),
-    new ScalarField({name: 'name', type: DataModelType.STRING}),
-  ],
+  fields: {
+    id: new ScalarField({type: DataModelType.ID, unique: true, autoGen: true}),
+    name: new ScalarField({type: DataModelType.STRING}),
+  },
 });
 
 export const groupModel = new Model({
   name: 'group',
-  fields: [
-    new ScalarField({name: 'id', type: DataModelType.ID, unique: true, autoGen: true}),
-    new ScalarField({name: 'name', type: DataModelType.STRING}),
-  ],
+  fields: {
+    id: new ScalarField({type: DataModelType.ID, unique: true, autoGen: true}),
+    name: new ScalarField({type: DataModelType.STRING}),
+  },
 });
 
 // relation
 // user-book: one-to-many
-userModel.appendField(new RelationField({
-  name: 'books',
+userModel.appendField('books', new RelationField({
   list: true,
   relationTo: bookModel,
 }));
@@ -50,8 +49,7 @@ userModel.setFieldResolver('books', async (parent: any, args, context: Context) 
   return response.data;
 });
 
-bookModel.appendField(new RelationField({
-  name: 'author',
+bookModel.appendField('author', new RelationField({
   relationTo: userModel,
 }));
 bookModel.setFieldResolver('author', async (parent: any, args, context: Context) => {
@@ -59,8 +57,7 @@ bookModel.setFieldResolver('author', async (parent: any, args, context: Context)
 });
 
 // user-group: many-to-many
-userModel.appendField(new RelationField({
-  name: 'groups',
+userModel.appendField('groups', new RelationField({
   list: true,
   relationTo: groupModel,
 }));
@@ -69,8 +66,7 @@ userModel.setFieldResolver('groups', async (parent: any, args, context: Context)
   return response.data.filter(group => group.members && group.members.indexOf(parent.id) >= 0);
 });
 
-groupModel.appendField(new RelationField({
-  name: 'members',
+groupModel.appendField('members', new RelationField({
   list: true,
   relationTo: userModel,
 }));

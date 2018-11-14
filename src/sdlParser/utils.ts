@@ -38,7 +38,7 @@ import {
   RelationField as DataRelationField,
 } from '../dataModel';
 import { InputValue } from './inputValue/interface';
-import { reduce, last, forEach, get } from 'lodash';
+import { reduce, last, forEach, mapValues } from 'lodash';
 import { SdlField, SdlFieldType } from './field/interface';
 import SdlObjectType from './namedType/objectType';
 import { SdlDirective } from './interface';
@@ -197,7 +197,6 @@ export const parseDataModelScalarType = (field: SdlField): DataModelType => {
 };
 
 export const createDataFieldFromSdlField = (
-  name: string,
   field: SdlField,
   isApiObjectType: (sdlObjectType: SdlObjectType) => boolean,
   getModel: (name: string) => Model,
@@ -206,19 +205,16 @@ export const createDataFieldFromSdlField = (
     case SdlFieldType.SCALAR:
       const type = parseDataModelScalarType(field);
       return new DataScalarField({
-        name,
         type,
       });
 
     case SdlFieldType.CUSTOM_SCALAR:
       return new DataCustomScalarField({
-        name,
         typename: field.getTypeName(),
       });
 
     case SdlFieldType.ENUM:
       return new DataEnumField({
-        name,
         enumName: field.getTypeName(),
         values: (field as EnumField).getEnumType().getValues(),
       });
@@ -227,17 +223,14 @@ export const createDataFieldFromSdlField = (
       const objectField = field as ObjectField;
       if (isApiObjectType(objectField.getObjectType())) {
         return new DataRelationField({
-          name,
           relationTo: () => getModel(objectField.getTypeName()),
         });
       } else {
         const fields = objectField.getObjectType().getFields();
         return new DataObjectField({
-          name,
           typename: objectField.getTypeName(),
-          fields: Object.keys(fields).map(key => {
-            const nestedField = fields[key];
-            return createDataFieldFromSdlField(key, nestedField, isApiObjectType, getModel);
+          fields: mapValues(fields, nestedField => {
+            return createDataFieldFromSdlField(nestedField, isApiObjectType, getModel);
           }),
         });
       }
@@ -255,9 +248,7 @@ export const createDataModelFromSdlObjectType = (
 
   // append fields
   forEach(sdlObjectType.getFields(), (sdlField, key) => {
-    model.appendField(
-      createDataFieldFromSdlField(key, sdlField, isApiObjectType, getModel),
-    );
+    model.appendField(key, createDataFieldFromSdlField(sdlField, isApiObjectType, getModel));
   });
   return model;
 };

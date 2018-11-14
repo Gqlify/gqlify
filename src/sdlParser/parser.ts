@@ -159,8 +159,8 @@ export class SdlParser {
       }));
 
       // visit fields
-      model.getFields().forEach(dataModelField => {
-        const sdlField = sdlObjectType.getField(dataModelField.getName());
+      forEach(model.getFields(), (dataModelField, name) => {
+        const sdlField = sdlObjectType.getField(name);
         middlewares.forEach(mid => mid.visitField && mid.visitField({
           model,
           field: dataModelField,
