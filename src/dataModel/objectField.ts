@@ -7,7 +7,6 @@ export default class ObjectField extends Field {
   private typename?: string;
 
   constructor({
-    name,
     typename,
     fields,
     nonNull,
@@ -15,7 +14,6 @@ export default class ObjectField extends Field {
     nonNullItem,
     readOnly,
   }: {
-    name: string,
     typename?: string,
     fields: Field[],
     nonNull?: boolean,
@@ -24,7 +22,6 @@ export default class ObjectField extends Field {
     readOnly?: boolean,
   }) {
     super({
-      name,
       type: DataModelType.OBJECT,
       nonNull,
       list,
@@ -41,7 +38,6 @@ export default class ObjectField extends Field {
   }
 
   public getTypename() {
-    // if typename specified of object, use it, otherwise use the name
-    return capitalize(this.typename || this.name);
+    return capitalize(this.typename);
   }
 }

@@ -9,14 +9,12 @@ export default class RelationField extends Field {
   private relationTo: ModelOrThunk;
 
   constructor({
-    name,
     relationTo,
     nonNull,
     list,
     nonNullItem,
     readOnly,
   }: {
-    name: string,
     relationTo: ModelOrThunk,
     nonNull?: boolean,
     list?: boolean,
@@ -24,7 +22,6 @@ export default class RelationField extends Field {
     readOnly?: boolean,
   }) {
     super({
-      name,
       type: DataModelType.RELATION,
       nonNull,
       list,

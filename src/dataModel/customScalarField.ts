@@ -5,7 +5,6 @@ export default class CustomScalarField extends Field {
   private typename: string;
 
   constructor({
-    name,
     typename,
     nonNull,
     list,
@@ -14,7 +13,6 @@ export default class CustomScalarField extends Field {
     readOnly,
     autoGen,
   }: {
-    name: string,
     typename: string,
     nonNull?: boolean,
     list?: boolean,
@@ -24,7 +22,6 @@ export default class CustomScalarField extends Field {
     autoGen?: boolean,
   }) {
     super({
-      name,
       type: DataModelType.CUSTOM_SCALAR,
       nonNull,
       list,

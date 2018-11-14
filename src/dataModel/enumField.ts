@@ -6,7 +6,6 @@ export default class EnumField extends Field {
   private values: string[];
 
   constructor({
-    name,
     nonNull,
     list,
     nonNullItem,
@@ -15,7 +14,6 @@ export default class EnumField extends Field {
     enumName,
     values,
   }: {
-    name: string,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,
@@ -25,7 +23,6 @@ export default class EnumField extends Field {
     values: string[],
   }) {
     super({
-      name,
       type: DataModelType.ENUM,
       nonNull,
       list,

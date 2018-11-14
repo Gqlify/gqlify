@@ -1,13 +1,12 @@
 import Field from './field';
 import * as pluralize from 'pluralize';
-import { capitalize, isEmpty } from 'lodash';
+import { capitalize, isEmpty, pickBy } from 'lodash';
 import { IResolverObject } from 'graphql-tools';
 import { DataSource } from '../dataSource/interface';
 
 export default class Model {
   private name: string;
-  private fields: Field[];
-  private fieldMap: Record<string, Field> = {};
+  private fields: Record<string, Field>;
   private namings: {
     plural: string;
     singular: string;
@@ -28,7 +27,7 @@ export default class Model {
     fields,
   }: {
     name: string,
-    fields?: Field[],
+    fields?: Record<string, Field>,
   }) {
     this.name = name;
     // lowercase and singular it first
@@ -38,19 +37,15 @@ export default class Model {
       singular: key,
       capitalSingular: capitalize(key),
     };
-    this.fields = fields || [];
-    this.fields.forEach(field => {
-      this.fieldMap[field.getName()] = field;
-    });
+    this.fields = fields || {};
   }
 
-  public appendField(field: Field) {
-    this.fieldMap[field.getName()] = field;
-    this.fields.push(field);
+  public appendField(name: string, field: Field) {
+    this.fields[name] = field;
   }
 
   public getField(name: string) {
-    return this.fieldMap[name];
+    return this.fields[name];
   }
 
   public getFields() {
@@ -71,7 +66,7 @@ export default class Model {
   }
 
   public getUniqueFields() {
-    return this.fields.filter(field => field.isUnique());
+    return pickBy(this.fields, field => field.isUnique());
   }
 
   public getMetadata(key: string) {
