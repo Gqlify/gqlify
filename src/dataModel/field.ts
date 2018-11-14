@@ -2,7 +2,6 @@ import { DataModelType, isScalarType } from './type';
 import { defaultTo } from 'lodash';
 
 export default class Field {
-  protected name: string;
   protected type: DataModelType;
 
   // type related fields
@@ -19,7 +18,6 @@ export default class Field {
   protected metadata: Record<string, any> = {};
 
   constructor({
-    name,
     type,
     nonNull,
     list,
@@ -28,7 +26,6 @@ export default class Field {
     readOnly,
     autoGen,
   }: {
-    name: string,
     type: DataModelType,
     nonNull?: boolean,
     list?: boolean,
@@ -37,7 +34,6 @@ export default class Field {
     readOnly?: boolean,
     autoGen?: boolean,
   }) {
-    this.name = name;
     this.type = type;
     this.nonNull = defaultTo(nonNull, false);
     this.list = defaultTo(list, false);
@@ -95,10 +91,6 @@ export default class Field {
     this.autoGen = value;
   }
 
-  public getName() {
-    return this.name;
-  }
-
   public getType() {
     return this.type;
   }
@@ -109,19 +101,6 @@ export default class Field {
 
   public getTypename() {
     return this.type.toString();
-  }
-
-  public stringifyAsField() {
-    let value = this.getTypename();
-
-    if (this.isList()) {
-      value = this.isNonNullItem() ? `[${value}!]` : `[${value}]`;
-    }
-
-    if (this.isNonNull()) {
-      value = `${value}!`;
-    }
-    return `${this.getName()}: ${value}`;
   }
 
   public getMetadata(key: string) {
