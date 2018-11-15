@@ -4,7 +4,7 @@ import SdlObjectType from '../namedType/objectType';
 import { SdlField } from '../field/interface';
 
 export interface SdlMiddleware {
-  visitApiObjectType?({
+  visitGqlifyModel?({
     model,
     sdlObjectType,
   }: {

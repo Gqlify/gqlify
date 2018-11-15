@@ -11,7 +11,7 @@ enum RESERVED_DIRECTIVES {
 }
 
 export default class BasicFieldMiddleware implements SdlMiddleware {
-  public visitField?({
+  public visitField({
     model,
     field,
     sdlObjectType,

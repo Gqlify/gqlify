@@ -1,4 +1,6 @@
 
-export const API_DIRECTIVE = 'api';
+export const MODEL_DIRECTIVE = 'GQLifyModel';
 
-export const API_DIRECTIVE_RELATION_TO_FIELD = 'name';
+export const MODEL_DIRECTIVE_SOURCE_NAME = 'dataSource';
+
+export const MODEL_DIRECTIVE_SOURCE_KEY = 'key';

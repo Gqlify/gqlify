@@ -198,7 +198,7 @@ export const parseDataModelScalarType = (field: SdlField): DataModelType => {
 
 export const createDataFieldFromSdlField = (
   field: SdlField,
-  isApiObjectType: (sdlObjectType: SdlObjectType) => boolean,
+  isGqlifyModel: (sdlObjectType: SdlObjectType) => boolean,
   getModel: (name: string) => Model,
   ) => {
   switch (field.getFieldType()) {
@@ -221,7 +221,7 @@ export const createDataFieldFromSdlField = (
 
     case SdlFieldType.OBJECT:
       const objectField = field as ObjectField;
-      if (isApiObjectType(objectField.getObjectType())) {
+      if (isGqlifyModel(objectField.getObjectType())) {
         return new DataRelationField({
           relationTo: () => getModel(objectField.getTypeName()),
         });
@@ -230,7 +230,7 @@ export const createDataFieldFromSdlField = (
         return new DataObjectField({
           typename: objectField.getTypeName(),
           fields: mapValues(fields, nestedField => {
-            return createDataFieldFromSdlField(nestedField, isApiObjectType, getModel);
+            return createDataFieldFromSdlField(nestedField, isGqlifyModel, getModel);
           }),
         });
       }
@@ -239,7 +239,7 @@ export const createDataFieldFromSdlField = (
 
 export const createDataModelFromSdlObjectType = (
   sdlObjectType: SdlObjectType,
-  isApiObjectType: (sdlObjectType: SdlObjectType) => boolean,
+  isGqlifyModel: (sdlObjectType: SdlObjectType) => boolean,
   getModel: (name: string) => Model,
   ): Model => {
   const model = new Model({
@@ -248,7 +248,7 @@ export const createDataModelFromSdlObjectType = (
 
   // append fields
   forEach(sdlObjectType.getFields(), (sdlField, key) => {
-    model.appendField(key, createDataFieldFromSdlField(sdlField, isApiObjectType, getModel));
+    model.appendField(key, createDataFieldFromSdlField(sdlField, isGqlifyModel, getModel));
   });
   return model;
 };
