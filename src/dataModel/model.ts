@@ -1,12 +1,12 @@
 import Field from './field';
 import * as pluralize from 'pluralize';
-import { capitalize, isEmpty, pickBy } from 'lodash';
+import { capitalize, isEmpty, pickBy, mapValues, isFunction } from 'lodash';
 import { IResolverObject } from 'graphql-tools';
 import { DataSource } from '../dataSource/interface';
 
 export default class Model {
   private name: string;
-  private fields: Record<string, Field>;
+  private fields: Record<string, () => Field | Field>;
   private namings: {
     plural: string;
     singular: string;
@@ -27,7 +27,7 @@ export default class Model {
     fields,
   }: {
     name: string,
-    fields?: Record<string, Field>,
+    fields?: Record<string, () => Field | Field>,
   }) {
     this.name = name;
     // lowercase and singular it first
@@ -40,16 +40,19 @@ export default class Model {
     this.fields = fields || {};
   }
 
-  public appendField(name: string, field: Field) {
+  public appendField(name: string, field: () => Field | Field) {
     this.fields[name] = field;
   }
 
   public getField(name: string) {
-    return this.fields[name];
+    const field = this.fields[name];
+    return isFunction(field) ? field() : field;
   }
 
   public getFields() {
-    return this.fields;
+    return mapValues(this.fields, field => {
+      return isFunction(field) ? field() : field;
+    });
   }
 
   public getName() {
@@ -66,7 +69,7 @@ export default class Model {
   }
 
   public getUniqueFields() {
-    return pickBy(this.fields, field => field.isUnique());
+    return pickBy(this.getFields(), field => field.isUnique());
   }
 
   public getMetadata(key: string) {

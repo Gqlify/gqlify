@@ -1,9 +1,9 @@
 import Field from './field';
 import { DataModelType } from './type';
-import { capitalize } from 'lodash';
+import { capitalize, mapValues, isFunction } from 'lodash';
 
 export default class ObjectField extends Field {
-  private fields: Record<string, Field>;
+  private fields: Record<string, () => Field | Field>;
   private typename?: string;
 
   constructor({
@@ -15,7 +15,7 @@ export default class ObjectField extends Field {
     readOnly,
   }: {
     typename?: string,
-    fields: Record<string, Field>,
+    fields: Record<string, () => Field | Field>,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,
@@ -33,8 +33,10 @@ export default class ObjectField extends Field {
     this.typename = typename;
   }
 
-  public getFields() {
-    return this.fields;
+  public getFields(): Record<string, Field> {
+    return mapValues(this.fields, field => {
+      return isFunction(field) ? field() : field;
+    });
   }
 
   public getTypename() {
