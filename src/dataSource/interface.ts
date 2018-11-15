@@ -64,9 +64,12 @@ export interface RelationReadable {
 export interface RelationMutable {
   setToOne(data: any, key: string, id: string): Promise<any>;
   unsetToOne(data: any, key: string): Promise<any>;
-  setOneToMany(data: any, key: string, ids: string[]): Promise<any>;
+  addOneToMany(data: any, key: string, id: string): Promise<any>;
+  removeOneToMany(data: any, key: string, id: string): Promise<any>;
   setManyToOne(data: any, key: string, id: string): Promise<any>;
-  setManyToMany(data: any, key: string, ids: string[]): Promise<any>;
+  unsetManyToOne(data: any, key: string): Promise<any>;
+  addManyToMany(data: any, key: string, id: string): Promise<any>;
+  removeManyToMany(data: any, key: string, id: string): Promise<any>;
 }
 
 export type DataSource = ListReadable & ListMutable;
