@@ -1,9 +1,9 @@
 import Field from './field';
 import { DataModelType } from './type';
+import EnumType from './fieldType/enumType';
 
 export default class EnumField extends Field {
-  private enumName: string;
-  private values: string[];
+  private enumType: EnumType;
 
   constructor({
     nonNull,
@@ -11,16 +11,14 @@ export default class EnumField extends Field {
     nonNullItem,
     unique,
     readOnly,
-    enumName,
-    values,
+    enumType,
   }: {
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,
     unique?: boolean,
     readOnly?: boolean,
-    enumName: string,
-    values: string[],
+    enumType: EnumType,
   }) {
     super({
       type: DataModelType.ENUM,
@@ -31,16 +29,15 @@ export default class EnumField extends Field {
       readOnly,
     });
 
-    this.enumName = enumName;
-    this.values = values;
+    this.enumType = enumType;
   }
 
   public getTypename() {
     // override getTypename to enum typename
-    return this.enumName;
+    return this.enumType.getTypename();
   }
 
   public getValues() {
-    return this.values;
+    return this.enumType.getValues();
   }
 }

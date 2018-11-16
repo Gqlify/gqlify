@@ -1,25 +1,23 @@
 import Field from './field';
 import { DataModelType } from './type';
 import { capitalize, mapValues, isFunction } from 'lodash';
+import ObjectType from './fieldType/objectType';
 
 export default class ObjectField extends Field {
-  private fields: Record<string, () => Field | Field>;
-  private typename?: string;
+  private objectType: ObjectType;
 
   constructor({
-    typename,
-    fields,
     nonNull,
     list,
     nonNullItem,
     readOnly,
+    objectType,
   }: {
-    typename?: string,
-    fields: Record<string, () => Field | Field>,
     nonNull?: boolean,
     list?: boolean,
     nonNullItem?: boolean,
     readOnly?: boolean,
+    objectType: ObjectType,
   }) {
     super({
       type: DataModelType.OBJECT,
@@ -29,17 +27,14 @@ export default class ObjectField extends Field {
       readOnly,
     });
 
-    this.fields = fields;
-    this.typename = typename;
+    this.objectType = objectType;
   }
 
   public getFields(): Record<string, Field> {
-    return mapValues(this.fields, field => {
-      return isFunction(field) ? field() : field;
-    });
+    return this.objectType.getFields();
   }
 
   public getTypename() {
-    return capitalize(this.typename);
+    return this.objectType.getTypename();
   }
 }
