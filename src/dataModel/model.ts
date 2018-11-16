@@ -6,7 +6,7 @@ import { DataSource } from '../dataSource/interface';
 
 export default class Model {
   private name: string;
-  private fields: Record<string, () => Field | Field>;
+  private fields: Record<string, Field>;
   private namings: {
     plural: string;
     singular: string;
@@ -27,7 +27,7 @@ export default class Model {
     fields,
   }: {
     name: string,
-    fields?: Record<string, () => Field | Field>,
+    fields?: Record<string, Field>,
   }) {
     this.name = name;
     // lowercase and singular it first
@@ -40,19 +40,16 @@ export default class Model {
     this.fields = fields || {};
   }
 
-  public appendField(name: string, field: () => Field | Field) {
+  public appendField(name: string, field: Field) {
     this.fields[name] = field;
   }
 
   public getField(name: string) {
-    const field = this.fields[name];
-    return isFunction(field) ? field() : field;
+    return this.fields[name];
   }
 
   public getFields() {
-    return mapValues(this.fields, field => {
-      return isFunction(field) ? field() : field;
-    });
+    return this.fields;
   }
 
   public getName() {

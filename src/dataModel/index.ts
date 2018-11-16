@@ -8,3 +8,8 @@ export { default as EnumField } from './enumField';
 export { default as ObjectField } from './objectField';
 export { default as RelationField } from './relationField';
 export { default as ScalarField } from './scalarField';
+
+// NamedType
+export { NamedType } from './namedType/interface';
+export { default as EnumType } from './namedType/enumType';
+export { default as ObjectType } from './namedType/objectType';

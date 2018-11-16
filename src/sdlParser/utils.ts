@@ -2,7 +2,6 @@ import {
   ValueNode,
   Kind,
   TypeNode,
-  NamedTypeNode,
   FieldDefinitionNode,
   DocumentNode,
   TypeDefinitionNode,
@@ -29,20 +28,11 @@ import {
   EnumField,
   ObjectField,
 } from './field';
-import {
-  Model,
-  ScalarField as DataScalarField,
-  CustomScalarField as DataCustomScalarField,
-  EnumField as DataEnumField,
-  ObjectField as DataObjectField,
-  RelationField as DataRelationField,
-} from '../dataModel';
 import { InputValue } from './inputValue/interface';
-import { reduce, last, forEach, mapValues } from 'lodash';
-import { SdlField, SdlFieldType } from './field/interface';
+import { reduce, last } from 'lodash';
+import { SdlField } from './field/interface';
 import SdlObjectType from './namedType/objectType';
 import { SdlDirective } from './interface';
-import { DataModelType } from '../dataModel/type';
 import { SdlNamedType } from './namedType/interface';
 import SdlEnumType from './namedType/enumType';
 
@@ -172,83 +162,4 @@ export const createSdlField = (
       );
       return field;
   }
-};
-
-export const parseDataModelScalarType = (field: SdlField): DataModelType => {
-  switch (field.getTypeName()) {
-    case GraphQLString.name:
-      return DataModelType.STRING;
-
-    case GraphQLInt.name:
-      return DataModelType.INT;
-
-    case GraphQLFloat.name:
-      return DataModelType.FLOAT;
-
-    case GraphQLBoolean.name:
-      return DataModelType.BOOLEAN;
-
-    case GraphQLID.name:
-      return DataModelType.ID;
-
-    default:
-      throw new Error(`cant parse dataModel type for field type: ${field.getTypeName()}`);
-  }
-};
-
-export const createDataFieldFromSdlField = (
-  field: SdlField,
-  isGqlifyModel: (sdlObjectType: SdlObjectType) => boolean,
-  getModel: (name: string) => Model,
-  ) => {
-  switch (field.getFieldType()) {
-    case SdlFieldType.SCALAR:
-      const type = parseDataModelScalarType(field);
-      return new DataScalarField({
-        type,
-      });
-
-    case SdlFieldType.CUSTOM_SCALAR:
-      return new DataCustomScalarField({
-        typename: field.getTypeName(),
-      });
-
-    case SdlFieldType.ENUM:
-      return new DataEnumField({
-        enumName: field.getTypeName(),
-        values: (field as EnumField).getEnumType().getValues(),
-      });
-
-    case SdlFieldType.OBJECT:
-      const objectField = field as ObjectField;
-      if (isGqlifyModel(objectField.getObjectType())) {
-        return new DataRelationField({
-          relationTo: () => getModel(objectField.getTypeName()),
-        });
-      } else {
-        const fields = objectField.getObjectType().getFields();
-        return new DataObjectField({
-          typename: objectField.getTypeName(),
-          fields: mapValues(fields, nestedField => {
-            return createDataFieldFromSdlField(nestedField, isGqlifyModel, getModel);
-          }),
-        });
-      }
-  }
-};
-
-export const createDataModelFromSdlObjectType = (
-  sdlObjectType: SdlObjectType,
-  isGqlifyModel: (sdlObjectType: SdlObjectType) => boolean,
-  getModel: (name: string) => Model,
-  ): Model => {
-  const model = new Model({
-    name: sdlObjectType.getName(),
-  });
-
-  // append fields
-  forEach(sdlObjectType.getFields(), (sdlField, key) => {
-    model.appendField(key, createDataFieldFromSdlField(sdlField, isGqlifyModel, getModel));
-  });
-  return model;
 };

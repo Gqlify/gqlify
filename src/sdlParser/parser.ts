@@ -11,17 +11,11 @@ import {
   EnumTypeDefinitionNode,
 } from 'graphql';
 import RootNode from '../RootNode';
-import { createSdlField, parseDirectiveNode, createDataModelFromSdlObjectType } from './utils';
+import { createSdlField, parseDirectiveNode } from './utils';
 import { SdlNamedType } from './namedType/interface';
 import { MODEL_DIRECTIVE } from './constants';
 import { BasicFieldMiddware, MetadataMiddleware, SdlMiddleware } from './middlewares';
 import { SdlScalarType, SdlObjectType, SdlEnumType } from './namedType';
-
-// check of typeDefNode has api directive and is objectTypeDefintionNode
-const isGqlifyModel = (node: TypeDefinitionNode): boolean => {
-  return node.kind === Kind.OBJECT_TYPE_DEFINITION &&
-    !isUndefined(find(node.directives, directiveNode => directiveNode.name.value === MODEL_DIRECTIVE));
-};
 
 const parseNodeToSdlObjectType = (
   documentNode: DocumentNode,
@@ -66,16 +60,6 @@ export class SdlParser {
     // construct SdlObjectType with SdlFields
     visit(documentAST, {
       enter: (node, key, parent, path) => {
-        // if objectTypeNode has api directive
-        // if (isGqlifyModel(node)) {
-        //   // construct sdlObjectType & sdlField
-        //   const objectType = parseNodeToSdlObjectType(documentAST, node, this.getSdlNamedType);
-        //   this.namedTypeMap[node.name.value] = objectType;
-        //   this.apiObjectTypeMap[node.name.value] = objectType;
-        //   // skip visiting
-        //   return false;
-        // }
-
         // if scalar
         if (node.kind === Kind.SCALAR_TYPE_DEFINITION) {
           // find scalar in map
@@ -101,54 +85,9 @@ export class SdlParser {
     });
 
     return values(this.namedTypeMap);
-
-    // // construct model from SdlObjectType
-    // forEach(this.apiObjectTypeMap, (sdlObjectType, key) => {
-    //   const model = createDataModelFromSdlObjectType(sdlObjectType, this.isGqlifyModel, this.getModel);
-    //   this.modelMap[key] = model;
-    // });
-
-    // // go through middlewares
-    // const middlewares: SdlMiddleware[] = [
-    //   new BasicFieldMiddware(),
-    //   new MetadataMiddleware(),
-    // ];
-
-    // // visit objectType
-    // forEach(this.namedTypeMap, namedType => {
-    //   if (namedType instanceof SdlObjectType) {
-    //     middlewares.forEach(mid => mid.visitObjectType && mid.visitObjectType(namedType));
-    //   }
-    // });
-
-    // // visit model & fields
-    // forEach(this.modelMap, (model, key) => {
-    //   const sdlObjectType = this.getSdlNamedType(key) as SdlObjectType;
-    //   middlewares.forEach(mid =>  mid.visitGqlifyModel && mid.visitGqlifyModel({
-    //     model,
-    //     sdlObjectType,
-    //   }));
-
-    //   // visit fields
-    //   forEach(model.getFields(), (dataModelField, name) => {
-    //     const sdlField = sdlObjectType.getField(name);
-    //     middlewares.forEach(mid => mid.visitField && mid.visitField({
-    //       model,
-    //       field: dataModelField,
-    //       sdlObjectType,
-    //       sdlField,
-    //     }));
-    //   });
-    // });
-
-    // return {rootNode, models: values(this.modelMap)};
   }
 
-  private getSdlNamedType = (name: string) => {
+  public getSdlNamedType = (name: string) => {
     return this.namedTypeMap[name];
-  };
-
-  private isGqlifyModel = (sdlNamedType: SdlNamedType) => {
-    return Boolean(sdlNamedType.getDirectives()[MODEL_DIRECTIVE]);
   };
 }

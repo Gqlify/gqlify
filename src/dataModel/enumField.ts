@@ -1,9 +1,12 @@
 import Field from './field';
 import { DataModelType } from './type';
-import EnumType from './fieldType/enumType';
+import EnumType from './namedType/enumType';
+import { isFunction } from 'lodash';
+
+export type EnumTypeOrThunk = () => EnumType | EnumType;
 
 export default class EnumField extends Field {
-  private enumType: EnumType;
+  private enumType: EnumTypeOrThunk;
 
   constructor({
     nonNull,
@@ -18,7 +21,7 @@ export default class EnumField extends Field {
     nonNullItem?: boolean,
     unique?: boolean,
     readOnly?: boolean,
-    enumType: EnumType,
+    enumType: EnumTypeOrThunk,
   }) {
     super({
       type: DataModelType.ENUM,
@@ -34,10 +37,14 @@ export default class EnumField extends Field {
 
   public getTypename() {
     // override getTypename to enum typename
-    return this.enumType.getTypename();
+    return this.resolveEnumType().getTypename();
   }
 
   public getValues() {
-    return this.enumType.getValues();
+    return this.resolveEnumType().getValues();
+  }
+
+  private resolveEnumType() {
+    return isFunction(this.enumType) ? this.enumType() : this.enumType;
   }
 }

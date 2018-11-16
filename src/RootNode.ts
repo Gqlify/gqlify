@@ -28,10 +28,59 @@ import {
   GraphQLUnionType,
   GraphQLInputObjectType,
   printSchema,
-  print
+  print,
+  Kind,
+  TypeNode,
+  NonNullTypeNode,
+  ListTypeNode
 } from 'graphql';
+import { ObjectType, NamedType, EnumType } from './dataModel';
+import Field from './dataModel/field';
+import { compose } from 'lodash/fp';
 // tslint:disable-next-line:no-var-requires
 const { ASTDefinitionBuilder } = require('graphql/utilities/buildASTSchema');
+
+const buildTypeNodeFromField = (field: Field): TypeNode => {
+  const wrapped: Array<(node: TypeNode) => TypeNode> = [];
+  if (field.isNonNull()) {
+    wrapped.push(node => {
+      // tslint:disable-next-line:no-object-literal-type-assertion
+      return {
+        kind: Kind.NON_NULL_TYPE,
+        type: node,
+      } as NonNullTypeNode;
+    });
+  }
+
+  if (field.isList()) {
+    wrapped.push(node => {
+      // tslint:disable-next-line:no-object-literal-type-assertion
+      return {
+        kind: Kind.LIST_TYPE,
+        type: node,
+      } as ListTypeNode;
+    });
+
+    if (field.isNonNullItem()) {
+      wrapped.push(node => {
+        // tslint:disable-next-line:no-object-literal-type-assertion
+        return {
+          kind: Kind.NON_NULL_TYPE,
+          type: node,
+        } as NonNullTypeNode;
+      });
+    }
+
+    const typeNode: NamedTypeNode = {
+      kind: Kind.NAMED_TYPE,
+      name: {
+        kind: Kind.NAME,
+        value: field.getTypename(),
+      },
+    };
+    return compose(wrapped)(typeNode);
+  }
+};
 
 export default class RootNode {
   private defBuilder: any;
@@ -67,8 +116,8 @@ export default class RootNode {
     this.mutationMap[name] = field;
   }
 
-  public addObjectType(typeDef: string | ObjectTypeDefinitionNode) {
-    const {name, def} = this.buildType<ObjectTypeDefinitionNode>(typeDef);
+  public addObjectType(type: string | ObjectType) {
+    const {name, def} = this.buildObjectType(type);
     this.objectTypeMap[name] = this.buildObjectTypeConfig(def);
   }
 
@@ -86,8 +135,8 @@ export default class RootNode {
     this.interfaceMap[name] = this.buildInterfaceTypeConfig(def);
   }
 
-  public addEnum(enumDef: string | EnumTypeDefinitionNode) {
-    const {name, def} = this.buildType<EnumTypeDefinitionNode>(enumDef);
+  public addEnum(enumDef: string | EnumType) {
+    const {name, def} = this.buildEnumType(enumDef);
     this.enumMap[name] = this.buildEnumTypeConfig(def);
   }
 
@@ -206,6 +255,56 @@ export default class RootNode {
     const typeDefNode = isString(typeDef)
       ? parse(typeDef as string).definitions[0] as any
       : typeDef;
+    const name = typeDefNode.name.value;
+    this.defBuilder._typeDefinitionsMap[name] = typeDefNode;
+    return {name, def: typeDefNode};
+  }
+
+  private buildObjectType(typeDef: string | ObjectType): {name: string, def: ObjectTypeDefinitionNode} {
+    const typeDefNode: ObjectTypeDefinitionNode = isString(typeDef)
+      ? parse(typeDef as string).definitions[0] as ObjectTypeDefinitionNode
+      : {
+        kind: Kind.OBJECT_TYPE_DEFINITION,
+        name: {
+          kind: Kind.NAME,
+          value: typeDef.getTypename(),
+        },
+        fields: reduce(typeDef.getFields(), (arr, field, key) => {
+          arr.push({
+            kind: Kind.FIELD_DEFINITION,
+            name: {
+              kind: Kind.NAME,
+              value: key,
+            },
+            type: buildTypeNodeFromField(field),
+          });
+          return arr;
+        }, []),
+      };
+    const name = typeDefNode.name.value;
+    this.defBuilder._typeDefinitionsMap[name] = typeDefNode;
+    return {name, def: typeDefNode};
+  }
+
+  private buildEnumType(typeDef: string | EnumType): {name: string, def: EnumTypeDefinitionNode} {
+    const typeDefNode: EnumTypeDefinitionNode = isString(typeDef)
+      ? parse(typeDef as string).definitions[0] as EnumTypeDefinitionNode
+      : {
+        kind: Kind.ENUM_TYPE_DEFINITION,
+        name: {
+          kind: Kind.NAME,
+          value: typeDef.getTypename(),
+        },
+        values: typeDef.getValues().map(value => {
+          return {
+            kind: Kind.ENUM_VALUE_DEFINITION,
+            name: {
+              kind: Kind.NAME,
+              value,
+            },
+          };
+        }),
+      };
     const name = typeDefNode.name.value;
     this.defBuilder._typeDefinitionsMap[name] = typeDefNode;
     return {name, def: typeDefNode};

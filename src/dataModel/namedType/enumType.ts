@@ -1,6 +1,6 @@
-import { FieldType } from './interface';
+import { NamedType } from './interface';
 
-export default class EnumType implements FieldType {
+export default class EnumType implements NamedType {
   private name: string;
   private values: string[];
 
