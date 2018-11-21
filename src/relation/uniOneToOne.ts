@@ -29,13 +29,6 @@ export default class UniOneToOne {
     this.sourceModel = sourceModel;
     this.targetModel = targetModel;
     this.relationField = relationField;
-
-    // uni one-to-one relation will put a foreign key on source side
-    // check if sourceModel suppport to-one relation
-    if (!supportToOneRelation(this.sourceModel)) {
-      throw new Error(`Data source of ${sourceModel.getName()} do not support to one relation`);
-    }
-
     this.foreignKey = createForeignKey(this.relationField, this.targetModel);
   }
 
@@ -59,7 +52,7 @@ export default class UniOneToOne {
     if (!targetId) {
       return null;
     }
-    const toOneData = await this.targetModel.getDataSource().findOne({where: {id: targetId}});
+    const toOneData = await this.targetModel.getDataSource().findOneById(targetId);
     return isEmpty(toOneData) ? null : toOneData;
   }
 }
