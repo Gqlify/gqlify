@@ -62,6 +62,23 @@ const createInputField = (model: Model, context: Context) => {
 export default class UpdatePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
+  private beforeUpdate?: (where: any, data: Record<string, any>) => Promise<void>;
+  private transformPayload?: (data: Record<string, any>) => Promise<Record<string, any>>;
+  private afterUpdate?: (where: any, data: Record<string, any>) => Promise<void>;
+
+  constructor({
+    beforeUpdate,
+    transformPayload,
+    afterUpdate,
+  }: {
+    beforeUpdate?: (where: any, data: Record<string, any>) => Promise<void>,
+    transformPayload?: (data: Record<string, any>) => Promise<Record<string, any>>,
+    afterUpdate?: (where: any, data: Record<string, any>) => Promise<void>,
+  }) {
+    this.beforeUpdate = beforeUpdate;
+    this.transformPayload = transformPayload;
+    this.afterUpdate = afterUpdate;
+  }
 
   public setPlugins(plugins: Plugin[]) {
     this.whereInputPlugin = plugins.find(
@@ -86,7 +103,15 @@ export default class UpdatePlugin implements Plugin {
     return {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
-        return dataSource.update(whereUnique, args.data);
+        if (this.beforeUpdate) {
+          await this.beforeUpdate(whereUnique, args.data);
+        }
+        const data = this.transformPayload ? await this.transformPayload(args.data) : args.data;
+        const updated = await dataSource.update(whereUnique, data);
+        if (this.afterUpdate) {
+          await this.afterUpdate(whereUnique, data);
+        }
+        return updated;
       },
     };
   }

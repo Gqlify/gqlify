@@ -62,6 +62,23 @@ const createInputField = (model: Model, context: Context) => {
 export default class CreatePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
+  private beforeCreate?: (data: Record<string, any>) => Promise<void>;
+  private transformPayload?: (data: Record<string, any>) => Promise<Record<string, any>>;
+  private afterCreate?: (data: Record<string, any>) => Promise<void>;
+
+  constructor({
+    beforeCreate,
+    transformPayload,
+    afterCreate,
+  }: {
+    beforeCreate?: (data: Record<string, any>) => Promise<void>,
+    transformPayload?: (data: Record<string, any>) => Promise<Record<string, any>>,
+    afterCreate?: (data: Record<string, any>) => Promise<void>,
+  }) {
+    this.beforeCreate = beforeCreate;
+    this.transformPayload = transformPayload;
+    this.afterCreate = afterCreate;
+  }
 
   public setPlugins(plugins: Plugin[]) {
     this.whereInputPlugin = plugins.find(
@@ -84,7 +101,15 @@ export default class CreatePlugin implements Plugin {
     const mutationName = this.getInputName(model);
     return {
       [mutationName]: async (root, args, context) => {
-        return dataSource.create(args.data);
+        if (this.beforeCreate) {
+          await this.beforeCreate(args.data);
+        }
+        const data = this.transformPayload ? await this.transformPayload(args.data) : args.data;
+        const created = await dataSource.create(data);
+        if (this.afterCreate) {
+          await this.afterCreate(data);
+        }
+        return created;
       },
     };
   }
