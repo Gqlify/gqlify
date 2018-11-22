@@ -1,16 +1,6 @@
 import { isEmpty, isNil } from 'lodash';
 import { Model } from '../dataModel';
-import { supportToOneRelation } from '../dataSource/utils';
 import { Operator } from '../dataSource/interface';
-const noop = val => val;
-
-enum relationType {
-  belongsTo = 'belongsTo',
-  hasOne = 'hasOne',
-}
-
-const createForeignKey = (model: Model) =>
-  `${model.getNamings().singular}Id`;
 
 // many-to-many
 export default class ManyToMany {

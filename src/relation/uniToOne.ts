@@ -1,11 +1,5 @@
 import { isEmpty } from 'lodash';
 import { Model } from '../dataModel';
-import { supportToOneRelation } from '../dataSource/utils';
-
-enum relationType {
-  belongsTo = 'belongsTo',
-  hasOne = 'hasOne',
-}
 
 const createForeignKey = (field: string, model: Model) =>
   `${field.toLowerCase()}${model.getNamings().capitalSingular}Id`;
