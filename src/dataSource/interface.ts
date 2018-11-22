@@ -48,6 +48,8 @@ export interface ListReadable {
   }: {
     where: Where,
   }): Promise<any>;
+
+  findOneById(id: string): Promise<any>;
 }
 
 export interface ListMutable {
@@ -56,14 +58,26 @@ export interface ListMutable {
   delete(where: Where): Promise<any>;
 }
 
+export interface ToOneRelation {
+  findOneByRelation(foreignKey: string, foreignId: string): Promise<any>;
+}
+
+// todo: support embed reference
+export interface ToManyRelationEmbedRef {
+  serializeManyRelation?(ids: string[]): any;
+  supportEmbedRef?(): boolean;
+  findOneFromManyRelation(foreignKey: string, foreignId: string): Promise<any>;
+}
+
+export interface ToManyRelation {
+  findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]>;
+}
+
 export interface RelationReadable {
-  findOneByRelation(key: string, id: string): Promise<any>;
   findManyByRelation(key: string, id: string): Promise<any[]>;
 }
 
 export interface RelationMutable {
-  setToOne(data: any, key: string, id: string): Promise<any>;
-  unsetToOne(data: any, key: string): Promise<any>;
   addOneToMany(data: any, key: string, id: string): Promise<any>;
   removeOneToMany(data: any, key: string, id: string): Promise<any>;
   setManyToOne(data: any, key: string, id: string): Promise<any>;
@@ -72,4 +86,4 @@ export interface RelationMutable {
   removeManyToMany(data: any, key: string, id: string): Promise<any>;
 }
 
-export type DataSource = ListReadable & ListMutable;
+export type DataSource = ListReadable & ListMutable & ToOneRelation & ToManyRelation & ToManyRelationEmbedRef;

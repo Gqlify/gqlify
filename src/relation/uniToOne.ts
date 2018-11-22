@@ -10,8 +10,8 @@ enum relationType {
 const createForeignKey = (field: string, model: Model) =>
   `${field.toLowerCase()}${model.getNamings().capitalSingular}Id`;
 
-// Unidirectional One-to-One
-export default class UniOneToOne {
+// Unidirectional One-to-One, or Many-to-One
+export default class UniToOne {
   private sourceModel: Model;
   private targetModel: Model;
   private relationField: string;
