@@ -12,7 +12,7 @@ enum relationType {
 const createForeignKey = (model: Model) =>
   `${model.getNamings().singular}Id`;
 
-// one-to-many
+// one-to-many, can be used for unidirectional and bidirectional
 // put a foreign key on many side
 export default class OneToMany {
   private oneSideModel: Model;

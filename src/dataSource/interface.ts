@@ -63,18 +63,23 @@ export interface ToOneRelation {
 }
 
 // todo: support embed reference
-export interface ToManyRelationEmbedRef {
+export interface OneToManyRelationEmbedRef {
   serializeManyRelation?(ids: string[]): any;
   supportEmbedRef?(): boolean;
   findOneFromManyRelation(foreignKey: string, foreignId: string): Promise<any>;
 }
 
-export interface ToManyRelation {
+export interface OneToManyRelation {
   findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]>;
 }
 
-export interface RelationReadable {
-  findManyByRelation(key: string, id: string): Promise<any[]>;
+export interface ManyToManyRelation {
+  // it's source-side data-source's responsibility to get the many relation from source-side
+  findManyFromManyRelation(sourceSideName: string, targetSideName: string, sourceSideId: string): Promise<any[]>;
+  addIdToManyRelation(
+    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string): Promise<void>;
+  removeIdFromManyRelation(
+    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string): Promise<void>;
 }
 
 export interface RelationMutable {
@@ -86,4 +91,5 @@ export interface RelationMutable {
   removeManyToMany(data: any, key: string, id: string): Promise<any>;
 }
 
-export type DataSource = ListReadable & ListMutable & ToOneRelation & ToManyRelation & ToManyRelationEmbedRef;
+export type DataSource =
+  ListReadable & ListMutable & ToOneRelation & OneToManyRelation & OneToManyRelationEmbedRef & ManyToManyRelation;
