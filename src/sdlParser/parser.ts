@@ -1,20 +1,14 @@
-import Model from '../dataModel/model';
-import { find, isUndefined, reduce, forEach, values, get } from 'lodash';
+import { reduce, values, get } from 'lodash';
 import {
   parse,
   visit,
   Kind,
   ObjectTypeDefinitionNode,
-  TypeDefinitionNode,
-  GraphQLScalarType,
   DocumentNode,
   EnumTypeDefinitionNode,
 } from 'graphql';
-import RootNode from '../RootNode';
 import { createSdlField, parseDirectiveNode } from './utils';
 import { SdlNamedType } from './namedType/interface';
-import { MODEL_DIRECTIVE } from './constants';
-import { BasicFieldMiddware, MetadataMiddleware, SdlMiddleware } from './middlewares';
 import { SdlScalarType, SdlObjectType, SdlEnumType } from './namedType';
 
 const parseNodeToSdlObjectType = (
