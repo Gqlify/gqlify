@@ -3,20 +3,20 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListMutable } from '../dataSource/interface';
-import { reduce } from 'lodash';
+import { reduce, get } from 'lodash';
 
 export default class DeletePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
-  private beforeDelete?: (where: any) => Promise<void>;
-  private afterDelete?: (where: any) => Promise<void>;
+  private beforeDelete?: Record<string, (where: any) => Promise<void>>;
+  private afterDelete?: Record<string, (where: any) => Promise<void>>;
 
   constructor({
     beforeDelete,
     afterDelete,
   }: {
-    beforeDelete?: (where: any) => Promise<void>,
-    afterDelete?: (where: any) => Promise<void>,
+    beforeDelete?: Record<string, (where: any) => Promise<void>>,
+    afterDelete?: Record<string, (where: any) => Promise<void>>,
   }) {
     this.beforeDelete = beforeDelete;
     this.afterDelete = afterDelete;
@@ -42,15 +42,18 @@ export default class DeletePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const inputName = this.getInputName(model);
+    const beforeDelete = get(this.beforeDelete, model.getName());
+    const afterDelete = get(this.afterDelete, model.getName());
+
     return {
       [inputName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
-        if (this.beforeDelete) {
-          await this.beforeDelete(whereUnique);
+        if (beforeDelete) {
+          await beforeDelete(whereUnique);
         }
         await dataSource.delete(whereUnique);
-        if (this.afterDelete) {
-          await this.afterDelete(whereUnique);
+        if (afterDelete) {
+          await afterDelete(whereUnique);
         }
         return whereUnique;
       },

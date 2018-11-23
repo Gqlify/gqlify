@@ -3,7 +3,7 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
-import { upperFirst, forEach } from 'lodash';
+import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
@@ -62,18 +62,18 @@ const createInputField = (model: Model, context: Context) => {
 export default class UpdatePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
-  private beforeUpdate?: (where: any, data: Record<string, any>) => Promise<void>;
-  private transformPayload?: (data: Record<string, any>) => Promise<Record<string, any>>;
-  private afterUpdate?: (where: any, data: Record<string, any>) => Promise<void>;
+  private beforeUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>;
+  private transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>;
+  private afterUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>;
 
   constructor({
     beforeUpdate,
     transformPayload,
     afterUpdate,
   }: {
-    beforeUpdate?: (where: any, data: Record<string, any>) => Promise<void>,
-    transformPayload?: (data: Record<string, any>) => Promise<Record<string, any>>,
-    afterUpdate?: (where: any, data: Record<string, any>) => Promise<void>,
+    beforeUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>,
+    transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>,
+    afterUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>,
   }) {
     this.beforeUpdate = beforeUpdate;
     this.transformPayload = transformPayload;
@@ -100,16 +100,20 @@ export default class UpdatePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const mutationName = this.getInputName(model);
+    const beforeCreate = get(this.beforeUpdate, model.getName());
+    const transformPayload = get(this.transformPayload, model.getName());
+    const afterCreate = get(this.afterUpdate, model.getName());
+
     return {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
-        if (this.beforeUpdate) {
-          await this.beforeUpdate(whereUnique, args.data);
+        if (beforeCreate) {
+          await beforeCreate(whereUnique, args.data);
         }
-        const data = this.transformPayload ? await this.transformPayload(args.data) : args.data;
+        const data = transformPayload ? await transformPayload(args.data) : args.data;
         const updated = await dataSource.update(whereUnique, data);
-        if (this.afterUpdate) {
-          await this.afterUpdate(whereUnique, data);
+        if (afterCreate) {
+          await afterCreate(whereUnique, data);
         }
         return updated;
       },
