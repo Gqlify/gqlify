@@ -1,4 +1,8 @@
 
+export interface Common {
+  setArgs?(data: any): void;
+}
+
 export interface Pagination {
   // cursor base
   last: number;
@@ -92,4 +96,10 @@ export interface RelationMutable {
 }
 
 export type DataSource =
-  ListReadable & ListMutable & ToOneRelation & OneToManyRelation & OneToManyRelationEmbedRef & ManyToManyRelation;
+  Common &
+  ListReadable &
+  ListMutable &
+  ToOneRelation &
+  OneToManyRelation &
+  OneToManyRelationEmbedRef &
+  ManyToManyRelation;
