@@ -13,3 +13,7 @@ export { default as ScalarField } from './scalarField';
 export { NamedType } from './namedType/interface';
 export { default as EnumType } from './namedType/enumType';
 export { default as ObjectType } from './namedType/objectType';
+
+// Relation
+export { createRelation } from './relation';
+export { ModelRelation, RelationType } from './relation/types';
