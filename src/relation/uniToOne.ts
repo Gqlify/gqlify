@@ -1,5 +1,6 @@
 import { isEmpty } from 'lodash';
 import { Model } from '../dataModel';
+import { Operator } from '../dataSource/interface';
 
 const createForeignKey = (field: string, model: Model) =>
   `${field.toLowerCase()}${model.getNamings().capitalSingular}Id`;
@@ -34,6 +35,15 @@ export default class UniToOne {
   public async createAndSetForeignKey(data: Record<string, any>, targetData: Record<string, any>) {
     const created = await this.targetModel.getDataSource().create(targetData);
     return this.setForeignKey(data, created.id);
+  }
+
+  public async destroyAndUnsetForeignKey(data: Record<string, any>) {
+    const foreignId = data[this.foreignKey];
+    if (!foreignId) {
+      return;
+    }
+    await this.targetModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
+    return this.unsetForeignKey(data);
   }
 
   public unsetForeignKey(data: Record<string, any>) {
