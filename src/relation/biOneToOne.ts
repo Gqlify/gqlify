@@ -51,6 +51,22 @@ export default class BiOneToOne {
     this.foreignKey = createForeignKey(this.owningSideField, this.refSideModel);
   }
 
+  public getOwningSide() {
+    return this.owningSideModel;
+  }
+
+  public getOwningSideField() {
+    return this.owningSideField;
+  }
+
+  public getRefSide() {
+    return this.refSideModel;
+  }
+
+  public getRefSideField() {
+    return this.refSideField;
+  }
+
   public setForeignKeyOnOwningSide(data: Record<string, any>, targetId: string) {
     data[this.foreignKey] = targetId;
     return data;
@@ -64,6 +80,15 @@ export default class BiOneToOne {
   public unsetForeignKeyOnOwningSide(data: Record<string, any>) {
     data[this.foreignKey] = null;
     return data;
+  }
+
+  public async deleteAndUnsetForeignKeyOnOwningSide(data: Record<string, any>) {
+    const foreignId = data[this.foreignKey];
+    if (!foreignId) {
+      return;
+    }
+    await this.refSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
+    return this.unsetForeignKeyOnOwningSide(data);
   }
 
   public async connectOnRefSide(refSideId: string, owningSideId: string) {
@@ -81,6 +106,13 @@ export default class BiOneToOne {
     const owningSideDataSource = this.owningSideModel.getDataSource();
     const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId);
     await owningSideDataSource.update({id: {[Operator.eq]: owningSideRecord.id}}, {[this.foreignKey]: null});
+  }
+
+  public async deleteAndDisconnectOnRefSide(refSideId: string) {
+    // simply delete the owning side
+    const owningSideDataSource = this.owningSideModel.getDataSource();
+    const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId);
+    return owningSideDataSource.delete({id: {[Operator.eq]: owningSideRecord.id}});
   }
 
   public async joinOnOwningSide(data: Record<string, any>) {
