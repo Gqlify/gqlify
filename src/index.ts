@@ -7,12 +7,14 @@ import {
   UpdatePlugin,
   DeletePlugin,
 } from './plugins';
-import { Hook } from './hooks/interface';
 import { createRelation } from './dataModel';
 import { parse } from './parse';
 import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_NAME } from './constants';
 import { omit } from 'lodash';
 import Generator from './generator';
+import { createRelationHooks } from './hooks/relationHook';
+import mergeHooks from './hooks/mergeHooks';
+import combine from './resolver/combine';
 
 export class GqlifyServer {
   private sdl: string;
@@ -42,18 +44,35 @@ export class GqlifyServer {
       model.setDataSource(dataSource);
     });
 
-    // create hooks
+    // create relation hooks
+    const relations = createRelation(models);
+    const relationHooks = createRelationHooks(relations);
 
+    // merge hooks
+    const hooks = mergeHooks(relationHooks);
+
+    // initialize plugins
     const plugins = [
       new BaseTypePlugin(),
       new WhereInputPlugin(),
       new QueryPlugin(),
-      new CreatePlugin(),
-      new UpdatePlugin(),
-      new DeletePlugin(),
+      new CreatePlugin(hooks),
+      new UpdatePlugin(hooks),
+      new DeletePlugin(hooks),
     ];
 
-    const generator = new Generator({ plugins });
+    const generator = new Generator({ plugins, rootNode });
     const resolvers = combine(plugins, models);
+
+    const typeDefs = gql(generator.generate(models));
+    const server = new ApolloServer({
+      typeDefs,
+      resolvers,
+    });
+
+    server.listen().then(({ url }) => {
+      // tslint:disable-next-line:no-console
+      console.log(`🚀 Server ready at ${url}`);
+    });
   }
 }

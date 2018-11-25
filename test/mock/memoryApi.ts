@@ -1,6 +1,8 @@
 import {
   ListReadable,
   ListMutable,
+  RelationReadable,
+  RelationMutable,
   Pagination,
   OrderBy,
   Where,

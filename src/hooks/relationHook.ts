@@ -9,7 +9,7 @@ import {
   ModelRelation
 } from '../dataModel';
 
-export const createRelationHook = (relations: ModelRelation[]): Array<Record<string, Hook>> => {
+export const createRelationHooks = (relations: ModelRelation[]): Array<Record<string, Hook>> => {
   const hooks = relations.map(relation => {
     switch (relation.type) {
       case RelationType.uniManyToOne:
