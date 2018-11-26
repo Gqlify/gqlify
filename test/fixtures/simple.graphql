@@ -1,0 +1,37 @@
+enum STATUS {
+  OK
+  NOT_OK
+}
+
+type Note {
+  id: ID!
+  text: String
+}
+
+type social {
+  fb: String
+  twitter: String
+}
+
+type User @GQLifyModel(dataSource: "memory", key: "users") {
+  id: ID! @unique @autoGen
+  username: String!
+  email: String
+  status: STATUS
+  social: social
+  books: [Book!]!
+  groups: [Group!]!
+}
+
+type Book @GQLifyModel(dataSource: "memory", key: "books") {
+  id: ID! @unique @autoGen
+  name: String!
+  notes: [Note]
+  author: User
+}
+
+type Group @GQLifyModel(dataSource: "memory", key: "groups") {
+  id: ID! @unique @autoGen
+  name: String!
+  members: [User!]!
+}

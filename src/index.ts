@@ -15,6 +15,7 @@ import Generator from './generator';
 import { createRelationHooks } from './hooks/relationHook';
 import mergeHooks from './hooks/mergeHooks';
 import combine from './resolver/combine';
+import { DataSource } from './dataSource/interface';
 
 export class GqlifyServer {
   private sdl: string;
@@ -31,15 +32,16 @@ export class GqlifyServer {
     this.dataSources = dataSources;
   }
 
-  private serve() {
+  public serve() {
     const {rootNode, models} = parse(this.sdl);
 
     // bind dataSource
     models.forEach(model => {
       const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
       const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
-      const dataSource = this.dataSources[dataSourceIdentifier];
-      dataSource.setArgs(omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME));
+      const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
+      const args = omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME);
+      const dataSource = createDataSource(args);
 
       model.setDataSource(dataSource);
     });

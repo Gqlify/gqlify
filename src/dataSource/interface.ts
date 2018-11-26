@@ -1,8 +1,4 @@
 
-export interface Common {
-  setArgs?(data: any): void;
-}
-
 export interface Pagination {
   // cursor base
   last: number;
@@ -86,20 +82,9 @@ export interface ManyToManyRelation {
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string): Promise<void>;
 }
 
-export interface RelationMutable {
-  addOneToMany(data: any, key: string, id: string): Promise<any>;
-  removeOneToMany(data: any, key: string, id: string): Promise<any>;
-  setManyToOne(data: any, key: string, id: string): Promise<any>;
-  unsetManyToOne(data: any, key: string): Promise<any>;
-  addManyToMany(data: any, key: string, id: string): Promise<any>;
-  removeManyToMany(data: any, key: string, id: string): Promise<any>;
-}
-
 export type DataSource =
-  Common &
   ListReadable &
   ListMutable &
   ToOneRelation &
   OneToManyRelation &
-  OneToManyRelationEmbedRef &
   ManyToManyRelation;
