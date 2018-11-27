@@ -3,7 +3,7 @@ import Model from '../../dataModel/model';
 import Field from '../../dataModel/field';
 import { SdlField } from '../field/interface';
 import SdlObjectType from '../namedType/objectType';
-import { forEach } from 'lodash';
+import { forEach, mapValues } from 'lodash';
 
 // put all directives into model & field metadata
 export default class MetadataMiddleware implements SdlMiddleware {
@@ -15,7 +15,7 @@ export default class MetadataMiddleware implements SdlMiddleware {
     sdlObjectType: SdlObjectType,
   }) {
     forEach(sdlObjectType.getDirectives(), (directive, key) => {
-      model.setMetadata(key, directive.args);
+      model.setMetadata(key, mapValues(directive.args, arg => arg.getValue()));
     });
   }
 
@@ -31,7 +31,7 @@ export default class MetadataMiddleware implements SdlMiddleware {
     sdlField: SdlField,
   }) {
     forEach(sdlField.getDirectives(), (directive, key) => {
-      field.setMetadata(key, directive.args);
+      field.setMetadata(key, mapValues(directive.args, arg => arg.getValue()));
     });
   }
 }

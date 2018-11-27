@@ -70,16 +70,16 @@ const buildTypeNodeFromField = (field: Field): TypeNode => {
         } as NonNullTypeNode;
       });
     }
-
-    const typeNode: NamedTypeNode = {
-      kind: Kind.NAMED_TYPE,
-      name: {
-        kind: Kind.NAME,
-        value: field.getTypename(),
-      },
-    };
-    return compose(wrapped)(typeNode);
   }
+
+  const typeNode: NamedTypeNode = {
+    kind: Kind.NAMED_TYPE,
+    name: {
+      kind: Kind.NAME,
+      value: field.getTypename(),
+    },
+  };
+  return compose(wrapped)(typeNode);
 };
 
 export default class RootNode {

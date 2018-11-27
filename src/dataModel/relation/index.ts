@@ -24,7 +24,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
       if (!targetRelation) {
         relationTable[model.getName()][field.getRelationTo().getName()] = [];
       }
-      targetRelation.push({
+      relationTable[model.getName()][field.getRelationTo().getName()].push({
         type: field.isList() ? toRelation.many : toRelation.one,
         field: fieldName,
       });

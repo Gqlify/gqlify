@@ -1,7 +1,7 @@
 import { readFileSync } from 'fs';
 import { GqlifyServer } from '../src';
 import MemoryDataSource from './mock/memoryDataSource';
-const sdl = readFileSync('./fixtures/simple.graphql', {encoding: 'utf8'});
+const sdl = readFileSync(__dirname + '/fixtures/simple.graphql', {encoding: 'utf8'});
 
 const defaultData = {
   users: [

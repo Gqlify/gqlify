@@ -31,7 +31,7 @@ import { SdlField, SdlFieldType } from './sdlParser/field/interface';
 import { DataModelType } from './dataModel/type';
 import { mapValues, forEach, values } from 'lodash';
 import { SdlNamedType } from './sdlParser/namedType/interface';
-import { MODEL_DIRECTIVE } from './sdlParser/constants';
+import { MODEL_DIRECTIVE } from './constants';
 
 const isGqlifyModel = (sdlNamedType: SdlNamedType) => {
   return Boolean(sdlNamedType.getDirectives()[MODEL_DIRECTIVE]);
