@@ -1,4 +1,3 @@
-import { ApolloServer, gql } from 'apollo-server';
 import {
   BaseTypePlugin,
   WhereInputPlugin,
@@ -16,9 +15,10 @@ import { createRelationHooks } from './hooks/relationHook';
 import mergeHooks from './hooks/mergeHooks';
 import combine from './resolver/combine';
 import { DataSource } from './dataSource/interface';
-// import prettier from 'prettier';
+import { IResolvers } from 'graphql-tools';
+import gql from 'graphql-tag';
 
-export class GqlifyServer {
+export class Gqlify {
   private sdl: string;
   private dataSources: Record<string, (args: any) => DataSource>;
 
@@ -33,7 +33,7 @@ export class GqlifyServer {
     this.dataSources = dataSources;
   }
 
-  public serve() {
+  public createServerConfig(): {typeDefs: string, resolvers: IResolvers} {
     const {rootNode, models} = parse(this.sdl);
     const modelMap: Record<string, Model> = {};
 
@@ -83,20 +83,19 @@ export class GqlifyServer {
 
     const generator = new Generator({ plugins, rootNode });
     const resolvers = combine(plugins, models);
-    const graphql = generator.generate(models);
+    const typeDefs = generator.generate(models);
 
-    const typeDefs = gql(graphql);
-    const server = new ApolloServer({
+    return {
       typeDefs,
       resolvers,
-    });
+    };
+  }
 
-    // tslint:disable-next-line:no-console
-    // console.log(prettier.format(graphql, { parser: 'graphql' }));
-
-    server.listen().then(({ url }) => {
-      // tslint:disable-next-line:no-console
-      console.log(`🚀 Server ready at ${url}`);
-    });
+  public createApolloConfig() {
+    const serverConfig = this.createServerConfig();
+    return {
+      ...serverConfig,
+      typeDefs: gql(serverConfig.typeDefs),
+    };
   }
 }

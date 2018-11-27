@@ -1,5 +1,6 @@
+import { ApolloServer } from 'apollo-server';
 import { readFileSync } from 'fs';
-import { GqlifyServer } from '../src';
+import { Gqlify } from '../src';
 import MemoryDataSource from './mock/memoryDataSource';
 const sdl = readFileSync(__dirname + '/fixtures/simple.graphql', {encoding: 'utf8'});
 
@@ -18,11 +19,15 @@ const defaultData = {
   ],
 };
 
-const server = new GqlifyServer({
+const gqlify = new Gqlify({
   sdl,
   dataSources: {
     memory: (args: any) => new MemoryDataSource(defaultData[args.key]),
   },
 });
+const server = new ApolloServer(gqlify.createApolloConfig());
 
-server.serve();
+server.listen().then(({ url }) => {
+  // tslint:disable-next-line:no-console
+  console.log(`🚀 Server ready at ${url}`)
+});
