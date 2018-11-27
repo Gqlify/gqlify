@@ -86,7 +86,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       resolveFields: {
-        [relation.sourceField]: data => relationImpl.joinModelB(data.id),
+        [relationImpl.getModelAField()]: data => relationImpl.joinModelB(data.id),
       },
     },
 
@@ -130,7 +130,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       resolveFields: {
-        [relation.sourceField]: data => relationImpl.joinModelA(data.id),
+        [relationImpl.getModelBField()]: data => relationImpl.joinModelA(data.id),
       },
     },
   };

@@ -81,6 +81,10 @@ export default class Model {
     this.resolver[field] = resolver;
   }
 
+  public overrideResolver(resolver: any) {
+    this.resolver = resolver;
+  }
+
   public getResolver() {
     return isEmpty(this.resolver) ? null : this.resolver;
   }

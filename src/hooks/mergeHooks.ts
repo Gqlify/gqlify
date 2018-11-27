@@ -61,7 +61,7 @@ export default (hooks: Array<Record<string, Hook>>): Record<string, Hook> => {
   return mapValues(reducedHookMap, hookMap => {
     return mapValues(hookMap, (combinedHooks, key) => {
       if (key === 'resolveFields') {
-        return hooks;
+        return combinedHooks;
       } else {
         return flow(combinedHooks as any[]) as any;
       }

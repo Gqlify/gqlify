@@ -30,8 +30,16 @@ export default class ManyToMany {
     return this.modelA;
   }
 
+  public getModelAField() {
+    return this.modelAField;
+  }
+
   public getModelB() {
     return this.modelB;
+  }
+
+  public getModelBField() {
+    return this.modelBField;
   }
 
   public async addIdToModelA(modelAId: string, modelBId: string) {

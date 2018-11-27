@@ -7,10 +7,10 @@ import {
   UpdatePlugin,
   DeletePlugin,
 } from './plugins';
-import { createRelation } from './dataModel';
+import { createRelation, Model } from './dataModel';
 import { parse } from './parse';
 import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_NAME } from './constants';
-import { omit } from 'lodash';
+import { omit, forEach } from 'lodash';
 import Generator from './generator';
 import { createRelationHooks } from './hooks/relationHook';
 import mergeHooks from './hooks/mergeHooks';
@@ -35,9 +35,14 @@ export class GqlifyServer {
 
   public serve() {
     const {rootNode, models} = parse(this.sdl);
+    const modelMap: Record<string, Model> = {};
 
     // bind dataSource
     models.forEach(model => {
+      // make it easy to accsss later
+      modelMap[model.getName()] = model;
+
+      // constuct data source
       const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
       const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
       const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
@@ -47,6 +52,7 @@ export class GqlifyServer {
       const args = omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME);
       const dataSource = createDataSource(args);
 
+      // set to model
       model.setDataSource(dataSource);
     });
 
@@ -66,6 +72,14 @@ export class GqlifyServer {
       new UpdatePlugin(hooks),
       new DeletePlugin(hooks),
     ];
+
+    // set resolver from hook
+    forEach(hooks, (hook, key) => {
+      if (!modelMap[key]) {
+        throw new Error(`model ${key} not found for hooks`);
+      }
+      modelMap[key].overrideResolver(hook.resolveFields);
+    });
 
     const generator = new Generator({ plugins, rootNode });
     const resolvers = combine(plugins, models);
