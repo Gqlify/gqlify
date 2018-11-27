@@ -63,22 +63,30 @@ export const createDataFieldFromSdlField = (
   field: SdlField,
   getModel: (name: string) => Model,
   getNamedType: (name: string) => NamedType,
-  ) => {
+) => {
+  const fieldMeta = {
+    nonNull: field.isNonNull(),
+    list: field.isList(),
+    nonNullItem: field.isItemNonNull(),
+  };
   switch (field.getFieldType()) {
     case SdlFieldType.SCALAR:
       const type = parseDataModelScalarType(field);
       return new DataScalarField({
         type,
+        ...fieldMeta,
       });
 
     case SdlFieldType.CUSTOM_SCALAR:
       return new DataCustomScalarField({
         typename: field.getTypeName(),
+        ...fieldMeta,
       });
 
     case SdlFieldType.ENUM:
       return new DataEnumField({
         enumType: () => getNamedType(field.getTypeName()) as EnumType,
+        ...fieldMeta,
       });
 
     case SdlFieldType.OBJECT:
@@ -86,10 +94,12 @@ export const createDataFieldFromSdlField = (
       if (isGqlifyModel(objectField.getObjectType())) {
         return new DataRelationField({
           relationTo: () => getModel(objectField.getTypeName()),
+          ...fieldMeta,
         });
       } else {
         return new DataObjectField({
           objectType: () => getNamedType(field.getTypeName()) as ObjectType,
+          ...fieldMeta,
         });
       }
   }
