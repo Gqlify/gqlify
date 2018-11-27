@@ -5,6 +5,7 @@ import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
 import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
+import { RelationField } from '../dataModel';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -24,13 +25,20 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
       return;
     }
 
-    // skip relation field
+    // skip relation, dont support relation in nested object for now
   });
   return content;
 };
 
-const createInputField = (model: Model, context: Context) => {
+const createInputField = (
+  model: Model,
+  context: Context,
+  createInputName: string,
+  getWhereInputName: (model: Model) => string,
+  getWhereUniqueInputName: (model: Model) => string,
+) => {
   const { root } = context;
+  const capName = model.getNamings().capitalSingular;
   const fields = model.getFields();
   const content: string[] = [];
   forEach(fields, (field, name) => {
@@ -45,7 +53,7 @@ const createInputField = (model: Model, context: Context) => {
 
     if (field instanceof ObjectField) {
       // create input for nested object
-      const fieldWithPrefix = `${model.getNamings().capitalSingular}${upperFirst(name)}`;
+      const fieldWithPrefix = `${capName}${upperFirst(name)}`;
       const typeFields = createObjectInputField(fieldWithPrefix, field, context);
       const objectInputName = `${fieldWithPrefix}CreateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
@@ -53,7 +61,33 @@ const createInputField = (model: Model, context: Context) => {
       return;
     }
 
-    // todo: add relation
+    // relation
+    // add create and connect for relation
+    const isRelation = field instanceof RelationField;
+    const isList = field.isList();
+    if (isRelation && !isList) {
+      // to-one
+      const relationTo = (field as RelationField).getRelationTo();
+      const relationInputName = `${capName}CreateOneInput`;
+      root.addInput(`input ${relationInputName} {
+        create: ${createInputName}
+        connect: ${getWhereUniqueInputName(relationTo)}
+      }`);
+      content.push(`${name}: ${relationInputName}`);
+      return;
+    }
+
+    if (isRelation && isList) {
+      // to-many
+      const relationTo = (field as RelationField).getRelationTo();
+      const relationInputName = `${capName}CreateManyInput`;
+      root.addInput(`input ${relationInputName} {
+        create: [${createInputName}]
+        connect: [${getWhereUniqueInputName(relationTo)}]
+      }`);
+      content.push(`${name}: ${relationInputName}`);
+      return;
+    }
   });
 
   return content;
@@ -92,13 +126,13 @@ export default class CreatePlugin implements Plugin {
     const modelType = this.baseTypePlugin.getTypename(model);
 
     // create
-    const mutationName = this.getInputName(model);
+    const mutationName = this.getMutationName(model);
     const inputName = this.generateCreateInput(model, context);
     root.addMutation(`${mutationName}(data: ${inputName}!): ${modelType}`);
   }
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
-    const mutationName = this.getInputName(model);
+    const mutationName = this.getMutationName(model);
     const beforeCreate = get(this.beforeCreate, model.getName());
     const transformPayload = get(this.transformPayload, model.getName());
     const afterCreate = get(this.afterCreate, model.getName());
@@ -118,16 +152,26 @@ export default class CreatePlugin implements Plugin {
     };
   }
 
+  public getCreateInputName(model: Model) {
+    return `${model.getNamings().capitalSingular}CreateInput`;
+  }
+
   private generateCreateInput(model: Model, context: Context) {
-    const inputName = `${model.getNamings().capitalSingular}CreateInput`;
+    const inputName = this.getCreateInputName(model);
     const input = `input ${inputName} {
-      ${createInputField(model, context)}
+      ${createInputField(
+        model,
+        context,
+        inputName,
+        this.whereInputPlugin.getWhereInputName,
+        this.whereInputPlugin.getWhereUniqueInputName,
+      )}
     }`;
     context.root.addInput(input);
     return inputName;
   }
 
-  private getInputName(model: Model) {
+  private getMutationName(model: Model) {
     return `create${model.getNamings().capitalSingular}`;
   }
 }

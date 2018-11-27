@@ -5,6 +5,8 @@ import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
 import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
+import { RelationField } from '../dataModel';
+import CreatePlugin from './create';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -29,8 +31,15 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
   return content;
 };
 
-const createInputField = (model: Model, context: Context) => {
+const createInputField = (
+  model: Model,
+  context: Context,
+  getCreateInputName: (model: Model) => string,
+  getWhereInputName: (model: Model) => string,
+  getWhereUniqueInputName: (model: Model) => string,
+) => {
   const { root } = context;
+  const capName = model.getNamings().capitalSingular;
   const fields = model.getFields();
   const content: string[] = [];
   forEach(fields, (field, name) => {
@@ -53,7 +62,38 @@ const createInputField = (model: Model, context: Context) => {
       return;
     }
 
-    // todo: add relation
+    // relation
+    // add create, connect, disconnect, delete for relation
+    const isRelation = field instanceof RelationField;
+    const isList = field.isList();
+    if (isRelation && !isList) {
+      // to-one
+      const relationTo = (field as RelationField).getRelationTo();
+      const relationInputName = `${capName}UpdateOneInput`;
+      root.addInput(`input ${relationInputName} {
+        create: ${getCreateInputName(relationTo)}
+        connect: ${getWhereUniqueInputName(relationTo)}
+        disconnect: Boolean
+        delete: Boolean
+      }`);
+      content.push(`${name}: ${relationInputName}`);
+      return;
+    }
+
+    if (isRelation && isList) {
+      // to-many
+      const relationTo = (field as RelationField).getRelationTo();
+      const relationInputName = `${capName}UpdateManyInput`;
+      const whereUnique = getWhereUniqueInputName(relationTo);
+      root.addInput(`input ${relationInputName} {
+        create: [${getCreateInputName(relationTo)}]
+        connect: [${whereUnique}]
+        disconnect: [${whereUnique}]
+        delete: [${whereUnique}]
+      }`);
+      content.push(`${name}: ${relationInputName}`);
+      return;
+    }
   });
 
   return content;
@@ -62,6 +102,7 @@ const createInputField = (model: Model, context: Context) => {
 export default class UpdatePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
+  private createPlugin: CreatePlugin;
   private beforeUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>;
   private transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>;
   private afterUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>;
@@ -85,6 +126,8 @@ export default class UpdatePlugin implements Plugin {
       plugin => plugin instanceof WhereInputPlugin) as WhereInputPlugin;
     this.baseTypePlugin = plugins.find(
       plugin => plugin instanceof BaseTypePlugin) as BaseTypePlugin;
+    this.createPlugin = plugins.find(
+        plugin => plugin instanceof CreatePlugin) as CreatePlugin;
   }
 
   public visitModel(model: Model, context: Context) {
@@ -123,7 +166,13 @@ export default class UpdatePlugin implements Plugin {
   private generateUpdateInput(model: Model, context: Context) {
     const inputName = `${model.getNamings().capitalSingular}UpdateInput`;
     const input = `input ${inputName} {
-      ${createInputField(model, context)}
+      ${createInputField(
+        model,
+        context,
+        this.createPlugin.getCreateInputName,
+        this.whereInputPlugin.getWhereInputName,
+        this.whereInputPlugin.getWhereUniqueInputName,
+      )}
     }`;
     context.root.addInput(input);
     return inputName;
