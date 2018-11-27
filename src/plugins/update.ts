@@ -7,6 +7,7 @@ import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
 import { RelationField } from '../dataModel';
 import CreatePlugin from './create';
+import { Hook } from '../hooks/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -103,22 +104,14 @@ export default class UpdatePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
   private createPlugin: CreatePlugin;
-  private beforeUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>;
-  private transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>;
-  private afterUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>;
+  private hook: Hook;
 
   constructor({
-    beforeUpdate,
-    transformPayload,
-    afterUpdate,
+    hook,
   }: {
-    beforeUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>,
-    transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>,
-    afterUpdate?: Record<string, (where: any, data: Record<string, any>) => Promise<void>>,
+    hook: Hook,
   }) {
-    this.beforeUpdate = beforeUpdate;
-    this.transformPayload = transformPayload;
-    this.afterUpdate = afterUpdate;
+    this.hook = hook;
   }
 
   public setPlugins(plugins: Plugin[]) {
@@ -143,20 +136,20 @@ export default class UpdatePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const mutationName = this.getInputName(model);
-    const beforeCreate = get(this.beforeUpdate, model.getName());
-    const transformPayload = get(this.transformPayload, model.getName());
-    const afterCreate = get(this.afterUpdate, model.getName());
+    const beforeUpdate = get(this.hook, [model.getName(), 'beforeUpdate']);
+    const transformUpdatePayload = get(this.hook, [model.getName(), 'transformUpdatePayload']);
+    const afterUpdate = get(this.hook, [model.getName(), 'afterUpdate']);
 
     return {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
-        if (beforeCreate) {
-          await beforeCreate(whereUnique, args.data);
+        if (beforeUpdate) {
+          await beforeUpdate(args.where, args.data);
         }
-        const data = transformPayload ? await transformPayload(args.data) : args.data;
+        const data = transformUpdatePayload ? await transformUpdatePayload(args.data) : args.data;
         const updated = await dataSource.update(whereUnique, data);
-        if (afterCreate) {
-          await afterCreate(whereUnique, data);
+        if (afterUpdate) {
+          await afterUpdate(args.where, data);
         }
         return updated;
       },

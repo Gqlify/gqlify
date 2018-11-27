@@ -57,10 +57,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // one side
     [relation.source.getName()]: {
       afterCreate: async data => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
+        if (!get(data, [relationImpl.getOneSideField()])) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getOneSideField(), 'connect']);
+        const createRecords: any[] = get(data, [relationImpl.getOneSideField(), 'create']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(where => where.id);
           await connect(data.id, connectIds);
         }
 
@@ -71,12 +75,16 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
       // require id in where
       afterUpdate: async (where, data) => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
-        const disconnectIds: string[] = get(data, [relation.sourceField, 'disconnect']);
-        const deleteIds: any[] = get(data, [relation.sourceField, 'delete']);
+        if (!get(data, [relationImpl.getOneSideField()])) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getOneSideField(), 'connect']);
+        const createRecords: any[] = get(data, [relationImpl.getOneSideField(), 'create']);
+        const disconnectWhere: Array<{id: string}> = get(data, [relationImpl.getOneSideField(), 'disconnect']);
+        const deleteWhere: Array<{id: string}> = get(data, [relationImpl.getOneSideField(), 'delete']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connect(where.id, connectIds);
         }
 
@@ -84,17 +92,19 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           await create(where.id, createRecords);
         }
 
-        if (disconnectIds) {
+        if (disconnectWhere) {
+          const disconnectIds = disconnectWhere.map(v => v.id);
           await disconnect(where.id, disconnectIds);
         }
 
-        if (deleteIds) {
+        if (deleteWhere) {
+          const deleteIds = deleteWhere.map(v => v.id);
           await destroy(where.id, deleteIds);
         }
       },
 
       resolveFields: {
-        [relation.sourceField]: data => relationImpl.joinManyOnOneSide(data),
+        [relationImpl.getOneSideField()]: data => relationImpl.joinManyOnOneSide(data),
       },
     },
 
@@ -102,8 +112,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     [relation.target.getName()]: {
       // connect or create relation
       transformCreatePayload: async data => {
-        const connectId = get(data, [relation.sourceField, 'connect', 'id']);
-        const createData = get(data, [relation.sourceField, 'create']);
+        if (!get(data, [relationImpl.getManySideField()])) {
+          return;
+        }
+        const connectId = get(data, [relationImpl.getManySideField(), 'connect', 'id']);
+        const createData = get(data, [relationImpl.getManySideField(), 'create']);
         if (connectId) {
           return connectOne(data, connectId);
         }
@@ -114,11 +127,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       transformUpdatePayload: async data => {
+        if (!get(data, [relationImpl.getManySideField()])) {
+          return;
+        }
         // connect -> create -> disconnect -> delete
-        const connectId = get(data, [relation.sourceField, 'connect', 'id']);
-        const ifDisconnect: boolean = get(data, [relation.sourceField, 'disconnect']);
-        const createData = get(data, [relation.sourceField, 'create']);
-        const ifDelete = get(data, [relation.sourceField, 'delete']);
+        const connectId = get(data, [relationImpl.getManySideField(), 'connect', 'id']);
+        const ifDisconnect: boolean = get(data, [relationImpl.getManySideField(), 'disconnect']);
+        const createData = get(data, [relationImpl.getManySideField(), 'create']);
+        const ifDelete = get(data, [relationImpl.getManySideField(), 'delete']);
 
         if (connectId) {
           return connectOne(data, connectId);
@@ -138,7 +154,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       resolveFields: {
-        [relation.targetField]: parent => relationImpl.joinOneOnManySide(parent),
+        [relationImpl.getManySideField()]: parent => relationImpl.joinOneOnManySide(parent),
       },
     },
   };

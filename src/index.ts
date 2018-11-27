@@ -61,20 +61,20 @@ export class GqlifyServer {
     const relationHooks = createRelationHooks(relations);
 
     // merge hooks
-    const hooks = mergeHooks(relationHooks);
+    const hookMap = mergeHooks(relationHooks);
 
     // initialize plugins
     const plugins = [
       new BaseTypePlugin(),
       new WhereInputPlugin(),
       new QueryPlugin(),
-      new CreatePlugin(hooks),
-      new UpdatePlugin(hooks),
-      new DeletePlugin(hooks),
+      new CreatePlugin({hook: hookMap}),
+      new UpdatePlugin({hook: hookMap}),
+      new DeletePlugin({hook: hookMap}),
     ];
 
     // set resolver from hook
-    forEach(hooks, (hook, key) => {
+    forEach(hookMap, (hook, key) => {
       if (!modelMap[key]) {
         throw new Error(`model ${key} not found for hooks`);
       }

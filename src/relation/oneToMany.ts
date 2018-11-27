@@ -34,6 +34,14 @@ export default class OneToMany {
     this.foreignKey = createForeignKey(this.manySideModel);
   }
 
+  public getOneSideField() {
+    return this.oneSideField;
+  }
+
+  public getManySideField() {
+    return this.manySideField;
+  }
+
   public setForeignKeyOnManySide(data: Record<string, any>, targetId: string) {
     data[this.foreignKey] = targetId;
     return data;

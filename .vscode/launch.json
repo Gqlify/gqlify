@@ -28,6 +28,17 @@
       ],
       "console": "integratedTerminal",
       "internalConsoleOptions": "neverOpen"
+  },
+  {
+    "type": "node",
+    "request": "launch",
+    "name": "apollo",
+    "program": "${workspaceFolder}/node_modules/.bin/ts-node",
+    "args": [
+        "./test/apollo.ts",
+    ],
+    "console": "integratedTerminal",
+    "internalConsoleOptions": "neverOpen"
   }
   ]
 }

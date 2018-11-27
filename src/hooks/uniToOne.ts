@@ -41,6 +41,9 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     [relation.source.getName()]: {
       // connect or create relation
       transformCreatePayload: async data => {
+        if (!get(data, relation.sourceField)) {
+          return;
+        }
         const connectId = get(data, [relation.sourceField, 'connect', 'id']);
         const createData = get(data, [relation.sourceField, 'create']);
         if (connectId) {
@@ -53,6 +56,9 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       transformUpdatePayload: async data => {
+        if (!get(data, relation.sourceField)) {
+          return;
+        }
         // connect -> create -> disconnect -> delete
         const connectId = get(data, [relation.sourceField, 'connect', 'id']);
         const ifDisconnect: boolean = get(data, [relation.sourceField, 'disconnect']);

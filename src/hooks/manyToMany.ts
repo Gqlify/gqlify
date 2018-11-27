@@ -49,10 +49,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // todo: add cascade delete support
     [relationImpl.getModelA().getName()]: {
       afterCreate: async data => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
+        if (!get(data, relationImpl.getModelAField())) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'connect']);
+        const createRecords: any[] = get(data, [relationImpl.getModelAField(), 'create']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connectFromModelA(data.id, connectIds);
         }
 
@@ -63,12 +67,16 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
       // require id in where
       afterUpdate: async (where, data) => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
-        const disconnectIds: string[] = get(data, [relation.sourceField, 'disconnect']);
-        const deleteIds: any[] = get(data, [relation.sourceField, 'delete']);
+        if (!get(data, relationImpl.getModelAField())) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'connect']);
+        const createRecords: any[] = get(data, [relationImpl.getModelAField(), 'create']);
+        const disconnectWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'disconnect']);
+        const deleteWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'delete']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connectFromModelA(data.id, connectIds);
         }
 
@@ -76,11 +84,13 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           await createFromModelA(data.id, createRecords);
         }
 
-        if (disconnectIds) {
+        if (disconnectWhere) {
+          const disconnectIds = disconnectWhere.map(v => v.id);
           await disconnectFromModelA(where.id, disconnectIds);
         }
 
-        if (deleteIds) {
+        if (deleteWhere) {
+          const deleteIds = deleteWhere.map(v => v.id);
           await destroyFromModelA(where.id, deleteIds);
         }
       },
@@ -93,10 +103,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // ref side
     [relationImpl.getModelB().getName()]: {
       afterCreate: async data => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
+        if (!get(data, relationImpl.getModelBField())) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'connect']);
+        const createRecords: any[] = get(data, [relationImpl.getModelBField(), 'create']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connectFromModelB(data.id, connectIds);
         }
 
@@ -107,12 +121,16 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
       // require id in where
       afterUpdate: async (where, data) => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
-        const disconnectIds: string[] = get(data, [relation.sourceField, 'disconnect']);
-        const deleteIds: any[] = get(data, [relation.sourceField, 'delete']);
+        if (!get(data, relationImpl.getModelBField())) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'connect']);
+        const createRecords: any[] = get(data, [relationImpl.getModelBField(), 'create']);
+        const disconnectWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'disconnect']);
+        const deleteWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'delete']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connectFromModelB(data.id, connectIds);
         }
 
@@ -120,11 +138,13 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           await createFromModelB(data.id, createRecords);
         }
 
-        if (disconnectIds) {
+        if (disconnectWhere) {
+          const disconnectIds = disconnectWhere.map(v => v.id);
           await disconnectFromModelB(where.id, disconnectIds);
         }
 
-        if (deleteIds) {
+        if (deleteWhere) {
+          const deleteIds = deleteWhere.map(v => v.id);
           await destroyFromModelB(where.id, deleteIds);
         }
       },

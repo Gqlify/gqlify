@@ -6,6 +6,7 @@ import ObjectField from '../dataModel/objectField';
 import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
 import { RelationField } from '../dataModel';
+import { Hook } from '../hooks/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -96,22 +97,14 @@ const createInputField = (
 export default class CreatePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
-  private beforeCreate?: Record<string, (data: Record<string, any>) => Promise<void>>;
-  private transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>;
-  private afterCreate?: Record<string, (data: Record<string, any>) => Promise<void>>;
+  private hook: Hook;
 
   constructor({
-    beforeCreate,
-    transformPayload,
-    afterCreate,
+    hook,
   }: {
-    beforeCreate?: Record<string, (data: Record<string, any>) => Promise<void>>;
-    transformPayload?: Record<string, (data: Record<string, any>) => Promise<Record<string, any>>>;
-    afterCreate?: Record<string, (data: Record<string, any>) => Promise<void>>;
+    hook: Hook,
   }) {
-    this.beforeCreate = beforeCreate;
-    this.transformPayload = transformPayload;
-    this.afterCreate = afterCreate;
+    this.hook = hook;
   }
 
   public setPlugins(plugins: Plugin[]) {
@@ -133,16 +126,16 @@ export default class CreatePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const mutationName = this.getMutationName(model);
-    const beforeCreate = get(this.beforeCreate, model.getName());
-    const transformPayload = get(this.transformPayload, model.getName());
-    const afterCreate = get(this.afterCreate, model.getName());
+    const beforeCreate = get(this.hook, [model.getName(), 'beforeCreate']);
+    const transformCreatePayload = get(this.hook, [model.getName(), 'transformCreatePayload']);
+    const afterCreate = get(this.hook, [model.getName(), 'afterCreate']);
 
     return {
       [mutationName]: async (root, args, context) => {
         if (beforeCreate) {
           await beforeCreate(args.data);
         }
-        const data = transformPayload ? await transformPayload(args.data) : args.data;
+        const data = transformCreatePayload ? await transformCreatePayload(args.data) : args.data;
         const created = await dataSource.create(data);
         if (afterCreate) {
           await afterCreate(data);

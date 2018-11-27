@@ -33,10 +33,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     [relation.source.getName()]: {
       // todo: fix that relation fields would be inserted into data
       afterCreate: async data => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
+        if (!get(data, relation.sourceField)) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relation.sourceField, 'connect']);
         const createRecords: any[] = get(data, [relation.sourceField, 'create']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connect(data.id, connectIds);
         }
 
@@ -47,12 +51,16 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
       // require id in where
       afterUpdate: async (where, data) => {
-        const connectIds: string[] = get(data, [relation.sourceField, 'connect']);
+        if (!get(data, relation.sourceField)) {
+          return;
+        }
+        const connectWhere: Array<{id: string}> = get(data, [relation.sourceField, 'connect']);
         const createRecords: any[] = get(data, [relation.sourceField, 'create']);
-        const disconnectIds: string[] = get(data, [relation.sourceField, 'disconnect']);
-        const deleteIds: any[] = get(data, [relation.sourceField, 'delete']);
+        const disconnectWhere: Array<{id: string}> = get(data, [relation.sourceField, 'disconnect']);
+        const deleteWhere: any[] = get(data, [relation.sourceField, 'delete']);
 
-        if (connectIds) {
+        if (connectWhere) {
+          const connectIds = connectWhere.map(v => v.id);
           await connect(where.id, connectIds);
         }
 
@@ -60,11 +68,13 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           await create(where.id, createRecords);
         }
 
-        if (disconnectIds) {
+        if (disconnectWhere) {
+          const disconnectIds = disconnectWhere.map(v => v.id);
           await disconnect(where.id, disconnectIds);
         }
 
-        if (deleteIds) {
+        if (deleteWhere) {
+          const deleteIds = deleteWhere.map(v => v.id);
           await destroy(where.id, deleteIds);
         }
       },

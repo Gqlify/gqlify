@@ -62,8 +62,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     [relationImpl.getOwningSide().getName()]: {
       // connect or create relation
       transformCreatePayload: async data => {
-        const connectId = get(data, [relation.sourceField, 'connect', 'id']);
-        const createData = get(data, [relation.sourceField, 'create']);
+        if (!get(data, relationImpl.getOwningSideField())) {
+          return;
+        }
+        const connectId = get(data, [relationImpl.getOwningSideField(), 'connect', 'id']);
+        const createData = get(data, [relationImpl.getOwningSideField(), 'create']);
         if (connectId) {
           return connectOwningSide(data, connectId);
         }
@@ -74,11 +77,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       transformUpdatePayload: async data => {
+        if (!get(data, relationImpl.getOwningSideField())) {
+          return;
+        }
         // connect -> create -> disconnect -> delete
-        const connectId = get(data, [relation.sourceField, 'connect', 'id']);
-        const ifDisconnect: boolean = get(data, [relation.sourceField, 'disconnect']);
-        const createData = get(data, [relation.sourceField, 'create']);
-        const ifDelete = get(data, [relation.sourceField, 'delete']);
+        const connectId = get(data, [relationImpl.getOwningSideField(), 'connect', 'id']);
+        const ifDisconnect: boolean = get(data, [relationImpl.getOwningSideField(), 'disconnect']);
+        const createData = get(data, [relationImpl.getOwningSideField(), 'create']);
+        const ifDelete = get(data, [relationImpl.getOwningSideField(), 'delete']);
 
         if (connectId) {
           return connectOwningSide(data, connectId);
@@ -105,8 +111,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // ref side
     [relationImpl.getRefSide().getName()]: {
       afterCreate: async data => {
-        const connectId = get(data, [relation.sourceField, 'connect', 'id']);
-        const createData = get(data, [relation.sourceField, 'create']);
+        if (!get(data, relationImpl.getRefSideField())) {
+          return;
+        }
+        const connectId = get(data, [relationImpl.getRefSideField(), 'connect', 'id']);
+        const createData = get(data, [relationImpl.getRefSideField(), 'create']);
 
         if (connectId) {
           return relationImpl.connectOnRefSide(data.id, connectId);
@@ -118,11 +127,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       afterUpdate: async (where, data) => {
+        if (!get(data, relationImpl.getRefSideField())) {
+          return;
+        }
         // connect -> create -> disconnect -> delete
-        const connectId = get(data, [relation.sourceField, 'connect', 'id']);
-        const ifDisconnect: boolean = get(data, [relation.sourceField, 'disconnect']);
-        const createData = get(data, [relation.sourceField, 'create']);
-        const ifDelete = get(data, [relation.sourceField, 'delete']);
+        const connectId = get(data, [relationImpl.getRefSideField(), 'connect', 'id']);
+        const ifDisconnect: boolean = get(data, [relationImpl.getRefSideField(), 'disconnect']);
+        const createData = get(data, [relationImpl.getRefSideField(), 'create']);
+        const ifDelete = get(data, [relationImpl.getRefSideField(), 'delete']);
 
         if (connectId) {
           return relationImpl.connectOnRefSide(where.id, connectId);

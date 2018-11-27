@@ -4,22 +4,19 @@ import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListMutable } from '../dataSource/interface';
 import { reduce, get } from 'lodash';
+import { Hook } from '../hooks/interface';
 
 export default class DeletePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
-  private beforeDelete?: Record<string, (where: any) => Promise<void>>;
-  private afterDelete?: Record<string, (where: any) => Promise<void>>;
+  private hook: Hook;
 
   constructor({
-    beforeDelete,
-    afterDelete,
+    hook,
   }: {
-    beforeDelete?: Record<string, (where: any) => Promise<void>>,
-    afterDelete?: Record<string, (where: any) => Promise<void>>,
+    hook: Hook,
   }) {
-    this.beforeDelete = beforeDelete;
-    this.afterDelete = afterDelete;
+    this.hook = hook;
   }
 
   public setPlugins(plugins: Plugin[]) {
@@ -42,8 +39,8 @@ export default class DeletePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const inputName = this.getInputName(model);
-    const beforeDelete = get(this.beforeDelete, model.getName());
-    const afterDelete = get(this.afterDelete, model.getName());
+    const beforeDelete = get(this.hook, [model.getName(), 'beforeDelete']);
+    const afterDelete = get(this.hook, [model.getName(), 'afterDelete']);
 
     return {
       [inputName]: async (root, args, context) => {
