@@ -1,18 +1,29 @@
 import { IResolverObject } from 'graphql-tools';
-import { Model } from '../dataModel';
+export interface CreateContext {
+  data: any;
+  response: any;
+}
+
+export interface UpdateContext {
+  where: any;
+  data: Record<string, any>;
+  response: any;
+}
+
+export interface DeleteContext {
+  where: any;
+  response: any;
+}
 
 export interface Hook {
   // create
-  wrapCreate?: (data, createOperation: (data: Record<string, any>) => Promise<any>) => Promise<any>;
+  wrapCreate?: (context: CreateContext, createOperation: () => Promise<any>) => Promise<any>;
 
   // update
-  wrapUpdate?: (
-    where: any,
-    data: Record<string, any>,
-    updateOperation: (where: any, data: Record<string, any>) => Promise<any>) => Promise<any>;
+  wrapUpdate?: (context: UpdateContext, updateOperation: () => Promise<any>) => Promise<any>;
 
   // delete
-  wrapDelete?: (where: any, destroyOperation: (where: any) => Promise<any>) => Promise<any>;
+  wrapDelete?: (context: DeleteContext, destroyOperation: () => Promise<any>) => Promise<any>;
 
   // query
   resolveFields?: IResolverObject;

@@ -54,10 +54,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const hookMap: Record<string, Hook> = {
     // one side
     [relation.source.getName()]: {
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, oneSideField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
 
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -65,7 +66,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         // create with filtered data
         const dataWithoutRelation = omit(data, oneSideField);
-        const created = await createOperation(dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const created = await createOperation();
 
         // execute relations
         if (connectWhere) {
@@ -81,15 +83,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       // require id in where
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, oneSideField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // update with filtered data
         const dataWithoutRelation = omit(data, oneSideField);
-        const updated = await updateOperation(where, dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const updated = await updateOperation();
 
         // execute relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -127,10 +131,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // many side
     [relation.target.getName()]: {
       // connect or create relation
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, manySideField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
 
         const connectId = get(relationData, ['connect', 'id']);
@@ -140,19 +145,22 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const dataWithoutRelation = omit(data, manySideField);
         if (connectId) {
           const dataWithConnectId = await connectOne(connectId);
-          return createOperation({...dataWithoutRelation, ...dataWithConnectId});
+          context.data = {...dataWithoutRelation, ...dataWithConnectId};
+          return createOperation();
         }
 
         if (createData) {
           const dataWithCreateId = await createOne(createData);
-          return createOperation({...dataWithoutRelation, ...dataWithCreateId});
+          context.data = {...dataWithoutRelation, ...dataWithCreateId};
+          return createOperation();
         }
       },
 
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, manySideField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // connect -> create -> disconnect -> delete
@@ -174,7 +182,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           dataWithRelationField = await destroyOne(data);
         }
 
-        return updateOperation(where, {...dataWithoutRelation, ...dataWithRelationField});
+        context.data = {...dataWithoutRelation, ...dataWithRelationField};
+        return updateOperation();
       },
 
       resolveFields: {

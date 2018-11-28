@@ -1,36 +1,26 @@
-import { Hook } from './interface';
+import { Hook, CreateContext, UpdateContext, DeleteContext } from './interface';
 import { IResolverObject } from 'graphql-tools';
 import { reduce, forEach, mapValues } from 'lodash';
 import { flow } from 'lodash/fp';
+import compose from './compose';
 
 interface ReducedHook {
-  // create
-  beforeCreate?: Array<(data: Record<string, any>) => Promise<void>>;
-  transformCreatePayload?: Array<(data: Record<string, any>) => Promise<Record<string, any>>>;
-  afterCreate?: Array<(data: Record<string, any>) => Promise<void>>;
+  wrapCreate?: Array<(context: CreateContext, createOperation: () => Promise<any>) => Promise<any>>;
 
   // update
-  beforeUpdate?: Array<(where: any, data: Record<string, any>) => Promise<void>>;
-  transformUpdatePayload?: Array<(data: Record<string, any>) => Promise<Record<string, any>>>;
-  afterUpdate?: Array<(where: any, data: Record<string, any>) => Promise<void>>;
+  wrapUpdate?: Array<(context: UpdateContext, updateOperation: () => Promise<any>) => Promise<any>>;
 
   // delete
-  beforeDelete?: Array<(where: any) => Promise<void>>;
-  afterDelete?: Array<(where: any) => Promise<void>>;
+  wrapDelete?: Array<(context: DeleteContext, destroyOperation: () => Promise<any>) => Promise<any>>;
 
   // query
   resolveFields?: IResolverObject;
 }
 
 const createEmptyHook = (): ReducedHook => ({
-  beforeCreate: [],
-  transformCreatePayload: [],
-  afterCreate: [],
-  beforeUpdate: [],
-  transformUpdatePayload: [],
-  afterUpdate: [],
-  beforeDelete: [],
-  afterDelete: [],
+  wrapCreate: [],
+  wrapUpdate: [],
+  wrapDelete: [],
   resolveFields: {},
 });
 
@@ -63,7 +53,7 @@ export default (hooks: Array<Record<string, Hook>>): Record<string, Hook> => {
       if (key === 'resolveFields') {
         return combinedHooks;
       } else {
-        return flow(combinedHooks as any[]) as any;
+        return compose(combinedHooks as any[]) as any;
       }
     });
   });

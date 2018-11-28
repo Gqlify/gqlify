@@ -6,7 +6,7 @@ import ObjectField from '../dataModel/objectField';
 import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
 import { RelationField } from '../dataModel';
-import { Hook } from '../hooks/interface';
+import { Hook, CreateContext } from '../hooks/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -126,21 +126,20 @@ export default class CreatePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const mutationName = this.getMutationName(model);
-    const beforeCreate = get(this.hook, [model.getName(), 'beforeCreate']);
-    const transformCreatePayload = get(this.hook, [model.getName(), 'transformCreatePayload']);
-    const afterCreate = get(this.hook, [model.getName(), 'afterCreate']);
+    const wrapCreate = get(this.hook, [model.getName(), 'wrapCreate']);
 
     return {
       [mutationName]: async (root, args, context) => {
-        if (beforeCreate) {
-          await beforeCreate(args.data);
+        if (!wrapCreate) {
+          return dataSource.create(args.data);
         }
-        const data = transformCreatePayload ? await transformCreatePayload(args.data) : args.data;
-        const created = await dataSource.create(data);
-        if (afterCreate) {
-          await afterCreate(data);
-        }
-        return created;
+
+        // wrap
+        const createContext: CreateContext = {data: args.data, response: {}};
+        await wrapCreate(createContext, async ctx => {
+          ctx.response = await dataSource.create(ctx.data);
+        });
+        return createContext.response;
       },
     };
   }

@@ -19,10 +19,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // todo: add cascade delete support
     [relationImpl.getOwningSide().getName()]: {
       // connect or create relation
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, owningSideField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
         const connectId = get(relationData, ['connect', 'id']);
         const createData = get(relationData, 'create');
@@ -31,19 +32,22 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const dataWithoutRelation = omit(data, owningSideField);
         if (connectId) {
           const dataWithConnectId = await relationImpl.setForeignKeyOnOwningSide(connectId);
-          return createOperation({...dataWithoutRelation, ...dataWithConnectId});
+          context.data = {...dataWithoutRelation, ...dataWithConnectId};
+          return createOperation();
         }
 
         if (createData) {
           const dataWithCreateId = await relationImpl.createAndSetForeignKeyOnOwningSide(createData);
-          return createOperation({...dataWithoutRelation, ...dataWithCreateId});
+          context.data = {...dataWithoutRelation, ...dataWithCreateId};
+          return createOperation();
         }
       },
 
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {data} = context;
         const relationData = get(data, owningSideField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // connect -> create -> disconnect -> delete
@@ -65,7 +69,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           dataWithRelationField = await relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
         }
 
-        return updateOperation(where, {...dataWithoutRelation, ...dataWithRelationField});
+        context.data = {...dataWithoutRelation, ...dataWithRelationField};
+        return updateOperation();
       },
 
       resolveFields: {
@@ -75,10 +80,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
     // ref side
     [relationImpl.getRefSide().getName()]: {
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, refSideField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
 
         const connectId = get(relationData, ['connect', 'id']);
@@ -86,7 +92,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         // after create
         const dataWithoutRelation = omit(data, owningSideField);
-        const created = await createOperation(dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const created = await createOperation();
 
         // bind relation
         if (connectId) {
@@ -98,15 +105,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         }
       },
 
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, refSideField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // update first
         const dataWithoutRelation = omit(data, refSideField);
-        const updated = await updateOperation(where, dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const updated = await updateOperation();
 
         // connect -> create -> disconnect -> delete
         const connectId = get(relationData, ['connect', 'id']);

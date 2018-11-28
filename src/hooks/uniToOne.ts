@@ -18,10 +18,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // todo: add cascade delete support
     [relation.source.getName()]: {
       // connect or create relation
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, relationField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
         const connectId = get(relationData, ['connect', 'id']);
         const createData = get(relationData, 'create');
@@ -30,19 +31,22 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const dataWithoutRelation = omit(data, relationField);
         if (connectId) {
           const dataWithConnectId = await relationImpl.setForeignKey(connectId);
-          return createOperation({...dataWithoutRelation, ...dataWithConnectId});
+          context.data = {...dataWithoutRelation, ...dataWithConnectId};
+          return createOperation();
         }
 
         if (createData) {
           const dataWithCreateId = await relationImpl.createAndSetForeignKey(createData);
-          return createOperation({...dataWithoutRelation, ...dataWithCreateId});
+          context.data = {...dataWithoutRelation, ...dataWithCreateId};
+          return createOperation();
         }
       },
 
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, relationField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // connect -> create -> disconnect -> delete
@@ -64,7 +68,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           dataWithRelationField = await relationImpl.destroyAndUnsetForeignKey(data);
         }
 
-        return updateOperation(where, {...dataWithoutRelation, ...dataWithRelationField});
+        context.data = {...dataWithoutRelation, ...dataWithRelationField};
+        return updateOperation();
       },
 
       resolveFields: {

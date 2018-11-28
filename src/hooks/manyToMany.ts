@@ -52,10 +52,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const hookMap: Record<string, Hook> = {
     // todo: add cascade delete support
     [relationImpl.getModelA().getName()]: {
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, modelAField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
 
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -63,7 +64,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         // create with filtered data
         const dataWithoutRelation = omit(data, modelAField);
-        const created = await createOperation(dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const created = await createOperation();
 
         // execute relations
         if (connectWhere) {
@@ -79,15 +81,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       // require id in where
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, modelAField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // update with filtered data
         const dataWithoutRelation = omit(data, modelAField);
-        const updated = await updateOperation(where, dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const updated = await updateOperation();
 
         // execute relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -124,10 +128,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
     // ref side
     [relationImpl.getModelB().getName()]: {
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, modelBField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
 
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -135,7 +140,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         // create with filtered data
         const dataWithoutRelation = omit(data, modelBField);
-        const created = await createOperation(dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const created = await createOperation();
 
         // execute relations
         if (connectWhere) {
@@ -151,15 +157,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       // require id in where
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, modelBField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // update with filtered data
         const dataWithoutRelation = omit(data, modelBField);
-        const updated = await updateOperation(where, dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const updated = await updateOperation();
 
         // execute relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');

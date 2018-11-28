@@ -4,7 +4,7 @@ import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListMutable } from '../dataSource/interface';
 import { reduce, get } from 'lodash';
-import { Hook } from '../hooks/interface';
+import { Hook, DeleteContext } from '../hooks/interface';
 
 export default class DeletePlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
@@ -39,19 +39,20 @@ export default class DeletePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const inputName = this.getInputName(model);
-    const beforeDelete = get(this.hook, [model.getName(), 'beforeDelete']);
-    const afterDelete = get(this.hook, [model.getName(), 'afterDelete']);
+    const wrapDelete = get(this.hook, [model.getName(), 'wrapDelete']);
 
     return {
       [inputName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
-        if (beforeDelete) {
-          await beforeDelete(whereUnique);
+        if (!wrapDelete) {
+          return dataSource.delete(whereUnique);
         }
-        await dataSource.delete(whereUnique);
-        if (afterDelete) {
-          await afterDelete(whereUnique);
-        }
+
+        // wrap
+        const deleteContext: DeleteContext = {where: args.where, response: {}};
+        await wrapDelete(deleteContext, async ctx => {
+          await dataSource.delete(whereUnique);
+        });
         return whereUnique;
       },
     };

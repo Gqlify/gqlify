@@ -7,7 +7,7 @@ import { upperFirst, forEach, get } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
 import { RelationField } from '../dataModel';
 import CreatePlugin from './create';
-import { Hook } from '../hooks/interface';
+import { Hook, UpdateContext } from '../hooks/interface';
 
 const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
   const { root } = context;
@@ -136,22 +136,21 @@ export default class UpdatePlugin implements Plugin {
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
     const mutationName = this.getInputName(model);
-    const beforeUpdate = get(this.hook, [model.getName(), 'beforeUpdate']);
-    const transformUpdatePayload = get(this.hook, [model.getName(), 'transformUpdatePayload']);
-    const afterUpdate = get(this.hook, [model.getName(), 'afterUpdate']);
+    const wrapUpdate = get(this.hook, [model.getName(), 'wrapUpdate']);
 
     return {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
-        if (beforeUpdate) {
-          await beforeUpdate(args.where, args.data);
+        if (!wrapUpdate) {
+          return dataSource.update(whereUnique, args.data);
         }
-        const data = transformUpdatePayload ? await transformUpdatePayload(args.data) : args.data;
-        const updated = await dataSource.update(whereUnique, data);
-        if (afterUpdate) {
-          await afterUpdate(args.where, data);
-        }
-        return updated;
+
+        // wrap
+        const updateContext: UpdateContext = {where: args.where, data: args.data, response: {}};
+        await wrapUpdate(updateContext, async ctx => {
+          ctx.response = await dataSource.update(whereUnique, ctx.data);
+        });
+        return updateContext.response;
       },
     };
   }

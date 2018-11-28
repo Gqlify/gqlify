@@ -33,15 +33,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const hookMap: Record<string, Hook> = {
     // one side
     [relation.source.getName()]: {
-      wrapCreate: async (data, createOperation) => {
+      wrapCreate: async (context, createOperation) => {
+        const {data} = context;
         const relationData = get(data, oneSideField);
         if (!relationData) {
-          return createOperation(data);
+          return createOperation();
         }
 
         // create data
         const dataWithoutRelation = omit(data, oneSideField);
-        const created = await createOperation(dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const created = await createOperation();
 
         // bind relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -58,15 +60,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       // require id in where
-      wrapUpdate: async (where, data, updateOperation) => {
+      wrapUpdate: async (context, updateOperation) => {
+        const {where, data} = context;
         const relationData = get(data, oneSideField);
         if (!relationData) {
-          return updateOperation(where, data);
+          return updateOperation();
         }
 
         // update first
         const dataWithoutRelation = omit(data, oneSideField);
-        const updated = await updateOperation(where, dataWithoutRelation);
+        context.data = dataWithoutRelation;
+        const updated = await updateOperation();
 
         // bind relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
