@@ -27,14 +27,17 @@ export default class UniToOne {
     this.foreignKey = createForeignKey(this.relationField, this.targetModel);
   }
 
-  public setForeignKey(data: Record<string, any>, targetId: string) {
-    data[this.foreignKey] = targetId;
-    return data;
+  public getRelationField() {
+    return this.relationField;
   }
 
-  public async createAndSetForeignKey(data: Record<string, any>, targetData: Record<string, any>) {
+  public setForeignKey(targetId: string) {
+    return {[this.foreignKey]: targetId};
+  }
+
+  public async createAndSetForeignKey(targetData: Record<string, any>) {
     const created = await this.targetModel.getDataSource().create(targetData);
-    return this.setForeignKey(data, created.id);
+    return this.setForeignKey(created.id);
   }
 
   public async destroyAndUnsetForeignKey(data: Record<string, any>) {
@@ -43,12 +46,11 @@ export default class UniToOne {
       return;
     }
     await this.targetModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
-    return this.unsetForeignKey(data);
+    return this.unsetForeignKey();
   }
 
-  public unsetForeignKey(data: Record<string, any>) {
-    data[this.foreignKey] = null;
-    return data;
+  public unsetForeignKey() {
+    return {[this.foreignKey]: null};
   }
 
   public async join(data: Record<string, any>) {

@@ -11,47 +11,9 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     modelBField: relation.targetField,
   });
 
-  // owningSide field
+  // fields
   const owningSideField = relationImpl.getOwningSideField();
   const refSideField = relationImpl.getRefSideField();
-
-  // owningSide
-  const connectOwningSide = (connectId: string) => {
-    return relationImpl.setForeignKeyOnOwningSide(connectId);
-  };
-
-  const createOwningSide = targetData => {
-    return relationImpl.createAndSetForeignKeyOnOwningSide(targetData);
-  };
-
-  const disconnectOwningSide = () => {
-    return relationImpl.unsetForeignKeyOnOwningSide();
-  };
-
-  const destroyOwningSide = data => {
-    return relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
-  };
-
-  // refSide
-  const connectRefSide = async (refSideId: string, owningSideId: string) => {
-    return relationImpl.connectOnRefSide(refSideId, owningSideId);
-  };
-
-  const createRefSide = (refSideId: string, targetData) => {
-    return relationImpl.createAndConnectOnRefSide(refSideId, targetData);
-  };
-
-  const disconnectRefSide = data => {
-    data = relationImpl.disconnectOnRefSide(data);
-    delete data[relationImpl.getRefSideField()];
-    return data;
-  };
-
-  const destroyRefSide = async data => {
-    data = await relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
-    delete data[relationImpl.getRefSideField()];
-    return data;
-  };
 
   const hookMap: Record<string, Hook> = {
     // todo: add cascade delete support
@@ -68,12 +30,12 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // put id to data
         const dataWithoutRelation = omit(data, owningSideField);
         if (connectId) {
-          const dataWithConnectId = await connectOwningSide(connectId);
+          const dataWithConnectId = await relationImpl.setForeignKeyOnOwningSide(connectId);
           return createOperation({...dataWithoutRelation, ...dataWithConnectId});
         }
 
         if (createData) {
-          const dataWithCreateId = await createOwningSide(createData);
+          const dataWithCreateId = await relationImpl.createAndSetForeignKeyOnOwningSide(createData);
           return createOperation({...dataWithoutRelation, ...dataWithCreateId});
         }
       },
@@ -94,13 +56,13 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const dataWithoutRelation = omit(data, owningSideField);
         let dataWithRelationField: any;
         if (connectId) {
-          dataWithRelationField = await connectOwningSide(connectId);
+          dataWithRelationField = await relationImpl.setForeignKeyOnOwningSide(connectId);
         } else if (createData) {
-          dataWithRelationField = await createOwningSide(createData);
+          dataWithRelationField = await relationImpl.createAndSetForeignKeyOnOwningSide(createData);
         } else if (ifDisconnect) {
-          dataWithRelationField = await disconnectOwningSide();
+          dataWithRelationField = await relationImpl.unsetForeignKeyOnOwningSide();
         } else if (ifDelete) {
-          dataWithRelationField = await destroyOwningSide(data);
+          dataWithRelationField = await relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
         }
 
         return updateOperation(where, {...dataWithoutRelation, ...dataWithRelationField});
