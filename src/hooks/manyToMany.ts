@@ -1,7 +1,7 @@
 import { ModelRelation } from '../dataModel';
 import { Hook } from './interface';
 import { ManyToManyRelation } from '../relation';
-import { get } from 'lodash';
+import { get, omit } from 'lodash';
 
 export const createHookMap = (relation: ModelRelation): Record<string, Hook> => {
   const relationImpl = new ManyToManyRelation({
@@ -10,6 +10,10 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     modelAField: relation.sourceField,
     modelBField: relation.targetField,
   });
+
+  // fields
+  const modelAField = relationImpl.getModelAField();
+  const modelBField = relationImpl.getModelBField();
 
   // A side
   const createFromModelA = (sourceId: string, records: any[]) => {
@@ -48,40 +52,56 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const hookMap: Record<string, Hook> = {
     // todo: add cascade delete support
     [relationImpl.getModelA().getName()]: {
-      afterCreate: async data => {
-        if (!get(data, relationImpl.getModelAField())) {
-          return;
+      wrapCreate: async (data, createOperation) => {
+        const relationData = get(data, modelAField);
+        if (!relationData) {
+          return createOperation(data);
         }
-        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'connect']);
-        const createRecords: any[] = get(data, [relationImpl.getModelAField(), 'create']);
 
+        const connectWhere: Array<{id: string}> = get(relationData, 'connect');
+        const createRecords: any[] = get(relationData, 'create');
+
+        // create with filtered data
+        const dataWithoutRelation = omit(data, modelAField);
+        const created = await createOperation(dataWithoutRelation);
+
+        // execute relations
         if (connectWhere) {
-          const connectIds = connectWhere.map(v => v.id);
+          const connectIds = connectWhere.map(where => where.id);
           await connectFromModelA(data.id, connectIds);
         }
 
         if (createRecords) {
           await createFromModelA(data.id, createRecords);
         }
+
+        return created;
       },
 
       // require id in where
-      afterUpdate: async (where, data) => {
-        if (!get(data, relationImpl.getModelAField())) {
-          return;
+      wrapUpdate: async (where, data, updateOperation) => {
+        const relationData = get(data, modelAField);
+        if (!relationData) {
+          return updateOperation(where, data);
         }
-        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'connect']);
-        const createRecords: any[] = get(data, [relationImpl.getModelAField(), 'create']);
-        const disconnectWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'disconnect']);
-        const deleteWhere: Array<{id: string}> = get(data, [relationImpl.getModelAField(), 'delete']);
+
+        // update with filtered data
+        const dataWithoutRelation = omit(data, modelAField);
+        const updated = await updateOperation(where, dataWithoutRelation);
+
+        // execute relation
+        const connectWhere: Array<{id: string}> = get(relationData, 'connect');
+        const createRecords: any[] = get(relationData, 'create');
+        const disconnectWhere: Array<{id: string}> = get(relationData, 'disconnect');
+        const deleteWhere: Array<{id: string}> = get(relationData, 'delete');
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connectFromModelA(data.id, connectIds);
+          await connectFromModelA(where.id, connectIds);
         }
 
         if (createRecords) {
-          await createFromModelA(data.id, createRecords);
+          await createFromModelA(where.id, createRecords);
         }
 
         if (disconnectWhere) {
@@ -93,6 +113,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           const deleteIds = deleteWhere.map(v => v.id);
           await destroyFromModelA(where.id, deleteIds);
         }
+
+        return updated;
       },
 
       resolveFields: {
@@ -102,40 +124,56 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
     // ref side
     [relationImpl.getModelB().getName()]: {
-      afterCreate: async data => {
-        if (!get(data, relationImpl.getModelBField())) {
-          return;
+      wrapCreate: async (data, createOperation) => {
+        const relationData = get(data, modelBField);
+        if (!relationData) {
+          return createOperation(data);
         }
-        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'connect']);
-        const createRecords: any[] = get(data, [relationImpl.getModelBField(), 'create']);
 
+        const connectWhere: Array<{id: string}> = get(relationData, 'connect');
+        const createRecords: any[] = get(relationData, 'create');
+
+        // create with filtered data
+        const dataWithoutRelation = omit(data, modelBField);
+        const created = await createOperation(dataWithoutRelation);
+
+        // execute relations
         if (connectWhere) {
-          const connectIds = connectWhere.map(v => v.id);
+          const connectIds = connectWhere.map(where => where.id);
           await connectFromModelB(data.id, connectIds);
         }
 
         if (createRecords) {
           await createFromModelB(data.id, createRecords);
         }
+
+        return created;
       },
 
       // require id in where
-      afterUpdate: async (where, data) => {
-        if (!get(data, relationImpl.getModelBField())) {
-          return;
+      wrapUpdate: async (where, data, updateOperation) => {
+        const relationData = get(data, modelBField);
+        if (!relationData) {
+          return updateOperation(where, data);
         }
-        const connectWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'connect']);
-        const createRecords: any[] = get(data, [relationImpl.getModelBField(), 'create']);
-        const disconnectWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'disconnect']);
-        const deleteWhere: Array<{id: string}> = get(data, [relationImpl.getModelBField(), 'delete']);
+
+        // update with filtered data
+        const dataWithoutRelation = omit(data, modelBField);
+        const updated = await updateOperation(where, dataWithoutRelation);
+
+        // execute relation
+        const connectWhere: Array<{id: string}> = get(relationData, 'connect');
+        const createRecords: any[] = get(relationData, 'create');
+        const disconnectWhere: Array<{id: string}> = get(relationData, 'disconnect');
+        const deleteWhere: Array<{id: string}> = get(relationData, 'delete');
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connectFromModelB(data.id, connectIds);
+          await connectFromModelB(where.id, connectIds);
         }
 
         if (createRecords) {
-          await createFromModelB(data.id, createRecords);
+          await createFromModelB(where.id, createRecords);
         }
 
         if (disconnectWhere) {
@@ -147,6 +185,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           const deleteIds = deleteWhere.map(v => v.id);
           await destroyFromModelB(where.id, deleteIds);
         }
+
+        return updated;
       },
 
       resolveFields: {
