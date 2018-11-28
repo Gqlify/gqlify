@@ -1,7 +1,7 @@
 import { ModelRelation } from '../dataModel';
 import { Hook } from './interface';
 import { BiOneToOneRelation } from '../relation';
-import { get } from 'lodash';
+import { get, omit } from 'lodash';
 
 export const createHookMap = (relation: ModelRelation): Record<string, Hook> => {
   const relationImpl = new BiOneToOneRelation({
@@ -11,29 +11,25 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     modelBField: relation.targetField,
   });
 
+  // owningSide field
+  const owningSideField = relationImpl.getOwningSideField();
+  const refSideField = relationImpl.getRefSideField();
+
   // owningSide
-  const connectOwningSide = (data, connectId: string) => {
-    data = relationImpl.setForeignKeyOnOwningSide(data, connectId);
-    delete data[relationImpl.getOwningSideField()];
-    return data;
+  const connectOwningSide = (connectId: string) => {
+    return relationImpl.setForeignKeyOnOwningSide(connectId);
   };
 
-  const createOwningSide = (data, targetData) => {
-    data = relationImpl.createAndSetForeignKeyOnOwningSide(data, targetData);
-    delete data[relationImpl.getOwningSideField()];
-    return data;
+  const createOwningSide = targetData => {
+    return relationImpl.createAndSetForeignKeyOnOwningSide(targetData);
   };
 
-  const disconnectOwningSide = data => {
-    data = relationImpl.unsetForeignKeyOnOwningSide(data);
-    delete data[relationImpl.getOwningSideField()];
-    return data;
+  const disconnectOwningSide = () => {
+    return relationImpl.unsetForeignKeyOnOwningSide();
   };
 
-  const destroyOwningSide = async data => {
-    data = await relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
-    delete data[relationImpl.getOwningSideField()];
-    return data;
+  const destroyOwningSide = data => {
+    return relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
   };
 
   // refSide
@@ -61,46 +57,53 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     // todo: add cascade delete support
     [relationImpl.getOwningSide().getName()]: {
       // connect or create relation
-      transformCreatePayload: async data => {
-        if (!get(data, relationImpl.getOwningSideField())) {
-          return data;
+      wrapCreate: async (data, createOperation) => {
+        const relationData = get(data, owningSideField);
+        if (!relationData) {
+          return createOperation(data);
         }
-        const connectId = get(data, [relationImpl.getOwningSideField(), 'connect', 'id']);
-        const createData = get(data, [relationImpl.getOwningSideField(), 'create']);
+        const connectId = get(relationData, ['connect', 'id']);
+        const createData = get(relationData, 'create');
+
+        // put id to data
+        const dataWithoutRelation = omit(data, owningSideField);
         if (connectId) {
-          return connectOwningSide(data, connectId);
+          const dataWithConnectId = await connectOwningSide(connectId);
+          return createOperation({...dataWithoutRelation, ...dataWithConnectId});
         }
 
         if (createData) {
-          return createOwningSide(data, createData);
+          const dataWithCreateId = await createOwningSide(createData);
+          return createOperation({...dataWithoutRelation, ...dataWithCreateId});
         }
       },
 
-      transformUpdatePayload: async data => {
-        if (!get(data, relationImpl.getOwningSideField())) {
-          return data;
+      wrapUpdate: async (where, data, updateOperation) => {
+        const relationData = get(data, owningSideField);
+        if (!relationData) {
+          return updateOperation(where, data);
         }
+
         // connect -> create -> disconnect -> delete
-        const connectId = get(data, [relationImpl.getOwningSideField(), 'connect', 'id']);
-        const ifDisconnect: boolean = get(data, [relationImpl.getOwningSideField(), 'disconnect']);
-        const createData = get(data, [relationImpl.getOwningSideField(), 'create']);
-        const ifDelete = get(data, [relationImpl.getOwningSideField(), 'delete']);
+        const connectId = get(relationData, ['connect', 'id']);
+        const ifDisconnect: boolean = get(relationData, 'disconnect');
+        const createData = get(relationData, 'create');
+        const ifDelete = get(relationData, 'delete');
 
+        // return to update operation with relation field
+        const dataWithoutRelation = omit(data, owningSideField);
+        let dataWithRelationField: any;
         if (connectId) {
-          return connectOwningSide(data, connectId);
+          dataWithRelationField = await connectOwningSide(connectId);
+        } else if (createData) {
+          dataWithRelationField = await createOwningSide(createData);
+        } else if (ifDisconnect) {
+          dataWithRelationField = await disconnectOwningSide();
+        } else if (ifDelete) {
+          dataWithRelationField = await destroyOwningSide(data);
         }
 
-        if (createData) {
-          return createOwningSide(data, createData);
-        }
-
-        if (ifDisconnect) {
-          return disconnectOwningSide(data);
-        }
-
-        if (ifDelete) {
-          return destroyOwningSide(data);
-        }
+        return updateOperation(where, {...dataWithoutRelation, ...dataWithRelationField});
       },
 
       resolveFields: {
@@ -110,31 +113,44 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
     // ref side
     [relationImpl.getRefSide().getName()]: {
-      afterCreate: async data => {
-        if (!get(data, relationImpl.getRefSideField())) {
-          return;
+      wrapCreate: async (data, createOperation) => {
+        const relationData = get(data, refSideField);
+        if (!relationData) {
+          return createOperation(data);
         }
-        const connectId = get(data, [relationImpl.getRefSideField(), 'connect', 'id']);
-        const createData = get(data, [relationImpl.getRefSideField(), 'create']);
 
+        const connectId = get(relationData, ['connect', 'id']);
+        const createData = get(relationData, 'create');
+
+        // after create
+        const dataWithoutRelation = omit(data, owningSideField);
+        const created = await createOperation(dataWithoutRelation);
+
+        // bind relation
         if (connectId) {
-          return relationImpl.connectOnRefSide(data.id, connectId);
+          return relationImpl.connectOnRefSide(created.id, connectId);
         }
 
         if (createData) {
-          return relationImpl.createAndConnectOnRefSide(data.id, createData);
+          return relationImpl.createAndConnectOnRefSide(created.id, createData);
         }
       },
 
-      afterUpdate: async (where, data) => {
-        if (!get(data, relationImpl.getRefSideField())) {
-          return;
+      wrapUpdate: async (where, data, updateOperation) => {
+        const relationData = get(data, refSideField);
+        if (!relationData) {
+          return updateOperation(where, data);
         }
+
+        // update first
+        const dataWithoutRelation = omit(data, refSideField);
+        const updated = await updateOperation(where, dataWithoutRelation);
+
         // connect -> create -> disconnect -> delete
-        const connectId = get(data, [relationImpl.getRefSideField(), 'connect', 'id']);
-        const ifDisconnect: boolean = get(data, [relationImpl.getRefSideField(), 'disconnect']);
-        const createData = get(data, [relationImpl.getRefSideField(), 'create']);
-        const ifDelete = get(data, [relationImpl.getRefSideField(), 'delete']);
+        const connectId = get(relationData, ['connect', 'id']);
+        const ifDisconnect: boolean = get(relationData, 'disconnect');
+        const createData = get(relationData, 'create');
+        const ifDelete = get(relationData, 'delete');
 
         if (connectId) {
           return relationImpl.connectOnRefSide(where.id, connectId);

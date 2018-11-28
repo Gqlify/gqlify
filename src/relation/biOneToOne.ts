@@ -67,19 +67,17 @@ export default class BiOneToOne {
     return this.refSideField;
   }
 
-  public setForeignKeyOnOwningSide(data: Record<string, any>, targetId: string) {
-    data[this.foreignKey] = targetId;
-    return data;
+  public setForeignKeyOnOwningSide(targetId: string) {
+    return {[this.foreignKey]: targetId};
   }
 
-  public async createAndSetForeignKeyOnOwningSide(data: Record<string, any>, targetData: Record<string, any>) {
+  public async createAndSetForeignKeyOnOwningSide(targetData: Record<string, any>) {
     const created = await this.refSideModel.getDataSource().create(targetData);
-    return this.setForeignKeyOnOwningSide(data, created.id);
+    return this.setForeignKeyOnOwningSide(created.id);
   }
 
-  public unsetForeignKeyOnOwningSide(data: Record<string, any>) {
-    data[this.foreignKey] = null;
-    return data;
+  public unsetForeignKeyOnOwningSide() {
+    return {[this.foreignKey]: null};
   }
 
   public async deleteAndUnsetForeignKeyOnOwningSide(data: Record<string, any>) {
@@ -88,7 +86,7 @@ export default class BiOneToOne {
       return;
     }
     await this.refSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
-    return this.unsetForeignKeyOnOwningSide(data);
+    return this.unsetForeignKeyOnOwningSide();
   }
 
   public async connectOnRefSide(refSideId: string, owningSideId: string) {
