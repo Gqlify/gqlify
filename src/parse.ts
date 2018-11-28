@@ -17,16 +17,12 @@ import {
   ObjectType,
 } from './dataModel';
 import {
-  ScalarField as SdlScalarField,
-  CustomScalarField as SdlCustomScalarField,
-  EnumField as SdlEnumField,
   ObjectField as SdlObjectField,
 } from './sdlParser/field';
 import RootNode from './RootNode';
 import { SdlParser } from './sdlParser/parser';
 import { SdlEnumType, SdlObjectType } from './sdlParser/namedType';
 import { BasicFieldMiddware, MetadataMiddleware, SdlMiddleware } from './sdlParser/middlewares';
-import Field from './dataModel/field';
 import { SdlField, SdlFieldType } from './sdlParser/field/interface';
 import { DataModelType } from './dataModel/type';
 import { mapValues, forEach, values, reduce } from 'lodash';
@@ -35,12 +31,6 @@ import { MODEL_DIRECTIVE } from './constants';
 
 const isGqlifyModel = (sdlNamedType: SdlNamedType) => {
   return Boolean(sdlNamedType.getDirectives()[MODEL_DIRECTIVE]);
-};
-
-const createInputFieldsFromSdlFields = (sdlFields: Record<string, SdlField>): string => {
-  return reduce(sdlFields, (result, sdlField, key) => {
-    return result += `${key}: ${sdlField.getTypeName()}`;
-  }, '');
 };
 
 export const parseDataModelScalarType = (field: SdlField): DataModelType => {
@@ -165,12 +155,6 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
       });
       namedTypes[name] = objectType;
       rootNode.addObjectType(objectType);
-      // add input as well
-      // todo: find a better way to deal with objectType input
-      // const inputName = `${name}Input`;
-      // rootNode.addInput(`input ${inputName} {
-      //   ${createInputFieldsFromSdlFields(sdlNamedType.getFields())}
-      // }`);
     }
 
     // GqlifyModel

@@ -37,5 +37,3 @@ export const recursiveCreateType = (fields: Record<string, Field>, context: Cont
 
   return content;
 };
-
-// export const getInputNameFromObjectType

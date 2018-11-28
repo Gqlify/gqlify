@@ -3,6 +3,11 @@ enum STATUS {
   NOT_OK
 }
 
+type Location {
+  lng: String
+  lat: String
+}
+
 type User @GQLifyModel(dataSource: "memory", key: "users") {
   id: ID! @unique @autoGen
   username: String!
@@ -10,6 +15,7 @@ type User @GQLifyModel(dataSource: "memory", key: "users") {
   status: STATUS
   books: [Book!]!
   groups: [Group!]!
+  location: Location
 }
 
 type Book @GQLifyModel(dataSource: "memory", key: "books") {

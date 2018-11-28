@@ -59,7 +59,7 @@ const createInputField = (
       const typeFields = createObjectInputField(fieldWithPrefix, field, context);
       const objectInputName = `${fieldWithPrefix}UpdateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
-      content.push(`${name}: ${field.getTypename()}`);
+      content.push(`${name}: ${objectInputName}`);
       return;
     }
 

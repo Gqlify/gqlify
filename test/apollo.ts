@@ -1,7 +1,7 @@
 import { ApolloServer } from 'apollo-server';
 import { readFileSync } from 'fs';
-import { Gqlify } from '../src';
-import MemoryDataSource from './mock/memoryDataSource';
+import { Gqlify } from '../src/gqlify';
+import MemoryDataSource from '../src/dataSource/memoryDataSource';
 const sdl = readFileSync(__dirname + '/fixtures/simple.graphql', {encoding: 'utf8'});
 
 const defaultData = {
