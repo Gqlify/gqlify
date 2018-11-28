@@ -1,13 +1,11 @@
 import {
-  ListReadable,
-  ListMutable,
   Where,
   PaginatedResponse,
   ListFindQuery,
   Operator,
   DataSource,
-} from '../../src/dataSource/interface';
-import { filter, createFilter, paginate, sort } from '../../src/helper';
+} from './interface';
+import { filter, createFilter, paginate, sort } from '../helper';
 import { first, last, assign, remove, isUndefined, get, pull } from 'lodash';
 
 export default class MemoryDataSource implements DataSource {

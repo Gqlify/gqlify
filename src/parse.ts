@@ -29,12 +29,18 @@ import { BasicFieldMiddware, MetadataMiddleware, SdlMiddleware } from './sdlPars
 import Field from './dataModel/field';
 import { SdlField, SdlFieldType } from './sdlParser/field/interface';
 import { DataModelType } from './dataModel/type';
-import { mapValues, forEach, values } from 'lodash';
+import { mapValues, forEach, values, reduce } from 'lodash';
 import { SdlNamedType } from './sdlParser/namedType/interface';
 import { MODEL_DIRECTIVE } from './constants';
 
 const isGqlifyModel = (sdlNamedType: SdlNamedType) => {
   return Boolean(sdlNamedType.getDirectives()[MODEL_DIRECTIVE]);
+};
+
+const createInputFieldsFromSdlFields = (sdlFields: Record<string, SdlField>): string => {
+  return reduce(sdlFields, (result, sdlField, key) => {
+    return result += `${key}: ${sdlField.getTypeName()}`;
+  }, '');
 };
 
 export const parseDataModelScalarType = (field: SdlField): DataModelType => {
@@ -159,6 +165,12 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
       });
       namedTypes[name] = objectType;
       rootNode.addObjectType(objectType);
+      // add input as well
+      // todo: find a better way to deal with objectType input
+      // const inputName = `${name}Input`;
+      // rootNode.addInput(`input ${inputName} {
+      //   ${createInputFieldsFromSdlFields(sdlNamedType.getFields())}
+      // }`);
     }
 
     // GqlifyModel

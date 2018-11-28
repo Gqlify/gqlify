@@ -1,9 +1,7 @@
 import Field from '../dataModel/field';
 import { Context } from './interface';
-import CustomScalarField from '../dataModel/customScalarField';
 import EnumField from '../dataModel/enumField';
 import ObjectField from '../dataModel/objectField';
-import RelationField from '../dataModel/relationField';
 import { upperFirst, forEach } from 'lodash';
 
 const graphqlType = (field: Field) => {
@@ -39,3 +37,5 @@ export const recursiveCreateType = (fields: Record<string, Field>, context: Cont
 
   return content;
 };
+
+// export const getInputNameFromObjectType
