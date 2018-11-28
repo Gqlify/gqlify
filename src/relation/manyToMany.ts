@@ -42,17 +42,15 @@ export default class ManyToMany {
     return this.modelBField;
   }
 
-  public async addIdToModelA(modelAId: string, modelBId: string) {
-    return this.modelA.getDataSource().addIdToManyRelation(
+  public async addId({modelAId, modelBId}: {modelAId: string, modelBId: string}) {
+    await this.modelA.getDataSource().addIdToManyRelation(
       this.modelA.getNamings().singular,
       this.modelB.getNamings().singular,
       modelAId,
       modelBId,
     );
-  }
 
-  public async addIdToModelB(modelBId: string, modelAId: string) {
-    return this.modelB.getDataSource().addIdToManyRelation(
+    await this.modelB.getDataSource().addIdToManyRelation(
       this.modelB.getNamings().singular,
       this.modelA.getNamings().singular,
       modelBId,
@@ -60,27 +58,25 @@ export default class ManyToMany {
     );
   }
 
-  public async createAndAddIdToModelA(modelAId: string, modelBData: Record<string, any>) {
-    const modelBRecord = await this.modelB.getDataSource().create(modelBData);
-    return this.addIdToModelA(modelAId, modelBRecord.id);
+  public async createAndAddIdForModelA({modelAId, modelBData}: {modelAId: string, modelBData: Record<string, any>}) {
+    const record = await this.modelB.getDataSource().create(modelBData);
+    return this.addId({modelAId, modelBId: record.id});
   }
 
-  public async createAndAddIdToModelB(modelBId: string, modelAData: Record<string, any>) {
-    const modelARecord = await this.modelA.getDataSource().create(modelAData);
-    return this.addIdToModelB(modelBId, modelARecord.id);
+  public async createAndAddIdForModelB({modelBId, modelAData}: {modelBId: string, modelAData: Record<string, any>}) {
+    const record = await this.modelA.getDataSource().create(modelAData);
+    return this.addId({modelBId, modelAId: record.id});
   }
 
-  public async removeIdFromModelA(modelAId: string, modelBId: string) {
-    return this.modelA.getDataSource().removeIdFromManyRelation(
+  public async removeId({modelAId, modelBId}: {modelAId: string, modelBId: string}) {
+    await this.modelA.getDataSource().removeIdFromManyRelation(
       this.modelA.getNamings().singular,
       this.modelB.getNamings().singular,
       modelAId,
       modelBId,
     );
-  }
 
-  public async removeIdFromModelB(modelBId: string, modelAId: string) {
-    return this.modelB.getDataSource().removeIdFromManyRelation(
+    await this.modelB.getDataSource().removeIdFromManyRelation(
       this.modelB.getNamings().singular,
       this.modelA.getNamings().singular,
       modelBId,
@@ -88,14 +84,14 @@ export default class ManyToMany {
     );
   }
 
-  public async deleteAndRemoveIdFromModelA(modelBId: string, modelAId: string) {
-    await this.modelB.getDataSource().delete({id: {[Operator.eq]: modelBId}});
-    return this.removeIdFromModelA(modelAId, modelBId);
-  }
-
-  public async deleteAndRemoveIdFromModelB(modelAId: string, modelBId: string) {
+  public async deleteAndRemoveIdFromModelA({modelAId, modelBId}: {modelAId: string, modelBId: string}) {
     await this.modelA.getDataSource().delete({id: {[Operator.eq]: modelAId}});
-    return this.removeIdFromModelB(modelBId, modelAId);
+    return this.removeId({modelAId, modelBId});
+  }
+
+  public async deleteAndRemoveIdFromModelB({modelAId, modelBId}: {modelAId: string, modelBId: string}) {
+    await this.modelB.getDataSource().delete({id: {[Operator.eq]: modelBId}});
+    return this.removeId({modelAId, modelBId});
   }
 
   public async joinModelA(modelBId: string) {

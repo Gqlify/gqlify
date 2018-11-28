@@ -16,37 +16,43 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const modelBField = relationImpl.getModelBField();
 
   // A side
-  const createFromModelA = (sourceId: string, records: any[]) => {
-    return Promise.all(records.map(record => relationImpl.createAndAddIdToModelA(sourceId, record)));
+  const createForModelA = (sourceId: string, records: any[]) => {
+    return Promise.all(records.map(record =>
+      relationImpl.createAndAddIdForModelA({modelAId: sourceId, modelBData: record})));
   };
 
-  const connectFromModelA = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.addIdToModelA(sourceId, id)));
+  const connectForModelA = (sourceId: string, ids: string[]) => {
+    return Promise.all(ids.map(id => relationImpl.addId({modelAId: sourceId, modelBId: id})));
   };
 
-  const disconnectFromModelA = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.removeIdFromModelA(sourceId, id)));
+  const disconnectForModelA = (sourceId: string, ids: string[]) => {
+    return Promise.all(ids.map(id =>
+        relationImpl.removeId({modelAId: sourceId, modelBId: id})));
   };
 
-  const destroyFromModelA = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.deleteAndRemoveIdFromModelA(sourceId, id)));
+  const destroyForModelA = (sourceId: string, ids: string[]) => {
+    return Promise.all(ids.map(id =>
+      relationImpl.deleteAndRemoveIdFromModelB({modelAId: sourceId, modelBId: id})));
   };
 
   // B side
-  const createFromModelB = (sourceId: string, records: any[]) => {
-    return Promise.all(records.map(record => relationImpl.createAndAddIdToModelB(sourceId, record)));
+  const createForModelB = (sourceId: string, records: any[]) => {
+    return Promise.all(records.map(record =>
+      relationImpl.createAndAddIdForModelB({modelBId: sourceId, modelAData: record})));
   };
 
-  const connectFromModelB = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.addIdToModelB(sourceId, id)));
+  const connectForModelB = (sourceId: string, ids: string[]) => {
+    return Promise.all(ids.map(id => relationImpl.addId({modelBId: sourceId, modelAId: id})));
   };
 
-  const disconnectFromModelB = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.removeIdFromModelB(sourceId, id)));
+  const disconnectForModelB = (sourceId: string, ids: string[]) => {
+    return Promise.all(ids.map(id =>
+        relationImpl.removeId({modelAId: id, modelBId: sourceId})));
   };
 
-  const destroyFromModelB = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.deleteAndRemoveIdFromModelB(sourceId, id)));
+  const destroyForModelB = (sourceId: string, ids: string[]) => {
+    return Promise.all(ids.map(id =>
+      relationImpl.deleteAndRemoveIdFromModelA({modelAId: id, modelBId: sourceId})));
   };
 
   const hookMap: Record<string, Hook> = {
@@ -70,11 +76,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // execute relations
         if (connectWhere) {
           const connectIds = connectWhere.map(where => where.id);
-          await connectFromModelA(data.id, connectIds);
+          await connectForModelA(data.id, connectIds);
         }
 
         if (createRecords) {
-          await createFromModelA(data.id, createRecords);
+          await createForModelA(data.id, createRecords);
         }
 
         return created;
@@ -101,21 +107,21 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connectFromModelA(where.id, connectIds);
+          await connectForModelA(where.id, connectIds);
         }
 
         if (createRecords) {
-          await createFromModelA(where.id, createRecords);
+          await createForModelA(where.id, createRecords);
         }
 
         if (disconnectWhere) {
           const disconnectIds = disconnectWhere.map(v => v.id);
-          await disconnectFromModelA(where.id, disconnectIds);
+          await disconnectForModelA(where.id, disconnectIds);
         }
 
         if (deleteWhere) {
           const deleteIds = deleteWhere.map(v => v.id);
-          await destroyFromModelA(where.id, deleteIds);
+          await destroyForModelA(where.id, deleteIds);
         }
 
         return updated;
@@ -146,11 +152,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // execute relations
         if (connectWhere) {
           const connectIds = connectWhere.map(where => where.id);
-          await connectFromModelB(data.id, connectIds);
+          await connectForModelB(data.id, connectIds);
         }
 
         if (createRecords) {
-          await createFromModelB(data.id, createRecords);
+          await createForModelB(data.id, createRecords);
         }
 
         return created;
@@ -177,21 +183,21 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connectFromModelB(where.id, connectIds);
+          await connectForModelB(where.id, connectIds);
         }
 
         if (createRecords) {
-          await createFromModelB(where.id, createRecords);
+          await createForModelB(where.id, createRecords);
         }
 
         if (disconnectWhere) {
           const disconnectIds = disconnectWhere.map(v => v.id);
-          await disconnectFromModelB(where.id, disconnectIds);
+          await disconnectForModelB(where.id, disconnectIds);
         }
 
         if (deleteWhere) {
           const deleteIds = deleteWhere.map(v => v.id);
-          await destroyFromModelB(where.id, deleteIds);
+          await destroyForModelB(where.id, deleteIds);
         }
 
         return updated;
