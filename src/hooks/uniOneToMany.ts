@@ -1,7 +1,7 @@
 import { ModelRelation } from '../dataModel';
 import { Hook } from './interface';
 import { OneToManyRelation } from '../relation';
-import { get } from 'lodash';
+import { get, omit } from 'lodash';
 
 export const createHookMap = (relation: ModelRelation): Record<string, Hook> => {
   const relationImpl = new OneToManyRelation({
@@ -10,6 +10,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     oneSideField: relation.sourceField,
     manySideField: relation.targetField,
   });
+
+  const oneSideField = relationImpl.getOneSideField();
 
   const create = (sourceId: string, records: any[]) => {
     return Promise.all(records.map(record => relationImpl.createAndAddFromOneSide(sourceId, record)));
@@ -31,33 +33,46 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const hookMap: Record<string, Hook> = {
     // one side
     [relation.source.getName()]: {
-      // todo: fix that relation fields would be inserted into data
-      afterCreate: async data => {
-        if (!get(data, relation.sourceField)) {
-          return;
+      wrapCreate: async (data, createOperation) => {
+        const relationData = get(data, oneSideField);
+        if (!relationData) {
+          return createOperation(data);
         }
-        const connectWhere: Array<{id: string}> = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
+
+        // create data
+        const dataWithoutRelation = omit(data, oneSideField);
+        const created = await createOperation(dataWithoutRelation);
+
+        // bind relation
+        const connectWhere: Array<{id: string}> = get(relationData, 'connect');
+        const createRecords: any[] = get(relationData, 'create');
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connect(data.id, connectIds);
+          await connect(created.id, connectIds);
         }
 
         if (createRecords) {
-          await create(data.id, createRecords);
+          await create(created.id, createRecords);
         }
       },
 
       // require id in where
-      afterUpdate: async (where, data) => {
-        if (!get(data, relation.sourceField)) {
-          return;
+      wrapUpdate: async (where, data, updateOperation) => {
+        const relationData = get(data, oneSideField);
+        if (!relationData) {
+          return updateOperation(where, data);
         }
-        const connectWhere: Array<{id: string}> = get(data, [relation.sourceField, 'connect']);
-        const createRecords: any[] = get(data, [relation.sourceField, 'create']);
-        const disconnectWhere: Array<{id: string}> = get(data, [relation.sourceField, 'disconnect']);
-        const deleteWhere: any[] = get(data, [relation.sourceField, 'delete']);
+
+        // update first
+        const dataWithoutRelation = omit(data, oneSideField);
+        const updated = await updateOperation(where, dataWithoutRelation);
+
+        // bind relation
+        const connectWhere: Array<{id: string}> = get(relationData, 'connect');
+        const createRecords: any[] = get(relationData, 'create');
+        const disconnectWhere: Array<{id: string}> = get(relationData, 'disconnect');
+        const deleteWhere: any[] = get(relationData, 'delete');
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
@@ -77,6 +92,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
           const deleteIds = deleteWhere.map(v => v.id);
           await destroy(where.id, deleteIds);
         }
+
+        return updated;
       },
 
       resolveFields: {

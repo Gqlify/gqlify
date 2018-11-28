@@ -61,7 +61,7 @@ export default class OneToMany {
       return;
     }
     await this.oneSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
-    return this.unsetForeignKeyOnManySide(data);
+    return this.unsetForeignKeyOnManySide();
   }
 
   public async addIdFromOneSide(oneSideId: string, manySideId: string) {
