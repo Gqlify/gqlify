@@ -3,6 +3,7 @@
 export { default as Model } from './model';
 
 // Field
+export { default as Field } from './field';
 export { default as CustomScalarField } from './customScalarField';
 export { default as EnumField } from './enumField';
 export { default as ObjectField } from './objectField';

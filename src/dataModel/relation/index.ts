@@ -3,6 +3,12 @@ import { forEach, get, size } from 'lodash';
 import RelationField from '../relationField';
 import { ModelRelation, RelationType } from './types';
 
+const createDefaultRelationName = (relationConfig: Partial<ModelRelation>): string => {
+  const sourceName = relationConfig.source.getNamings().capitalSingular;
+  const targetName = relationConfig.target.getNamings().capitalSingular;
+  return `${sourceName}And${targetName}On${relationConfig.sourceField}`;
+};
+
 enum toRelation {
   one = '1',
   many = '*',
@@ -38,7 +44,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
       const otherSideFields: Array<{type: toRelation, field: string, built?: boolean}> =
         get(relationTable, [toModelName, fromModelName]);
       fields.forEach(({type, field}) => {
-        let relation: ModelRelation;
+        let relationConfig: ModelRelation;
         const fromModel = findModel(fromModelName);
         const toModel = findModel(toModelName);
 
@@ -46,7 +52,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         // we make it uni-directional
         // todo: support relation with name to disambiguate them
         if (!otherSideFields || size(otherSideFields) > 1) {
-          relation = {
+          relationConfig = {
             type: (type === toRelation.one) ? RelationType.uniOneToOne : RelationType.uniOneToMany,
             source: fromModel,
             target: toModel,
@@ -57,7 +63,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         // bi-directional
         const otherSide = otherSideFields[0];
         if (type === toRelation.one && otherSide.type === toRelation.one) {
-          relation = {
+          relationConfig = {
             type: RelationType.biOneToOne,
             source: fromModel,
             target: toModel,
@@ -65,7 +71,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             targetField: otherSide.field,
           };
         } else if (type === toRelation.one && otherSide.type === toRelation.many) {
-          relation = {
+          relationConfig = {
             type: RelationType.biOneToMany,
             source: toModel,
             target: fromModel,
@@ -73,7 +79,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             targetField: field,
           };
         } else if (type === toRelation.many && otherSide.type === toRelation.one) {
-          relation = {
+          relationConfig = {
             type: RelationType.biOneToMany,
             source: fromModel,
             target: toModel,
@@ -81,7 +87,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             targetField: otherSide.field,
           };
         } else if (type === toRelation.many && otherSide.type === toRelation.many) {
-          relation = {
+          relationConfig = {
             type: RelationType.biManyToMany,
             source: fromModel,
             target: toModel,
@@ -94,7 +100,10 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
 
         // mark field from otherside to built to prevent deplicate relation
         otherSide.built = true;
-        modelRelations.push(relation);
+        modelRelations.push({
+          name: createDefaultRelationName(relationConfig),
+          ...relationConfig,
+        });
       });
     });
   });

@@ -11,6 +11,7 @@ export enum RelationType {
 
 export interface ModelRelation {
   type: RelationType;
+  name?: string;
   source: Model;
   sourceField: string;
   target: Model;

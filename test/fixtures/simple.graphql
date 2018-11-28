@@ -10,6 +10,15 @@ type Location {
   lat: String
 }
 
+type Note {
+  title: String
+  text: String
+}
+
+# User-Group on members: many-to-many
+# User-Group on admin: one-to-many
+# User-Book: one-to-many
+# User-User on friend: one-to-one
 type User @GQLifyModel(dataSource: "memory", key: "users") {
   id: ID! @unique @autoGen
   username: String!
@@ -17,18 +26,22 @@ type User @GQLifyModel(dataSource: "memory", key: "users") {
   status: STATUS
   attributes: JSON
   books: [Book!]!
-  groups: [Group!]!
+  groups: [Group!]! @relation(name: "Membership")
   location: Location
+  friend: User
+  adminedGroups: [Group!]! @relation(name: "Admin")
 }
 
 type Book @GQLifyModel(dataSource: "memory", key: "books") {
   id: ID! @unique @autoGen
   name: String!
   author: User
+  notes: [Note!]!
 }
 
 type Group @GQLifyModel(dataSource: "memory", key: "groups") {
   id: ID! @unique @autoGen
   name: String!
-  members: [User!]!
+  members: [User!]! @relation(name: "Membership")
+  admin: User @relation(name: "Admin")
 }
