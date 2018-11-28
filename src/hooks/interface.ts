@@ -3,18 +3,16 @@ import { Model } from '../dataModel';
 
 export interface Hook {
   // create
-  beforeCreate?: (data: Record<string, any>) => Promise<void>;
-  transformCreatePayload?: (data: Record<string, any>) => Promise<Record<string, any>>;
-  afterCreate?: (data: Record<string, any>) => Promise<void>;
+  wrapCreate?: (data, createOperation: (data: Record<string, any>) => Promise<any>) => Promise<any>;
 
   // update
-  beforeUpdate?: (where: any, data: Record<string, any>) => Promise<void>;
-  transformUpdatePayload?: (data: Record<string, any>) => Promise<Record<string, any>>;
-  afterUpdate?: (where: any, data: Record<string, any>) => Promise<void>;
+  wrapUpdate?: (
+    where: any,
+    data: Record<string, any>,
+    updateOperation: (where: any, data: Record<string, any>) => Promise<any>) => Promise<any>;
 
   // delete
-  beforeDelete?: (where: any) => Promise<void>;
-  afterDelete?: (where: any) => Promise<void>;
+  wrapDelete?: (where: any, destroyOperation: (where: any) => Promise<any>) => Promise<any>;
 
   // query
   resolveFields?: IResolverObject;

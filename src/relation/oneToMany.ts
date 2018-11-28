@@ -42,19 +42,17 @@ export default class OneToMany {
     return this.manySideField;
   }
 
-  public setForeignKeyOnManySide(data: Record<string, any>, targetId: string) {
-    data[this.foreignKey] = targetId;
-    return data;
+  public setForeignKeyOnManySide(targetId: string) {
+    return {[this.foreignKey]: targetId};
   }
 
-  public async createAndSetForeignKeyOnManySide(data: Record<string, any>, targetData: Record<string, any>) {
+  public async createAndSetForeignKeyOnManySide(targetData: Record<string, any>) {
     const created = await this.oneSideModel.getDataSource().create(targetData);
-    return this.setForeignKeyOnManySide(data, created.id);
+    return this.setForeignKeyOnManySide(created.id);
   }
 
-  public unsetForeignKeyOnManySide(data: Record<string, any>) {
-    data[this.foreignKey] = null;
-    return data;
+  public unsetForeignKeyOnManySide() {
+    return {[this.foreignKey]: null};
   }
 
   public async destroyAndUnsetForeignKeyOnManySide(data: Record<string, any>) {
