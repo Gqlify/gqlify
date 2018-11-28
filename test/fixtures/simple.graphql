@@ -1,3 +1,5 @@
+scalar JSON
+
 enum STATUS {
   OK
   NOT_OK
@@ -13,6 +15,7 @@ type User @GQLifyModel(dataSource: "memory", key: "users") {
   username: String!
   email: String
   status: STATUS
+  attributes: JSON
   books: [Book!]!
   groups: [Group!]!
   location: Location

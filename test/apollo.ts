@@ -1,4 +1,5 @@
 import { ApolloServer } from 'apollo-server';
+import GraphQLJSON from 'graphql-type-json';
 import { readFileSync } from 'fs';
 import { Gqlify } from '../src/gqlify';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
@@ -23,6 +24,9 @@ const gqlify = new Gqlify({
   sdl,
   dataSources: {
     memory: (args: any) => new MemoryDataSource(defaultData[args.key]),
+  },
+  scalars: {
+    JSON: GraphQLJSON,
   },
 });
 const server = new ApolloServer(gqlify.createApolloConfig());

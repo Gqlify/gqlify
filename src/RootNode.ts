@@ -89,7 +89,7 @@ export default class RootNode {
   private mutationMap: Record<string, () => GraphQLFieldConfig<any, any>> = {};
   private objectTypeMap: Record<string, GraphQLObjectTypeConfig<any, any>> = {};
   private inputMap: Record<string, GraphQLInputObjectTypeConfig> = {};
-  private scalarMap: Record<string, GraphQLScalarTypeConfig<any, any>> = {};
+  private scalars: GraphQLScalarType[] = [];
   private interfaceMap: Record<string, GraphQLInterfaceTypeConfig<any, any>> = {};
   private enumMap: Record<string, GraphQLEnumTypeConfig> = {};
   private unionMap: Record<string, GraphQLUnionTypeConfig<any, any>> = {};
@@ -126,8 +126,8 @@ export default class RootNode {
     this.inputMap[name] = this.buildInputTypeConfig(def);
   }
 
-  public addScalar(name: string, scalar: GraphQLScalarType) {
-    this.scalarMap[name] = scalar;
+  public addScalar(scalar: GraphQLScalarType) {
+    this.scalars.push(scalar);
   }
 
   public addInterface(interfaceDef: string) {
@@ -157,8 +157,7 @@ export default class RootNode {
       }),
     };
 
-    const scalarDefs = values<GraphQLScalarTypeConfig<any, any>>(this.scalarMap)
-      .map(typeConfig => new GraphQLScalarType(typeConfig));
+    const scalarDefs = this.scalars;
     const interfaceDefs = values<GraphQLInterfaceTypeConfig<any, any>>(this.interfaceMap)
       .map(typeConfig => new GraphQLInterfaceType(typeConfig));
     const enumDefs = values<GraphQLEnumTypeConfig>(this.enumMap)
