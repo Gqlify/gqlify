@@ -1,8 +1,11 @@
 {
-  "name": "@canner/gqlify",
+  "name": "@gqlify/server",
   "version": "1.8.0",
   "description": "gqlify",
   "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "jsnext:main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
   "files": [
     "lib"
   ],

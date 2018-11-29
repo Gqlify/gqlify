@@ -4,11 +4,13 @@
     "packages/*"
   ],
   "scripts": {
+    "compile": "tsc --build tsconfig.build.json",
     "clean": "lerna run clean --stream --parallel",
     "build": "lerna run build --stream --parallel",
     "lint": "lerna run lint --stream --parallel",
     "pretest": "yarn lint",
-    "test": "lerna run test --stream --parallel -- --colors"
+    "test": "lerna run test --stream --parallel -- --colors",
+    "postinstall": "npm run compile"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",
