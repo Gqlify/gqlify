@@ -9,7 +9,7 @@ import {
 import { createRelation, Model } from './dataModel';
 import { parse } from './parse';
 import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_NAME } from './constants';
-import { omit, forEach, values } from 'lodash';
+import { omit, forEach, values, get } from 'lodash';
 import Generator from './generator';
 import { createRelationHooks } from './hooks/relationHook';
 import mergeHooks from './hooks/mergeHooks';
@@ -41,9 +41,14 @@ export class Gqlify {
     this.scalars = scalars;
   }
 
-  public createServerConfig(): {typeDefs: string, resolvers: IResolvers, scalars?: Record<string, GraphQLScalarType> } {
-    // tslint:disable-next-line:no-console
-    console.log(chalk.magenta(`Starting Gqlify...\n`));
+  public createServerConfig(
+    settings?: {skipPrint: boolean},
+  ): {typeDefs: string, resolvers: IResolvers, scalars?: Record<string, GraphQLScalarType> } {
+    const ifSkipPrint = get(settings, 'skipPrint', false);
+    if (!ifSkipPrint) {
+      // tslint:disable-next-line:no-console
+      console.log(chalk.magenta(`Starting Gqlify...\n`));
+    }
 
     const {rootNode, models} = parse(this.sdl);
     const modelMap: Record<string, Model> = {};
@@ -72,8 +77,10 @@ export class Gqlify {
     const relationHooks = createRelationHooks(relations);
 
     // print
-    printModels(models);
-    printRelations(relations);
+    if (!ifSkipPrint) {
+      printModels(models);
+      printRelations(relations);
+    }
 
     // merge hooks
     const hookMap = mergeHooks(relationHooks);
