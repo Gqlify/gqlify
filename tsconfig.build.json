@@ -1,0 +1,11 @@
+{
+  "compilerOptions": {
+    "composite": true
+  },
+  "files": [],
+  "include": [],
+  "references": [
+    { "path": "./packages/gqlify" },
+    { "path": "./packages/gqlify-firebase" },
+  ]
+}
