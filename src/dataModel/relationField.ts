@@ -7,6 +7,7 @@ export type ModelOrThunk = Model | (() => Model);
 
 export default class RelationField extends Field {
   private relationTo: ModelOrThunk;
+  private relationName?: string;
 
   constructor({
     relationTo,
@@ -43,5 +44,13 @@ export default class RelationField extends Field {
 
   public getFields() {
     return this.getRelationTo().getFields();
+  }
+
+  public getRelationName() {
+    return this.relationName;
+  }
+
+  public setRelationName(name: string) {
+    this.relationName = name;
   }
 }

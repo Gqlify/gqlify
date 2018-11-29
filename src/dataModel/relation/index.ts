@@ -1,7 +1,7 @@
-import Model from '../model';
 import { forEach, get, size } from 'lodash';
 import RelationField from '../relationField';
 import { ModelRelation, RelationType } from './types';
+import { Field, Model } from '..';
 
 const createDefaultRelationName = (relationConfig: Partial<ModelRelation>): string => {
   const sourceName = relationConfig.source.getNamings().capitalSingular;
@@ -16,7 +16,8 @@ enum toRelation {
 
 interface RelationTableField {
   type: toRelation;
-  field: string;
+  field: Field;
+  fieldName: string;
   built?: boolean;
   sourceModel: Model;
   targetModel: Model;
@@ -41,15 +42,18 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
 
       const relationToModel = field.getRelationTo();
       const relationToModelName = relationToModel.getName();
-      const relationField = {
+      const relationField: RelationTableField = {
         type: field.isList() ? toRelation.many : toRelation.one,
-        field: fieldName,
+        fieldName,
+        field,
         sourceModel: model,
         targetModel: relationToModel,
       };
 
       // if relation has name
       const relationName = get(field.getMetadata('relation'), 'name');
+      // set to relationField
+      field.setRelationName(relationName);
       if (relationName && !relationsWithName[relationName]) {
         relationsWithName[relationName] = {sourceSide: relationField};
         return;
@@ -77,7 +81,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         type: (sourceSide.type === toRelation.one) ? RelationType.uniOneToOne : RelationType.uniOneToMany,
         source: sourceSide.sourceModel,
         target: sourceSide.targetModel,
-        sourceField: sourceSide.field,
+        sourceField: sourceSide.fieldName,
       };
       modelRelations.push(relation);
       return;
@@ -91,32 +95,35 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         type: RelationType.biOneToOne,
         source: sourceSide.sourceModel,
         target: sourceSide.targetModel,
-        sourceField: sourceSide.field,
-        targetField: targetSide.field,
+        sourceField: sourceSide.fieldName,
+        targetField: targetSide.fieldName,
       };
     } else if (sourceSide.type === toRelation.one && targetSide.type === toRelation.many) {
       relation = {
+        name,
         type: RelationType.biOneToMany,
         source: sourceSide.targetModel,
         target: sourceSide.sourceModel,
-        sourceField: targetSide.field,
-        targetField: sourceSide.field,
+        sourceField: targetSide.fieldName,
+        targetField: sourceSide.fieldName,
       };
     } else if (sourceSide.type === toRelation.many && targetSide.type === toRelation.one) {
       relation = {
+        name,
         type: RelationType.biOneToMany,
         source: sourceSide.sourceModel,
         target: sourceSide.targetModel,
-        sourceField: sourceSide.field,
-        targetField: targetSide.field,
+        sourceField: sourceSide.fieldName,
+        targetField: targetSide.fieldName,
       };
     } else if (sourceSide.type === toRelation.many && targetSide.type === toRelation.many) {
       relation = {
+        name,
         type: RelationType.biManyToMany,
         source: sourceSide.sourceModel,
         target: sourceSide.targetModel,
-        sourceField: sourceSide.field,
-        targetField: targetSide.field,
+        sourceField: sourceSide.fieldName,
+        targetField: targetSide.fieldName,
       };
     } else {
       throw new Error(`unknown relation type from ${sourceSide.type} to ${targetSide.type}`);
@@ -128,9 +135,9 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
   // construct mutual relation from relation table
   forEach(relationTable, (toRelationMap, fromModelName) => {
     forEach(toRelationMap, (fields, toModelName) => {
-      const otherSideFields: Array<{type: toRelation, field: string, built?: boolean}> =
+      const otherSideFields: RelationTableField[] =
         get(relationTable, [toModelName, fromModelName]);
-      fields.forEach(({type, field, built}) => {
+      fields.forEach(({type, field, fieldName, built}) => {
         // build relation already skip it
         if (built) {
           return;
@@ -147,7 +154,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             type: (type === toRelation.one) ? RelationType.uniOneToOne : RelationType.uniOneToMany,
             source: fromModel,
             target: toModel,
-            sourceField: field,
+            sourceField: fieldName,
           };
         }
 
@@ -158,32 +165,32 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             type: RelationType.biOneToOne,
             source: fromModel,
             target: toModel,
-            sourceField: field,
-            targetField: otherSide.field,
+            sourceField: fieldName,
+            targetField: otherSide.fieldName,
           };
         } else if (type === toRelation.one && otherSide.type === toRelation.many) {
           relationConfig = {
             type: RelationType.biOneToMany,
             source: toModel,
             target: fromModel,
-            sourceField: otherSide.field,
-            targetField: field,
+            sourceField: otherSide.fieldName,
+            targetField: fieldName,
           };
         } else if (type === toRelation.many && otherSide.type === toRelation.one) {
           relationConfig = {
             type: RelationType.biOneToMany,
             source: fromModel,
             target: toModel,
-            sourceField: field,
-            targetField: otherSide.field,
+            sourceField: fieldName,
+            targetField: otherSide.fieldName,
           };
         } else if (type === toRelation.many && otherSide.type === toRelation.many) {
           relationConfig = {
             type: RelationType.biManyToMany,
             source: fromModel,
             target: toModel,
-            sourceField: field,
-            targetField: otherSide.field,
+            sourceField: fieldName,
+            targetField: otherSide.fieldName,
           };
         } else {
           throw new Error(`unknown relation type from ${type} to ${otherSide.type}`);
@@ -191,8 +198,14 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
 
         // mark field from otherside to built to prevent deplicate relation
         otherSide.built = true;
+        const relationName = createDefaultRelationName(relationConfig);
+        // set to bothside fields
+        (field as RelationField).setRelationName(relationName);
+        (otherSide.field as RelationField).setRelationName(relationName);
+
+        // append to result
         modelRelations.push({
-          name: createDefaultRelationName(relationConfig),
+          name: relationName,
           ...relationConfig,
         });
       });

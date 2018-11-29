@@ -20,6 +20,7 @@
   "dependencies": {
     "axios": "^0.18.0",
     "bluebird": "^3.5.1",
+    "chalk": "^2.4.1",
     "graphql": "^14.0.2",
     "graphql-tag": "^2.10.0",
     "graphql-tools": "^4.0.2",

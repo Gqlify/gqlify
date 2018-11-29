@@ -19,6 +19,8 @@ import { IResolvers } from 'graphql-tools';
 import gql from 'graphql-tag';
 import { GraphQLScalarType } from 'graphql';
 import { Config } from 'apollo-server';
+import { printModels, printRelations } from './printer';
+import chalk from 'chalk';
 
 export class Gqlify {
   private sdl: string;
@@ -40,6 +42,9 @@ export class Gqlify {
   }
 
   public createServerConfig(): {typeDefs: string, resolvers: IResolvers, scalars?: Record<string, GraphQLScalarType> } {
+    // tslint:disable-next-line:no-console
+    console.log(chalk.magenta(`Starting Gqlify...\n`));
+
     const {rootNode, models} = parse(this.sdl);
     const modelMap: Record<string, Model> = {};
 
@@ -65,6 +70,10 @@ export class Gqlify {
     // create relation hooks
     const relations = createRelation(models);
     const relationHooks = createRelationHooks(relations);
+
+    // print
+    printModels(models);
+    printRelations(relations);
 
     // merge hooks
     const hookMap = mergeHooks(relationHooks);
@@ -94,6 +103,7 @@ export class Gqlify {
       });
     }
 
+    // construct graphql server config
     const generator = new Generator({ plugins, rootNode });
     const resolvers = combine(plugins, models);
     const typeDefs = generator.generate(models);
