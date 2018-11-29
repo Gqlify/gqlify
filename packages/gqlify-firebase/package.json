@@ -1,0 +1,13 @@
+{
+  "name": "@gqlify/firebase",
+  "version": "1.0.0",
+  "description": "the firebase packages for @canner/gqlify",
+  "main": "lib/index.js",
+  "repository": "https://github.com/Canner/gqlify",
+  "author": "FrankYang0529",
+  "license": "MIT",
+  "dependencies": {
+    "firebase": "^5.5.9",
+    "@gqlify/server": "^1.8.0"
+  }
+}
