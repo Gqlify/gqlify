@@ -1,0 +1,35 @@
+{
+  "name": "@gqlify/server",
+  "version": "1.8.0",
+  "description": "gqlify",
+  "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "jsnext:main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "clean": "rimraf lib",
+    "lint": "tslint --force --format verbose \"src/**/*.ts\" \"test/*\"",
+    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc -p ./tsconfig.release.json --pretty",
+    "test": "mocha --timeout 100000 --compilers ts:ts-node/register --recursive \"test/**/*.spec.ts\"",
+    "test:grep": "mocha --compilers ts:ts-node/register --recursive",
+    "coverage": "nyc npm run test",
+    "watch": "npm run build -- --watch",
+    "watch:test": "npm run test -- --watch",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "dependencies": {
+    "axios": "^0.18.0",
+    "bluebird": "^3.5.1",
+    "chalk": "^2.4.1",
+    "graphql": "^14.0.2",
+    "graphql-tag": "^2.10.0",
+    "graphql-tools": "^4.0.2",
+    "lodash": "^4.17.10",
+    "pluralize": "^7.0.0"
+  },
+  "author": "wwwy3y3",
+  "license": "ISC"
+}
