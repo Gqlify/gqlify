@@ -1,0 +1,31 @@
+{
+  "name": "@gqlify/mongodb",
+  "version": "1.0.0",
+  "description": "the mongodb package of gqlify",
+  "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "jsnext:main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "clean": "rimraf lib",
+    "lint": "tslint --force --format verbose \"src/**/*.ts\" \"test/*\"",
+    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc -p ./tsconfig.release.json --pretty",
+    "test": "mocha --timeout 100000 --compilers ts:ts-node/register --recursive \"test/**/*.spec.ts\"",
+    "test:grep": "mocha --compilers ts:ts-node/register --recursive",
+    "coverage": "nyc npm run test",
+    "watch": "npm run build -- --watch",
+    "watch:test": "npm run test -- --watch",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
+  "repository": "https://github.com/Canner/gqlify",
+  "author": "FrankYang0529",
+  "license": "Apache-2.0",
+  "dependencies": {
+    "@gqlify/server": "^1.8.0",
+    "lodash": "^4.17.11",
+    "mongodb": "^3.1.10"
+  }
+}
