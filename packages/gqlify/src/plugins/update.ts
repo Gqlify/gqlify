@@ -49,7 +49,8 @@ const createInputField = (
     }
 
     if (field.isScalar()) {
-      content.push(`${name}: ${field.getTypename()}`);
+      const fieldType = field.isList() ? `[${field.getTypename()}]` : field.getTypename();
+      content.push(`${name}: ${fieldType}`);
       return;
     }
 
@@ -59,7 +60,8 @@ const createInputField = (
       const typeFields = createObjectInputField(fieldWithPrefix, field, context);
       const objectInputName = `${fieldWithPrefix}UpdateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
-      content.push(`${name}: ${objectInputName}`);
+      const fieldType = field.isList() ? `[${objectInputName}]` : objectInputName;
+      content.push(`${name}: ${fieldType}`);
       return;
     }
 
