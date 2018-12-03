@@ -31,7 +31,7 @@ export default class OneToMany {
     this.manySideModel = manySideModel;
     this.oneSideField = oneSideField;
     this.manySideField = manySideField;
-    this.foreignKey = createForeignKey(this.manySideModel);
+    this.foreignKey = createForeignKey(this.oneSideModel);
   }
 
   public getOneSideField() {
