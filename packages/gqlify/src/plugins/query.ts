@@ -3,6 +3,15 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListReadable } from '../dataSource/interface';
+import { pick } from 'lodash';
+
+const parsePaginationFromArgs = (args: Record<string, any>) => {
+  if (!args) {
+    return null;
+  }
+
+  return pick(args, ['first', 'last', 'before', 'after']);
+};
 
 export default class QueryPlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
@@ -27,7 +36,13 @@ export default class QueryPlugin implements Plugin {
     // find many query
     const findManyQueryName = this.createFindQueryName(model);
     const whereInputName = this.whereInputPlugin.getWhereInputName(model);
-    root.addQuery(`${findManyQueryName}(where: ${whereInputName}): [${modelType}]`);
+    root.addQuery(`${findManyQueryName}(
+      where: ${whereInputName},
+      first: Int,
+      last: Int,
+      before: String,
+      after: String
+    ): [${modelType}]`);
   }
 
   public resolveInQuery({
@@ -46,7 +61,8 @@ export default class QueryPlugin implements Plugin {
       },
       [findManyQueryName]: async (root, args, context) => {
         const where = this.whereInputPlugin.parseWhere(args.where);
-        const response = await dataSource.find({where});
+        const pagination = parsePaginationFromArgs(args);
+        const response = await dataSource.find({where, pagination});
         return response.data;
       },
     };

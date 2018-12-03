@@ -12,57 +12,60 @@ export default class MemoryDataSource implements DataSource {
   private defaultData: any[];
   private relationTable: Record<string, Record<string, string[]>> = {};
 
-  constructor(defaultData: any[]) {
-    this.defaultData = defaultData;
+  constructor(defaultData?: any[]) {
+    this.defaultData = defaultData || [];
   }
 
-  public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
+  public find = async (args?: ListFindQuery): Promise<PaginatedResponse> => {
     const { pagination, where, orderBy = {} } = args || {} as any;
     const filteredData = sort(filter(this.defaultData, where), orderBy);
     return paginate(filteredData, pagination);
-  }
+  };
 
-  public async findOne({ where }: { where: Where }): Promise<any> {
+  public findOne = async ({ where }: { where: Where }): Promise<any> => {
     return first(filter(this.defaultData, where));
-  }
+  };
 
-  public async findOneById(id: string): Promise<any> {
+  public findOneById = async (id: string): Promise<any> => {
     return first(filter(this.defaultData, {id: {[Operator.eq]: id}}));
-  }
+  };
 
-  public async create(payload: any): Promise<any> {
-    payload.id = last(this.defaultData).id + 1;
+  public create = async (payload: any): Promise<any> => {
+    const lastRecord = last(this.defaultData);
+    const nextId = lastRecord ? parseInt(lastRecord.id, 10) + 1 : 0;
+    payload.id = nextId.toString();
     this.defaultData.push(payload);
-  }
+    return payload;
+  };
 
-  public async update(where: Where, payload: any): Promise<any> {
+  public update = async (where: Where, payload: any): Promise<any> => {
     const user = first(filter(this.defaultData, where));
     assign(user, payload);
-  }
+  };
 
-  public async delete(where: Where): Promise<any> {
-    const rmFilter = createFilter(where);
-    this.defaultData = remove(this.defaultData, rmFilter);
-  }
+  public delete = async (where: Where): Promise<any> => {
+    const target = first(filter(this.defaultData, where));
+    remove(this.defaultData, row => row === target);
+  };
 
   // ToOneRelation
-  public async findOneByRelation(foreignKey: string, foreignId: string): Promise<any> {
+  public findOneByRelation = async (foreignKey: string, foreignId: string): Promise<any> => {
     return first(filter(this.defaultData, {[foreignKey]: {[Operator.eq]: foreignId}}));
-  }
+  };
 
   // OneToManyRelation
-  public async findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]> {
+  public findManyFromOneRelation = async (foreignKey: string, foreignId: string): Promise<any[]> => {
     return filter(this.defaultData, {[foreignKey]: {[Operator.eq]: foreignId}});
-  }
+  };
 
   // ManyToManyRelation
-  public async findManyFromManyRelation(sourceSideName: string, targetSideName: string, sourceSideId: string) {
+  public findManyFromManyRelation = async (sourceSideName: string, targetSideName: string, sourceSideId: string) => {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
     return get(this.relationTable, [relationTableName, sourceSideId]) || [];
-  }
+  };
 
-  public async addIdToManyRelation(
-    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
+  public addIdToManyRelation = async (
+    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) => {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
     if (!this.relationTable[relationTableName]) {
       this.relationTable[relationTableName] = {[sourceSideId]: []};
@@ -73,10 +76,10 @@ export default class MemoryDataSource implements DataSource {
     }
 
     this.relationTable[relationTableName][sourceSideId].push(targetSideId);
-  }
+  };
 
-  public async removeIdFromManyRelation(
-    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
+  public removeIdFromManyRelation = async (
+    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) => {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
     if (!this.relationTable[relationTableName] ||
       isUndefined(this.relationTable[relationTableName][sourceSideId])) {
@@ -84,5 +87,5 @@ export default class MemoryDataSource implements DataSource {
     }
 
     pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
-  }
+  };
 }
