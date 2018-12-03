@@ -156,6 +156,18 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             target: toModel,
             sourceField: fieldName,
           };
+
+          // todo: reduce duplicate code here
+          const uniRelationName = createDefaultRelationName(relationConfig);
+          // set to bothside fields
+          (field as RelationField).setRelationName(uniRelationName);
+
+          // append to result
+          modelRelations.push({
+            name: uniRelationName,
+            ...relationConfig,
+          });
+          return;
         }
 
         // bi-directional
