@@ -6,12 +6,17 @@ import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 import { readFileSync } from 'fs';
 import GraphQLJSON from 'graphql-type-json';
+import * as admin from 'firebase-admin';
+
+import { FirebaseDataSource } from '@gqlify/firebase';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
+
 import faker from 'faker';
 import { createApp } from './createApp';
 
 const expect = chai.expect;
 const sdl = readFileSync(__dirname + '/fixtures/oneToOne.graphql', {encoding: 'utf8'});
+const serviceAccount = readFileSync(process.env.TEST_FIREBASE_CERT, {encoding: 'utf8'});
 
 const userFields = `
   id
@@ -99,6 +104,38 @@ describe('Relation tests on fixtures/oneToOne.graphql', function() {
   });
 
   after(async () => {
+    await (this as any).close();
+  });
+
+  testSuits.call(this);
+});
+
+describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source', function() {
+  this.timeout(20000);
+
+  before(async () => {
+    const serviceAccountJson = JSON.parse(serviceAccount);
+    const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).firebase = admin.app().database();
+  });
+
+  afterEach(async () => {
+    await (this as any).firebase.ref('/').remove();
+  });
+
+  after(async () => {
+    await (this as any).firebase.goOffline();
     await (this as any).close();
   });
 

@@ -79,6 +79,8 @@ describe('Tests on fixtures/oneModel.graphql with Memory Data Source', function(
 });
 
 describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', function() {
+  this.timeout(20000);
+
   before(async () => {
     const serviceAccountJson = JSON.parse(serviceAccount);
     const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
