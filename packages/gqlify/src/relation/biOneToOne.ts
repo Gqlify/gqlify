@@ -92,7 +92,7 @@ export default class BiOneToOne {
   public async connectOnRefSide(refSideId: string, owningSideId: string) {
     const owningSideDataSource = this.owningSideModel.getDataSource();
     // add refSideId to owningSide record
-    await owningSideDataSource.update({id: {[Operator.eq]: owningSideId}}, {[this.foreignKey]: refSideId});
+    await owningSideDataSource.updateOneRelation(owningSideId, this.foreignKey, refSideId);
   }
 
   public async createAndConnectOnRefSide(refSideId: string, data: Record<string, any>) {

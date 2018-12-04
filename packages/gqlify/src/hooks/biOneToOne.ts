@@ -93,7 +93,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // after create
         const dataWithoutRelation = omit(data, owningSideField);
         context.data = dataWithoutRelation;
-        const created = await createOperation();
+        await createOperation();
+        const created  = context.response;
 
         // bind relation
         if (connectId) {
