@@ -21,7 +21,7 @@ const createFilterFromOperator = (value, op) => {
   }
 };
 
-const iterateWhere = (where: Where, callback: (field: string, op: Operator, value: any) => void) => {
+export const iterateWhere = (where: Where, callback: (field: string, op: Operator, value: any) => void) => {
   forEach(where, (opWithValue, field) => {
     forEach(opWithValue, (value, op: Operator) => {
       callback(field, op, value);
