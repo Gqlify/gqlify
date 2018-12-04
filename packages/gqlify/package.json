@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/server",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
