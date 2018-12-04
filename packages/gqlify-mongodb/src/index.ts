@@ -66,6 +66,11 @@ export default class MongodbDataSource implements DataSource {
     return first(filter(data, {[foreignKey]: {[Operator.eq]: foreignId}}));
   }
 
+  // ToOneRelation
+  public async updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<any> {
+    throw Error('Not Implement');
+  }
+
   // OneToManyRelation
   public async findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]> {
     const data = await this.db.collection(this.collectionName).find({}).toArray();

@@ -29,6 +29,8 @@
     "lodash": "^4.17.11"
   },
   "devDependencies": {
-    "chai": "^4.2.0"
-  }
+    "chai": "^4.2.0",
+    "rimraf": "^2.6.2"
+  },
+  "gitHead": "f8f04b1e0c945bbffab0c0ae6dd9812f5ccab5e8"
 }

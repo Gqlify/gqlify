@@ -27,5 +27,9 @@
     "@gqlify/server": "^1.0.0",
     "firebase-admin": "^6.3.0",
     "lodash": "^4.17.11"
+  },
+  "gitHead": "f8f04b1e0c945bbffab0c0ae6dd9812f5ccab5e8",
+  "devDependencies": {
+    "rimraf": "^2.6.2"
   }
 }

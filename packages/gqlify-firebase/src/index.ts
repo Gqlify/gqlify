@@ -69,6 +69,11 @@ export default class FirebaseDataSource implements DataSource {
     return first(filter(snapshot.val(), {[foreignKey]: {[Operator.eq]: foreignId}}));
   }
 
+  // ToOneRelation
+  public async updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<any> {
+    throw Error('Not Implement');
+  }
+
   // OneToManyRelation
   public async findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]> {
     const ref = this.db.ref(`/${this.path}`);
