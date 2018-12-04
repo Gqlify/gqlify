@@ -24,7 +24,7 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
-    "@gqlify/server": "^1.8.0",
+    "@gqlify/server": "^1.0.0",
     "lodash": "^4.17.11",
     "mongodb": "^3.1.10"
   }
