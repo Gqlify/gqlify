@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { first, isUndefined, get, pull } from 'lodash';
+import { first, isEmpty, isUndefined, get, pull } from 'lodash';
 
 import {
   Where,
@@ -17,10 +17,13 @@ export default class FirestoreDataSource implements DataSource {
   private path: string;
   private relationTable: Record<string, Record<string, string[]>> = {};
 
-  constructor({ cert, path }: { cert: admin.ServiceAccount, path: string }) {
-    this.db = admin.initializeApp({
-      credential: admin.credential.cert(cert),
-    }).firestore();
+  constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
+    this.db = isEmpty(admin.apps)
+      ? admin.initializeApp({
+        credential: admin.credential.cert(cert),
+        databaseURL: dbUrl,
+      }).firestore()
+      : admin.app().firestore();
     this.path = path;
   }
 
@@ -56,8 +59,10 @@ export default class FirestoreDataSource implements DataSource {
   }
 
   public async create(payload: any): Promise<any> {
-    const ref = this.db.collection(this.path).doc();
-    ref.set(payload);
+    const ref = await this.db.collection(this.path).add(payload);
+    await ref.update({ id: ref.id });
+    const doc = await ref.get();
+    return doc.data();
   }
 
   public async update(where: Where, payload: any): Promise<any> {

@@ -17,7 +17,7 @@ export default class MongodbDataSource implements DataSource {
   private collectionName: string;
   private relationTable: Record<string, Record<string, string[]>> = {};
 
-  constructor({ uri, dbName, collectionName }: { uri: string, dbName: string, collectionName: string }) {
+  constructor(uri: string, dbName: string, collectionName: string) {
     MongoClient.connect(uri, (err, client) => {
       this.db = client.db(dbName);
     });
@@ -47,7 +47,7 @@ export default class MongodbDataSource implements DataSource {
   }
 
   public async create(payload: any): Promise<any> {
-    await this.db.collection(this.collectionName).insertOne(payload);
+    return this.db.collection(this.collectionName).insertOne(payload);
   }
 
   public async update(where: Where, payload: any): Promise<any> {
