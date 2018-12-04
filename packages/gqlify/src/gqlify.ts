@@ -26,24 +26,33 @@ export class Gqlify {
   private sdl: string;
   private dataSources: Record<string, (args: any) => DataSource>;
   private scalars: Record<string, GraphQLScalarType>;
+  private context: any;
 
   constructor({
     sdl,
     dataSources,
     scalars,
+    context,
   }: {
     sdl: string,
     dataSources: Record<string, (args: any) => DataSource>,
     scalars?: Record<string, GraphQLScalarType>,
+    context?: any,
   }) {
     this.sdl = sdl;
     this.dataSources = dataSources;
     this.scalars = scalars;
+    this.context = context;
   }
 
   public createServerConfig(
     settings?: {skipPrint: boolean},
-  ): {typeDefs: string, resolvers: IResolvers, scalars?: Record<string, GraphQLScalarType> } {
+  ): {
+    typeDefs: string,
+    resolvers: IResolvers,
+    scalars?: Record<string, GraphQLScalarType>,
+    context?: any,
+  } {
     const ifSkipPrint = get(settings, 'skipPrint', false);
     if (!ifSkipPrint) {
       // tslint:disable-next-line:no-console
@@ -119,6 +128,7 @@ export class Gqlify {
       typeDefs,
       resolvers,
       scalars: this.scalars,
+      context: this.context,
     };
   }
 
