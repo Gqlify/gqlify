@@ -42,7 +42,8 @@
     "faker": "^4.1.0",
     "graphql-type-json": "^0.2.1",
     "koa": "^2.6.2",
-    "rimraf": "^2.6.2"
+    "rimraf": "^2.6.2",
+    "tslint": "^5.11.0"
   },
-  "gitHead": "f8f04b1e0c945bbffab0c0ae6dd9812f5ccab5e8"
+  "gitHead": "0548648380a2bb7996307825f1fd61415f16b812"
 }
