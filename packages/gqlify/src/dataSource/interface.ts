@@ -60,6 +60,7 @@ export interface ListMutable {
 
 export interface ToOneRelation {
   findOneByRelation(foreignKey: string, foreignId: string): Promise<any>;
+  updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<void>;
 }
 
 // todo: support embed reference

@@ -6,7 +6,7 @@ import {
   DataSource,
 } from './interface';
 import { filter, createFilter, paginate, sort } from '../helper';
-import { first, last, assign, remove, isUndefined, get, pull } from 'lodash';
+import { first, last, assign, remove, isUndefined, get, pull, unset } from 'lodash';
 
 export default class MemoryDataSource implements DataSource {
   private defaultData: any[];
@@ -51,6 +51,15 @@ export default class MemoryDataSource implements DataSource {
   // ToOneRelation
   public findOneByRelation = async (foreignKey: string, foreignId: string): Promise<any> => {
     return first(filter(this.defaultData, {[foreignKey]: {[Operator.eq]: foreignId}}));
+  };
+
+  // ToOneRelation
+  public updateOneRelation = async (id: string, foreignKey: string, foreignId: string): Promise<any> => {
+    const oldOwner = first(filter(this.defaultData, {[foreignKey]: {[Operator.eq]: foreignId}}));
+    unset(oldOwner, foreignKey);
+
+    const newOwner = first(filter(this.defaultData, { id: { [Operator.eq]: id } }));
+    assign(newOwner, { [foreignKey]: foreignId });
   };
 
   // OneToManyRelation
