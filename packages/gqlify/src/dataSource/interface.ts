@@ -1,14 +1,14 @@
 
 export interface Pagination {
   // cursor base
-  last: number;
-  first: number;
-  before: string;
-  after: string;
+  last?: number;
+  first?: number;
+  before?: string;
+  after?: string;
 
   // number based
-  perPage: number;
-  page: number;
+  perPage?: number;
+  page?: number;
 }
 
 export interface PaginatedResponse {

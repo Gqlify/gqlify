@@ -9,7 +9,9 @@
     "build": "lerna run build --stream --parallel",
     "lint": "lerna run lint --stream --parallel",
     "pretest": "yarn lint",
-    "test": "lerna run test --stream --parallel -- --colors",
+    "test": "lerna run test --stream --parallel --colors",
+    "test:scope": "lerna run test --stream --parallel --scope $SCOPE -- --colors",
+    "test:grep": "lerna run test:grep --stream --parallel --scope $SCOPE -- $FILE --colors ",
     "postinstall": "npm run compile"
   },
   "devDependencies": {
