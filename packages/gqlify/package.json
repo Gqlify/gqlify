@@ -13,8 +13,8 @@
     "clean": "rimraf lib",
     "lint": "tslint --force --format verbose \"src/**/*.ts\" \"test/*\"",
     "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc -p ./tsconfig.release.json --pretty",
-    "test": "mocha --timeout 100000 --compilers ts:ts-node/register --recursive \"test/**/*.spec.ts\"",
-    "test:grep": "mocha --compilers ts:ts-node/register --recursive",
+    "test": "../../node_modules/.bin/mocha --timeout 100000 --compilers ts:ts-node/register --recursive \"test/**/*.spec.ts\"",
+    "test:grep": "../../node_modules/.bin/mocha --compilers ts:ts-node/register --recursive",
     "coverage": "nyc npm run test",
     "watch": "npm run build -- --watch",
     "watch:test": "npm run test -- --watch",
@@ -31,5 +31,16 @@
     "pluralize": "^7.0.0"
   },
   "author": "wwwy3y3",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@types/chai-http": "^3.0.5",
+    "apollo-server": "^2.2.5",
+    "apollo-server-koa": "^2.2.5",
+    "apollo-server-testing": "^2.2.5",
+    "chai": "^4.2.0",
+    "chai-http": "^4.2.0",
+    "faker": "^4.1.0",
+    "graphql-type-json": "^0.2.1",
+    "koa": "^2.6.2"
+  }
 }

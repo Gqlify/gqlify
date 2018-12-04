@@ -19,7 +19,7 @@ import {
 import {
   ObjectField as SdlObjectField,
 } from './sdlParser/field';
-import RootNode from './RootNode';
+import RootNode from './rootNode';
 import { SdlParser } from './sdlParser/parser';
 import { SdlEnumType, SdlObjectType } from './sdlParser/namedType';
 import { BasicFieldMiddware, MetadataMiddleware, SdlMiddleware } from './sdlParser/middlewares';

@@ -3,7 +3,7 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
-import { upperFirst, forEach, get } from 'lodash';
+import { upperFirst, forEach, get, reduce } from 'lodash';
 import { ListMutable } from '../dataSource/interface';
 import { RelationField } from '../dataModel';
 import CreatePlugin from './create';
@@ -49,7 +49,8 @@ const createInputField = (
     }
 
     if (field.isScalar()) {
-      content.push(`${name}: ${field.getTypename()}`);
+      const fieldType = field.isList() ? `[${field.getTypename()}]` : field.getTypename();
+      content.push(`${name}: ${fieldType}`);
       return;
     }
 
@@ -59,7 +60,8 @@ const createInputField = (
       const typeFields = createObjectInputField(fieldWithPrefix, field, context);
       const objectInputName = `${fieldWithPrefix}UpdateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
-      content.push(`${name}: ${objectInputName}`);
+      const fieldType = field.isList() ? `[${objectInputName}]` : objectInputName;
+      content.push(`${name}: ${fieldType}`);
       return;
     }
 
@@ -125,13 +127,14 @@ export default class UpdatePlugin implements Plugin {
 
   public visitModel(model: Model, context: Context) {
     const { root } = context;
-    const modelType = this.baseTypePlugin.getTypename(model);
+    // const modelType = this.baseTypePlugin.getTypename(model);
+    const returnType = this.createUniqueReturnType(model, context);
 
     // update
     const mutationName = this.getInputName(model);
     const inputName = this.generateUpdateInput(model, context);
     const whereUniqueInput = this.whereInputPlugin.getWhereUniqueInputName(model);
-    root.addMutation(`${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${modelType}`);
+    root.addMutation(`${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${returnType}`);
   }
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
@@ -142,15 +145,16 @@ export default class UpdatePlugin implements Plugin {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
         if (!wrapUpdate) {
-          return dataSource.update(whereUnique, args.data);
+          await dataSource.update(whereUnique, args.data);
+          return args.where;
         }
 
         // wrap
         const updateContext: UpdateContext = {where: args.where, data: args.data, response: {}};
         await wrapUpdate(updateContext, async ctx => {
-          ctx.response = await dataSource.update(whereUnique, ctx.data);
+          await dataSource.update(whereUnique, ctx.data);
         });
-        return updateContext.response;
+        return args.where;
       },
     };
   }
@@ -172,5 +176,24 @@ export default class UpdatePlugin implements Plugin {
 
   private getInputName(model: Model) {
     return `update${model.getNamings().capitalSingular}`;
+  }
+
+  private createUniqueReturnType(model: Model, context: Context) {
+    const uniqueFields = model.getUniqueFields();
+    const typename = this.getReturnTypename(model);
+    const fields = reduce(uniqueFields,
+      (arr, field, name) => {
+        arr.push(`${name}: ${field.getTypename()}`);
+        return arr;
+      }, []).join(' ');
+    const type = `type ${typename} {
+      ${fields}
+    }`;
+    context.root.addObjectType(type);
+    return typename;
+  }
+
+  private getReturnTypename(model: Model) {
+    return `${model.getNamings().capitalSingular}UpdateResponse`;
   }
 }

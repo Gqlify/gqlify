@@ -3,6 +3,23 @@
   "version": "1.0.0",
   "description": "the firebase packages for @canner/gqlify",
   "main": "lib/index.js",
+  "module": "./lib/index.js",
+  "jsnext:main": "./lib/index.js",
+  "typings": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "clean": "rimraf lib",
+    "lint": "tslint --force --format verbose \"src/**/*.ts\" \"test/*\"",
+    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc -p ./tsconfig.release.json --pretty",
+    "test": "mocha --timeout 100000 --compilers ts:ts-node/register --recursive \"test/**/*.spec.ts\"",
+    "test:grep": "mocha --compilers ts:ts-node/register --recursive",
+    "coverage": "nyc npm run test",
+    "watch": "npm run build -- --watch",
+    "watch:test": "npm run test -- --watch",
+    "prepublishOnly": "npm run clean && npm run build"
+  },
   "repository": "https://github.com/Canner/gqlify",
   "author": "FrankYang0529",
   "license": "MIT",
@@ -10,5 +27,8 @@
     "@gqlify/server": "^1.8.0",
     "firebase-admin": "^6.3.0",
     "lodash": "^4.17.11"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0"
   }
 }

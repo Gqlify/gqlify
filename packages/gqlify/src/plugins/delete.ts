@@ -45,7 +45,8 @@ export default class DeletePlugin implements Plugin {
       [inputName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
         if (!wrapDelete) {
-          return dataSource.delete(whereUnique);
+          await dataSource.delete(whereUnique);
+          return args.where;
         }
 
         // wrap
@@ -53,7 +54,7 @@ export default class DeletePlugin implements Plugin {
         await wrapDelete(deleteContext, async ctx => {
           await dataSource.delete(whereUnique);
         });
-        return whereUnique;
+        return args.where;
       },
     };
   }

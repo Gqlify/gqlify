@@ -1,4 +1,3 @@
-import { Context } from './plugins/interface';
 import { values, reduce, isString, keyBy, isPlainObject, isEmpty, concat, mapValues } from 'lodash';
 import {
   GraphQLFieldConfig,
