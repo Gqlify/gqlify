@@ -13,14 +13,15 @@ import {
   sort
 } from '@gqlify/server';
 
-export default class FirebaseDataSource implements DataSource {
+export class FirebaseDataSource implements DataSource {
   private db: admin.database.Database;
   private path: string;
   private relationTable: Record<string, Record<string, string[]>> = {};
 
-  constructor({ cert, path }: { cert: admin.ServiceAccount, path: string }) {
+  constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
     this.db = admin.initializeApp({
       credential: admin.credential.cert(cert),
+      databaseURL: dbUrl,
     }).database();
     this.path = path;
   }
@@ -29,7 +30,10 @@ export default class FirebaseDataSource implements DataSource {
     const { pagination, where, orderBy = {} } = args || {} as any;
     const ref = this.db.ref(`/${this.path}`);
     const snapshot = await ref.once('value');
-    const filteredData = sort(filter(snapshot.val(), where), orderBy);
+    const data = snapshot.val();
+    const filteredData = data
+      ? sort(filter(data, where), orderBy)
+      : [];
     return paginate(filteredData, pagination);
   }
 
@@ -47,7 +51,10 @@ export default class FirebaseDataSource implements DataSource {
 
   public async create(payload: any): Promise<any> {
     const ref = this.db.ref(`/${this.path}`);
-    ref.push(payload);
+    const newItem = await ref.push(payload);
+    await newItem.update({ id: newItem.key });
+    const snapshot = await this.db.ref(`/${this.path}/${newItem.key}`).once('value');
+    return snapshot.val();
   }
 
   public async update(where: Where, payload: any): Promise<any> {
