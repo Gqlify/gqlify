@@ -28,6 +28,9 @@
     "lodash": "^4.17.11",
     "mongodb": "^3.1.10"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "gitHead": "0548648380a2bb7996307825f1fd61415f16b812",
   "devDependencies": {
     "rimraf": "^2.6.2",

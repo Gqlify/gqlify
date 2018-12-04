@@ -28,6 +28,9 @@
     "firebase-admin": "^6.3.0",
     "lodash": "^4.17.11"
   },
+  "publishConfig": {
+    "access": "public"
+  },
   "gitHead": "0548648380a2bb7996307825f1fd61415f16b812",
   "devDependencies": {
     "rimraf": "^2.6.2",
