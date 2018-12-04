@@ -1,0 +1,42 @@
+scalar JSON
+
+enum STATUS {
+  OK
+  NOT_OK
+}
+
+type Location {
+  lng: String
+  lat: String
+}
+
+type Note {
+  title: String
+  text: String
+}
+
+type User @GQLifyModel(dataSource: "memory", key: "users") {
+  id: ID! @unique @autoGen
+  username: String!
+  email: String
+  status: STATUS
+  attributes: JSON
+  location: Location
+  note: [Note!]!
+  # bi-one-to-one relation
+  oneBook: Book
+}
+
+type Book @GQLifyModel(dataSource: "memory", key: "books") {
+  id: ID! @unique @autoGen
+  name: String
+  # bi-one-to-one relation
+  author: User
+}
+
+type Team @GQLifyModel(dataSource: "memory", key: "teams") {
+  id: ID! @unique @autoGen
+  name: String
+  # uni-one-to-one relation
+  onePlayer: User
+}
