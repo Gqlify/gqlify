@@ -91,7 +91,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const createData = get(relationData, 'create');
 
         // after create
-        const dataWithoutRelation = omit(data, owningSideField);
+        const dataWithoutRelation = omit(data, refSideField);
         context.data = dataWithoutRelation;
         await createOperation();
         const created  = context.response;

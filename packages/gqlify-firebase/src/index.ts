@@ -1,6 +1,6 @@
 // import { initializeApp, credential } from 'firebase-admin';
 import * as admin from 'firebase-admin';
-import { first, isUndefined, get, pull } from 'lodash';
+import { first, isEmpty, isUndefined, get, pull } from 'lodash';
 
 import {
   Where,
@@ -19,10 +19,12 @@ export class FirebaseDataSource implements DataSource {
   private relationTable: Record<string, Record<string, string[]>> = {};
 
   constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
-    this.db = admin.initializeApp({
-      credential: admin.credential.cert(cert),
-      databaseURL: dbUrl,
-    }).database();
+    this.db = isEmpty(admin.apps)
+      ? admin.initializeApp({
+        credential: admin.credential.cert(cert),
+        databaseURL: dbUrl,
+      }).database()
+      : admin.app().database();
     this.path = path;
   }
 
@@ -46,7 +48,7 @@ export class FirebaseDataSource implements DataSource {
   public async findOneById(id: string): Promise<any> {
     const ref = this.db.ref(`/${this.path}/${id}`);
     const snapshot = await ref.once('value');
-    return first(snapshot.val());
+    return snapshot.val();
   }
 
   public async create(payload: any): Promise<any> {
@@ -60,7 +62,7 @@ export class FirebaseDataSource implements DataSource {
   public async update(where: Where, payload: any): Promise<any> {
     // WARNING: where may not contain id
     const ref = this.db.ref(`/${this.path}`).child(where.id.eq);
-    ref.update(payload);
+    await ref.update(payload);
   }
 
   public async delete(where: Where): Promise<any> {
@@ -78,7 +80,16 @@ export class FirebaseDataSource implements DataSource {
 
   // ToOneRelation
   public async updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<any> {
-    throw Error('Not Implement');
+    const ref = this.db.ref(`/${this.path}`);
+    const snapshot = await ref.once('value');
+    const oldOwner = first(filter(snapshot.val(), {[foreignKey]: {[Operator.eq]: foreignId}}));
+    if (oldOwner) {
+      const oldRef = this.db.ref(`/${this.path}/${(oldOwner as any).id}`);
+      await oldRef.update({[foreignKey]: null});
+    }
+
+    const newRef = this.db.ref(`/${this.path}/${id}`);
+    await newRef.update({[foreignKey]: foreignId});
   }
 
   // OneToManyRelation
