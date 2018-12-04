@@ -6,13 +6,18 @@ import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
 import { readFileSync } from 'fs';
 import GraphQLJSON from 'graphql-type-json';
+import * as admin from 'firebase-admin';
+
+import { FirebaseDataSource } from '@gqlify/firebase';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
+
 import faker from 'faker';
 import { createApp } from './createApp';
 import { times } from 'lodash';
 
 const expect = chai.expect;
 const sdl = readFileSync(__dirname + '/fixtures/oneModel.graphql', {encoding: 'utf8'});
+const serviceAccount = readFileSync(process.env.TEST_FIREBASE_CERT, {encoding: 'utf8'});
 
 const fields = `
   id
@@ -45,8 +50,9 @@ const fakeUserData = (data?: any) => {
   };
 };
 
-describe('Tests on fixtures/oneModel.graphql', function() {
+describe('Tests on fixtures/oneModel.graphql with Memory Data Source', function() {
   before(async () => {
+    const db = new MemoryDataSource();
     const {graphqlRequest, close} = createApp({
       sdl,
       dataSources: {
@@ -58,16 +64,51 @@ describe('Tests on fixtures/oneModel.graphql', function() {
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
+    (this as any).db = db;
   });
 
   after(async () => {
     await (this as any).close();
   });
 
+  afterEach(async () => {
+    ((this as any).db as any).defaultData = [];
+  });
+
   testSuits.call(this);
 });
 
-function testSuits() {
+describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', function() {
+  before(async () => {
+    const serviceAccountJson = JSON.parse(serviceAccount);
+    const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).firebase = admin.app().database();
+  });
+
+  afterEach(async () => {
+    await (this as any).firebase.ref('/').remove();
+  });
+
+  after(async () => {
+    await (this as any).firebase.goOffline();
+    await (this as any).close();
+  });
+
+  testSuits.call(this);
+});
+
+export function testSuits() {
   it('should respond empty array', async () => {
     const listQuery = `
       query {
@@ -130,11 +171,11 @@ function testSuits() {
           .then(res => res.createUser);
     }));
 
-    // find user with id: 5
-    const expectCertainUser = createdUsers.find(user => user.id === '5');
+    // find 5th user
+    const expectCertainUser = createdUsers[4];
     const {user: certainUser} = await (this as any).graphqlRequest(`
       query {
-        user(where: {id: "5"}) {${fields}}
+        user(where: {id: "${expectCertainUser.id}"}) {${fields}}
       }
     `);
     expect(certainUser).to.deep.equal(expectCertainUser);
@@ -164,7 +205,7 @@ function testSuits() {
 
     // paginate users with where
     const last = 3;
-    const before = '6';
+    const before = createdUsers[5].id;
     const expectedPageUsersWithWhere = createdUsers
       .filter(user => user.status === 'NOT_OK')
       .slice(2, createdUsers.findIndex(user => user.id === before));
@@ -178,39 +219,60 @@ function testSuits() {
   });
 
   it('should update', async () => {
-    const variables = {
+    const createUserVariables = {
+      data: fakeUserData(),
+    };
+    const createUserQuery = `
+      mutation ($data: UserCreateInput!) {
+        createUser (data: $data) {${fields}}
+      }
+    `;
+    const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
+
+    const updateUserVariables = {
+      where: { id: createUser.id },
       data: {
         username: faker.internet.userName(),
       },
     };
-    const query = `
+    const updateUserQuery = `
       mutation ($data: UserUpdateInput!) {
-        updateUser (where: {id: "1"}, data: $data) { id }
+        updateUser (where: {id: "${createUser.id}"}, data: $data) { id }
       }
     `;
-    const {updateUser} = await (this as any).graphqlRequest(query, variables);
-    expect(updateUser.id).to.be.equal('1');
+    const {updateUser} = await (this as any).graphqlRequest(updateUserQuery, updateUserVariables);
+    expect(updateUser.id).to.be.equal(createUser.id);
 
     const {user: certainUser} = await (this as any).graphqlRequest(`
       query {
-        user(where: {id: "1"}) {${fields}}
+        user(where: {id: "${createUser.id}"}) {${fields}}
       }
     `);
-    expect(certainUser.username).to.deep.equal(variables.data.username);
+    expect(certainUser.username).to.deep.equal(updateUserVariables.data.username);
   });
 
   it('should delete', async () => {
+    const createUserVariables = {
+      data: fakeUserData(),
+    };
+    const createUserQuery = `
+      mutation ($data: UserCreateInput!) {
+        createUser (data: $data) {${fields}}
+      }
+    `;
+    const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
+
     const query = `
       mutation {
-        deleteUser (where: {id: "1"}) { id }
+        deleteUser (where: {id: "${createUser.id}"}) { id }
       }
     `;
     const {deleteUser} = await (this as any).graphqlRequest(query);
-    expect(deleteUser.id).to.be.equal('1');
+    expect(deleteUser.id).to.be.equal(createUser.id);
 
     const {user: certainUser} = await (this as any).graphqlRequest(`
       query {
-        user(where: {id: "1"}) {${fields}}
+        user(where: {id: "${createUser.id}"}) {${fields}}
       }
     `);
     // tslint:disable-next-line:no-unused-expression

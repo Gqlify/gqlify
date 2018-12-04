@@ -9,7 +9,6 @@ import GraphQLJSON from 'graphql-type-json';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 import faker from 'faker';
 import { createApp } from './createApp';
-import { times } from 'lodash';
 
 const expect = chai.expect;
 const sdl = readFileSync(__dirname + '/fixtures/oneToOne.graphql', {encoding: 'utf8'});
@@ -106,7 +105,7 @@ describe('Relation tests on fixtures/oneToOne.graphql', function() {
   testSuits.call(this);
 });
 
-function testSuits() {
+export function testSuits() {
   it('should create unconnected item with uni-1-to-1', async () => {
     const createTeamQuery = `
       mutation ($data: TeamCreateInput!) {
