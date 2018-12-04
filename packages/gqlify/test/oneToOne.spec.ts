@@ -103,6 +103,10 @@ describe('Relation tests on fixtures/oneToOne.graphql', function() {
     await (this as any).close();
   });
 
+  testSuits.call(this);
+});
+
+function testSuits() {
   it('should create unconnected item with uni-1-to-1', async () => {
     const createTeamQuery = `
       mutation ($data: TeamCreateInput!) {
@@ -823,4 +827,4 @@ describe('Relation tests on fixtures/oneToOne.graphql', function() {
   });
 
   it('should disconnect unconnected item with bi-1-to-1 from one side');
-});
+}

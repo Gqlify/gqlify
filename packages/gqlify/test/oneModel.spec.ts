@@ -64,6 +64,10 @@ describe('Tests on fixtures/oneModel.graphql', function() {
     await (this as any).close();
   });
 
+  testSuits.call(this);
+});
+
+function testSuits() {
   it('should respond empty array', async () => {
     const listQuery = `
       query {
@@ -212,4 +216,4 @@ describe('Tests on fixtures/oneModel.graphql', function() {
     // tslint:disable-next-line:no-unused-expression
     expect(certainUser).to.be.null;
   });
-});
+}
