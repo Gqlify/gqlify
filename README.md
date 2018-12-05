@@ -1,9 +1,9 @@
-## Gqlify
+## GQLify
 [![npm version](https://badge.fury.io/js/%40gqlify%2Fserver.svg)](https://badge.fury.io/js/%40gqlify%2Fserver)
 
 ![home](https://i.imgur.com/ojShV9s.png)
 
-Build a GraphQL server with one definition file.
+Build GraphQL servers with GraphQL SDL.
 
 ## Features
 * **Easy**: Build GraphQL server with SDL
