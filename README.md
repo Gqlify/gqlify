@@ -9,7 +9,7 @@
 
 ## Features
 * **Easy**: Build GraphQL server with SDL
-* **API agnostic**: Support multiple data-sources, including firebase, firestore, mongoDB and more to come.
+* **API agnostic**: Support multiple data-sources, including Firebase, Firestore, MongoDB and more...
 * **Extensible framework**: custoimize scalar, query, mutation is all possible in GQLify.
 
 ## Community & Resources
