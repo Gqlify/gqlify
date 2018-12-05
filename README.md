@@ -3,7 +3,17 @@
 
 ![home](https://i.imgur.com/ojShV9s.png)
 
-Build a GraphQL server with SDL.
+Build a GraphQL server with one definition file.
+
+## Features
+* **Easy**: Build GraphQL server with SDL
+* **API agnostic**: Support multiple data-sources, including firebase, firestore, mongoDB and more to come.
+* **Extensible framework**: custoimize scalar, query, mutation is all possible in GQLify.
+
+## Community & Resources
+* [gqlify.com](https://www.gqlify.com/)
+* [document](https://www.gqlify.com/docs)
+* [gitter](https://gitter.im/Canner/gqlify)
 
 ## Installation
 ``` console
@@ -14,6 +24,8 @@ yarn add @gqlify/server
 [![Edit GQLify Server @welcome page](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/p7wqo43zpx)
 
 ## Quick start
+> [Walk through quickstart in document](https://www.gqlify.com/docs/quick-start)
+
 ### Datamodel
 Your datamodel file is written in GraphQL SDL (Schema Definition Language)
 ```graphql
