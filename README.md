@@ -15,7 +15,6 @@
 ## Community & Resources
 * [gqlify.com](https://www.gqlify.com/)
 * [document](https://www.gqlify.com/docs)
-* [gitter](https://gitter.im/Canner/gqlify)
 
 ## Installation
 ``` console
