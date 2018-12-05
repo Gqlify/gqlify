@@ -12,7 +12,7 @@
 </div>
 <br/>
 
-> Build GraphQL servers with GraphQL SDL in seconds.
+> Build GraphQL servers with hybrid APIs in seconds.
 
 * Official Website: [gqlify.com](https://www.gqlify.com/)
 
