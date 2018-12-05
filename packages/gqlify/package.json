@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/server",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
@@ -33,7 +33,7 @@
   "author": "wwwy3y3",
   "license": "ISC",
   "devDependencies": {
-    "@gqlify/firebase": "^1.0.5",
+    "@gqlify/firebase": "^1.0.6",
     "@types/chai-http": "^3.0.5",
     "apollo-server": "^2.2.5",
     "apollo-server-koa": "^2.2.5",
