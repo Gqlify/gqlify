@@ -9,6 +9,7 @@ import GraphQLJSON from 'graphql-type-json';
 import * as admin from 'firebase-admin';
 
 import { FirebaseDataSource } from '@gqlify/firebase';
+import { FirestoreDataSource } from '@gqlify/firestore';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 
 import faker from 'faker';
@@ -88,29 +89,61 @@ const fakeUserData = (data?: any) => {
   };
 };
 
-describe('Relation tests on fixtures/oneToOne.graphql', function() {
-  before(async () => {
-    const {graphqlRequest, close} = createApp({
-      sdl,
-      dataSources: {
-        memory: () => new MemoryDataSource(),
-      },
-      scalars: {
-        JSON: GraphQLJSON,
-      },
-    });
-    (this as any).graphqlRequest = graphqlRequest;
-    (this as any).close = close;
-  });
+// describe('Relation tests on fixtures/oneToOne.graphql', function() {
+//   before(async () => {
+//     const {graphqlRequest, close} = createApp({
+//       sdl,
+//       dataSources: {
+//         memory: () => new MemoryDataSource(),
+//       },
+//       scalars: {
+//         JSON: GraphQLJSON,
+//       },
+//     });
+//     (this as any).graphqlRequest = graphqlRequest;
+//     (this as any).close = close;
+//   });
 
-  after(async () => {
-    await (this as any).close();
-  });
+//   after(async () => {
+//     await (this as any).close();
+//   });
 
-  testSuits.call(this);
-});
+//   testSuits.call(this);
+// });
 
-describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source', function() {
+// describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source', function() {
+//   this.timeout(20000);
+
+//   before(async () => {
+//     const serviceAccountJson = JSON.parse(serviceAccount);
+//     const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+//     const {graphqlRequest, close} = createApp({
+//       sdl,
+//       dataSources: {
+//         memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
+//       },
+//       scalars: {
+//         JSON: GraphQLJSON,
+//       },
+//     });
+//     (this as any).graphqlRequest = graphqlRequest;
+//     (this as any).close = close;
+//     (this as any).firebase = admin.app().database();
+//   });
+
+//   afterEach(async () => {
+//     await (this as any).firebase.ref('/').remove();
+//   });
+
+//   after(async () => {
+//     await (this as any).firebase.goOffline();
+//     await (this as any).close();
+//   });
+
+//   testSuits.call(this);
+// });
+
+describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source', function() {
   this.timeout(20000);
 
   before(async () => {
@@ -119,7 +152,7 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source'
     const {graphqlRequest, close} = createApp({
       sdl,
       dataSources: {
-        memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
+        memory: args => new FirestoreDataSource(serviceAccountJson, dbUrl, args.key),
       },
       scalars: {
         JSON: GraphQLJSON,

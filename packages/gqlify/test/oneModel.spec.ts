@@ -9,6 +9,7 @@ import GraphQLJSON from 'graphql-type-json';
 import * as admin from 'firebase-admin';
 
 import { FirebaseDataSource } from '@gqlify/firebase';
+import { FirestoreDataSource } from '@gqlify/firestore';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 
 import faker from 'faker';
@@ -56,7 +57,7 @@ describe('Tests on fixtures/oneModel.graphql with Memory Data Source', function(
     const {graphqlRequest, close} = createApp({
       sdl,
       dataSources: {
-        memory: () => new MemoryDataSource(),
+        memory: () => db,
       },
       scalars: {
         JSON: GraphQLJSON,
@@ -84,10 +85,14 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
   before(async () => {
     const serviceAccountJson = JSON.parse(serviceAccount);
     const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    let db;
     const {graphqlRequest, close} = createApp({
       sdl,
       dataSources: {
-        memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
+        memory: args => {
+          db = new FirebaseDataSource(serviceAccountJson, dbUrl, args.key)
+          return db;
+        },
       },
       scalars: {
         JSON: GraphQLJSON,
@@ -95,6 +100,7 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
+    (this as any).db = db;
     (this as any).firebase = admin.app().database();
   });
 
@@ -104,6 +110,52 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
 
   after(async () => {
     await (this as any).firebase.goOffline();
+    await (this as any).close();
+  });
+
+  testSuits.call(this);
+});
+
+describe('Tests on fixtures/oneModel.graphql with Firestore Data Source', function() {
+  this.timeout(20000);
+
+  before(async () => {
+    const serviceAccountJson = JSON.parse(serviceAccount);
+    const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    let db;
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => {
+          db = new FirestoreDataSource(serviceAccountJson, dbUrl, args.key)
+          return db;
+        },
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).db = db;
+    (this as any).firestore = admin.app().firestore();
+  });
+
+  afterEach(async () => {
+    const collectionRef = (this as any).firestore.collection('users');
+    const querySnapshot = await collectionRef.get();
+    const docPaths = [];
+    querySnapshot.forEach(documentSnapshot => {
+      docPaths.push(documentSnapshot.ref.path);
+    });
+
+    await Promise.all(docPaths.map(async docPath => {
+      const docRef = (this as any).firestore.doc(docPath);
+      await docRef.delete();
+    }));
+  });
+
+  after(async () => {
     await (this as any).close();
   });
 
@@ -191,12 +243,16 @@ export function testSuits() {
     `);
     expect(notOkUsers).to.have.deep.members(expectedNotOkUsers);
 
+    // get all data from source
+    const findAllQuery = await (this as any).db.find();
+    const usersFromDB = findAllQuery.data;
+
     // paginate users without where
     const first = 5;
-    const after = '0';
+    const after = usersFromDB[0].id;
 
     // we already created one user in previous test
-    const expectedPageUsers = createdUsers.slice(0, first);
+    const expectedPageUsers = usersFromDB.slice(1, first + 1);
     const {users: pageUsers} = await (this as any).graphqlRequest(`
       query {
         users(first: ${first}, after: "${after}") {${fields}}
@@ -207,13 +263,12 @@ export function testSuits() {
 
     // paginate users with where
     const last = 3;
-    const before = createdUsers[5].id;
-    const expectedPageUsersWithWhere = createdUsers
-      .filter(user => user.status === 'NOT_OK')
-      .slice(2, createdUsers.findIndex(user => user.id === before));
+    const before = notOkUsers[5].id;
+    const expectedPageUsersWithWhere = notOkUsers
+      .slice(2, notOkUsers.findIndex(user => user.id === before));
     const {users: pageUsersWithWhere} = await (this as any).graphqlRequest(`
       query {
-        users(last: ${last}, before: "${before}") {${fields}}
+        users(last: ${last}, before: "${before}", where: {status: NOT_OK}) {${fields}}
       }
     `);
     expect(pageUsersWithWhere).to.have.deep.members(expectedPageUsersWithWhere);
