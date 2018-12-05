@@ -10,12 +10,12 @@
     "lib"
   ],
   "scripts": {
-    "clean": "rimraf lib",
-    "lint": "tslint --force --format verbose \"src/**/*.ts\" \"test/*\"",
-    "build": "npm run clean && npm run lint && echo Using TypeScript && tsc --version && tsc -p ./tsconfig.release.json --pretty",
+    "clean": "../../node_modules/.bin/rimraf lib",
+    "lint": "../../node_modules/.bin/tslint --force --format verbose \"src/**/*.ts\" \"test/*\"",
+    "build": "npm run clean && npm run lint && echo Using TypeScript && ../../node_modules/.bin/tsc --version && ../../node_modules/.bin/tsc -p ./tsconfig.release.json --pretty",
     "test": "../../node_modules/.bin/mocha --timeout 100000 --compilers ts:ts-node/register --recursive --exit \"test/**/*.spec.ts\"",
     "test:grep": "../../node_modules/.bin/mocha --compilers ts:ts-node/register --recursive --exit",
-    "coverage": "nyc npm run test",
+    "coverage": "../../node_modules/.bin/nyc npm run test",
     "watch": "npm run build -- --watch",
     "watch:test": "npm run test -- --watch",
     "prepublishOnly": "npm run clean && npm run build"
