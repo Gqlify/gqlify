@@ -89,62 +89,30 @@ const fakeUserData = (data?: any) => {
   };
 };
 
-// describe('Relation tests on fixtures/oneToOne.graphql', function() {
-//   before(async () => {
-//     const {graphqlRequest, close} = createApp({
-//       sdl,
-//       dataSources: {
-//         memory: () => new MemoryDataSource(),
-//       },
-//       scalars: {
-//         JSON: GraphQLJSON,
-//       },
-//     });
-//     (this as any).graphqlRequest = graphqlRequest;
-//     (this as any).close = close;
-//   });
+describe('Relation tests on fixtures/oneToOne.graphql', function() {
+  before(async () => {
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: () => new MemoryDataSource(),
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+  });
 
-//   after(async () => {
-//     await (this as any).close();
-//   });
+  after(async () => {
+    await (this as any).close();
+  });
 
-//   testSuits.call(this);
-// });
+  testSuits.call(this);
+});
 
-// describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source', function() {
-//   this.timeout(20000);
-
-//   before(async () => {
-//     const serviceAccountJson = JSON.parse(serviceAccount);
-//     const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
-//     const {graphqlRequest, close} = createApp({
-//       sdl,
-//       dataSources: {
-//         memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
-//       },
-//       scalars: {
-//         JSON: GraphQLJSON,
-//       },
-//     });
-//     (this as any).graphqlRequest = graphqlRequest;
-//     (this as any).close = close;
-//     (this as any).firebase = admin.app().database();
-//   });
-
-//   afterEach(async () => {
-//     await (this as any).firebase.ref('/').remove();
-//   });
-
-//   after(async () => {
-//     await (this as any).firebase.goOffline();
-//     await (this as any).close();
-//   });
-
-//   testSuits.call(this);
-// });
-
-describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source', function() {
-  this.timeout(20000);
+describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source', function() {
+  this.timeout(25000);
 
   before(async () => {
     const serviceAccountJson = JSON.parse(serviceAccount);
@@ -152,7 +120,7 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source
     const {graphqlRequest, close} = createApp({
       sdl,
       dataSources: {
-        memory: args => new FirestoreDataSource(serviceAccountJson, dbUrl, args.key),
+        memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
       },
       scalars: {
         JSON: GraphQLJSON,
@@ -168,8 +136,53 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source
   });
 
   after(async () => {
-    await (this as any).firebase.goOffline();
     await (this as any).close();
+    await admin.app().delete();
+  });
+
+  testSuits.call(this);
+});
+
+describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source', function() {
+  this.timeout(25000);
+
+  before(async () => {
+    const serviceAccountJson = JSON.parse(serviceAccount);
+    const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => new FirestoreDataSource(serviceAccountJson, dbUrl, args.key),
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).firestore = admin.app().firestore();
+  });
+
+  afterEach(async () => {
+    const collections = await (this as any).firestore.getCollections();
+    await Promise.all(collections.map(async collection => {
+      const collectionRef = (this as any).firestore.collection('users');
+      const querySnapshot = await collectionRef.get();
+      const docPaths = [];
+      querySnapshot.forEach(documentSnapshot => {
+        docPaths.push(documentSnapshot.ref.path);
+      });
+
+      await Promise.all(docPaths.map(async docPath => {
+        const docRef = (this as any).firestore.doc(docPath);
+        await docRef.delete();
+      }));
+    }));
+  });
+
+  after(async () => {
+    await (this as any).close();
+    await admin.app().delete();
   });
 
   testSuits.call(this);

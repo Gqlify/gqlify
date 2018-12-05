@@ -90,7 +90,7 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
       sdl,
       dataSources: {
         memory: args => {
-          db = new FirebaseDataSource(serviceAccountJson, dbUrl, args.key)
+          db = new FirebaseDataSource(serviceAccountJson, dbUrl, args.key);
           return db;
         },
       },
@@ -109,8 +109,8 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
   });
 
   after(async () => {
-    await (this as any).firebase.goOffline();
     await (this as any).close();
+    await admin.app().delete();
   });
 
   testSuits.call(this);
@@ -127,7 +127,7 @@ describe('Tests on fixtures/oneModel.graphql with Firestore Data Source', functi
       sdl,
       dataSources: {
         memory: args => {
-          db = new FirestoreDataSource(serviceAccountJson, dbUrl, args.key)
+          db = new FirestoreDataSource(serviceAccountJson, dbUrl, args.key);
           return db;
         },
       },
@@ -157,6 +157,7 @@ describe('Tests on fixtures/oneModel.graphql with Firestore Data Source', functi
 
   after(async () => {
     await (this as any).close();
+    await admin.app().delete();
   });
 
   testSuits.call(this);
