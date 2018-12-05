@@ -1,125 +1,57 @@
 ## Gqlify
-GQLify is a framework help you easily build a GraphQL server on top of existing data-source or APIs.
+[![npm version](https://badge.fury.io/js/%40gqlify%2Fserver.svg)](https://badge.fury.io/js/%40gqlify%2Fserver)
 
-## Features
-* [Declarative data modeling](#data-modeling)
-* Auto-generated GraphQL API
-* [Support multiple data-source](#data-source)
-* [Seamless relation API](#relation)
-* Opencrud compatible GraphQL API
+![home](https://i.imgur.com/ojShV9s.png)
+
+Build a GraphQL server with SDL.
 
 ## Installation
 ``` console
 yarn add @gqlify/server
 ```
 
-## Quickstart
-``` ts
-import { GqlifyServer, MemoryDataSource } from '@gqlify/server';
+## Demo
+[![Edit GQLify Server @welcome page](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/p7wqo43zpx)
 
-const dataModel = ```
+## Quick start
+### Datamodel
+Your datamodel file is written in GraphQL SDL (Schema Definition Language)
+```graphql
 type User @GQLifyModel(dataSource: "memory", key: "users") {
   id: ID! @unique @autoGen
   username: String!
   email: String
-  groups: [Group!]!
+  books: [Book!]!
 }
 
-type Group @GQLifyModel(dataSource: "memory", key: "groups") {
+type Book @GQLifyModel(dataSource: "memory", key: "books") {
   id: ID! @unique @autoGen
   name: String!
-  members: [User!]!
-}
-```;
-
-const server = new GqlifyServer({
-  sdl: dataModel,
-  dataSources: {
-    memory: (args: any) => new MemoryDataSource({key: args.key}),
-  },
-});
-
-server.serve();
-```
-
-## Data Modeling
-The datamodel is written in the GraphQL Schema Definition Language (SDL). It will be used to generate your GraphQL API and construct data-sources.
-
-### Scalar Fields
-* STRING
-``` graphql
-type User {
-  name: String
-}
-```
-
-* INTEGER
-``` graphql
-type User {
-  age: Int
-}
-```
-
-* BOOLEAN
-``` graphql
-type User {
-  married: Boolean
-}
-```
-
-* ENUM
-``` graphql
-enum Status {
-  SUCCESS,
-  FAILED
-}
-
-type Order {
-  status: Status
-}
-```
-
-* ID
-```
-type User {
-  id: ID! @unique
-}
-```
-
-## Data source
-Gqlify will create your data source with function you assigned.
-``` ts
-const server = new GqlifyServer({
-  sdl: dataModel,
-  dataSources: {
-    // memory data source
-    memory: (args: any) => new MemoryDataSource({key: args.key}),
-  },
-});
-```
-
-The argumnets will be passed from SDL `@GQLifyModel` directive to creator function.
-
-``` graphql
-type Group @GQLifyModel(dataSource: "memory", key: "groups") {
-  id: ID! @unique @autoGen
-  name: String!
-}
-```
-
-## Relation
-A relation defines a connection between two types. 
-
-For example, we create a simple bidirectional one-to-many relation between user and article:
-
-``` graphql
-type User {
-  id: ID! @unique
-  articles: [Article!]!
-}
-
-type Article {
-  id: ID! @unique
   author: User!
 }
 ```
+
+### Use with apollo-server
+```js
+const { ApolloServer, gql } = require("apollo-server");
+const { Gqlify, MemoryDataSource } = require("@gqlify/server");
+
+// read datamodel
+const { readFileSync } = require("fs");
+const dataModel = readFileSync("./datamodel.graphql", "utf8");
+
+// Construct GQLify
+const gqlify = new Gqlify({
+  sdl: dataModel,
+  dataSources: {
+    memory: () => new MemoryDataSource()
+  }
+});
+
+const server = new ApolloServer(gqlify.createApolloConfig());
+
+server.listen().then(({ url }) => {
+  console.log(`🚀 Server ready at ${url}`);
+});
+```
+
