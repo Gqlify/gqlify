@@ -67,6 +67,9 @@ export class FirestoreDataSource implements DataSource {
 
   public async update(where: Where, payload: any): Promise<any> {
     // WARNING: where may not contain id
+    if (isEmpty(payload)) {
+      return;
+    }
     const ref = this.db.collection(this.path).doc(where.id.eq);
     await ref.update(payload);
   }
@@ -89,7 +92,20 @@ export class FirestoreDataSource implements DataSource {
 
   // ToOneRelation
   public async updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<any> {
-    throw Error('Not Implement');
+    const ref = this.db.collection(this.path);
+    const snapshot = await ref.get();
+    const data = [];
+    snapshot.forEach(doc => {
+      data.push(doc.data());
+    });
+    const oldOwner = first(filter(data, {[foreignKey]: {[Operator.eq]: foreignId}}));
+    if (oldOwner) {
+      const oldRef = this.db.doc(`${this.path}/${(oldOwner as any).id}`);
+      await oldRef.update({[foreignKey]: admin.firestore.FieldValue.delete()});
+    }
+
+    const newRef = this.db.doc(`${this.path}/${id}`);
+    await newRef.update({[foreignKey]: foreignId});
   }
 
   // OneToManyRelation
