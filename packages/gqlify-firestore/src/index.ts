@@ -12,7 +12,7 @@ import {
   sort
 } from '@gqlify/server';
 
-export default class FirestoreDataSource implements DataSource {
+export class FirestoreDataSource implements DataSource {
   private db: admin.firestore.Firestore;
   private path: string;
   private relationTable: Record<string, Record<string, string[]>> = {};
@@ -68,12 +68,12 @@ export default class FirestoreDataSource implements DataSource {
   public async update(where: Where, payload: any): Promise<any> {
     // WARNING: where may not contain id
     const ref = this.db.collection(this.path).doc(where.id.eq);
-    ref.update(payload);
+    await ref.update(payload);
   }
 
   public async delete(where: Where): Promise<any> {
     // WARNING: where may not contain id
-    this.db.collection(this.path).doc(where.id.eq).delete();
+    await this.db.collection(this.path).doc(where.id.eq).delete();
   }
 
   // ToOneRelation
