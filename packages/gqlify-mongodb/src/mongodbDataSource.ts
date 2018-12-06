@@ -29,22 +29,25 @@ export class MongodbDataSource implements DataSource {
     let query = this.db.collection(this.collectionName).find(filterQuery);
     query = isEmpty(orderBy) ? query : query.sort({ [orderBy.field]: orderBy.value });
 
-    const filteredData = await query.toArray();
-    const removeObjectIdData = filteredData.map(o => this.removeObjectId(o));
-    return paginate(removeObjectIdData, pagination);
+    const filteredData = await query.project({ _id: 0 }).toArray();
+    return paginate(filteredData, pagination);
   }
 
   public async findOne({ where }: { where: Where }): Promise<any> {
     const filterQuery = this.whereToFilterQuery(where);
-    const filteredData = await this.db.collection(this.collectionName).find(filterQuery).toArray();
-    const removeObjectIdData = filteredData.map(o => this.removeObjectId(o));
-    return first(removeObjectIdData);
+    const filteredData = await this.db.collection(this.collectionName)
+      .find(filterQuery)
+      .project({ _id: 0 })
+      .toArray();
+    return first(filteredData);
   }
 
   public async findOneById(id: string): Promise<any> {
-    const filteredData = await this.db.collection(this.collectionName).find({ _id: id }).toArray();
-    const removeObjectIdData = filteredData.map(o => this.removeObjectId(o));
-    return first(removeObjectIdData);
+    const filteredData = await this.db.collection(this.collectionName)
+      .find({ id })
+      .project({ _id: 0 })
+      .toArray();
+    return first(filteredData);
   }
 
   public async create(payload: any): Promise<any> {
@@ -68,7 +71,9 @@ export class MongodbDataSource implements DataSource {
 
   public async update(where: Where, payload: any): Promise<any> {
     const filterQuery = this.whereToFilterQuery(where);
-    await this.db.collection(this.collectionName).updateOne(filterQuery, { $set: payload });
+    if (!isEmpty(payload)) {
+      await this.db.collection(this.collectionName).updateOne(filterQuery, { $set: payload });
+    }
   }
 
   public async delete(where: Where): Promise<any> {
@@ -87,7 +92,19 @@ export class MongodbDataSource implements DataSource {
 
   // ToOneRelation
   public async updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<any> {
-    throw Error('Not Implement');
+    // remove oldOwner foreignKey
+    await this.db.collection(this.collectionName).findOneAndUpdate(
+      { [foreignKey]: foreignId },
+      { $unset: { [foreignKey]: '' } },
+    );
+
+    // add foreignKey to  newOwner
+    const tmp = await this.db.collection(this.collectionName).findOne({ id });
+    await this.db.collection(this.collectionName).findOneAndUpdate(
+      { id },
+      { $set: { [foreignKey]: foreignId } },
+      { returnOriginal: false },
+    );
   }
 
   // OneToManyRelation
@@ -157,10 +174,5 @@ export class MongodbDataSource implements DataSource {
     });
 
     return filterQuery;
-  }
-
-  private removeObjectId(document: any) {
-    unset(document, '_id');
-    return document;
   }
 }

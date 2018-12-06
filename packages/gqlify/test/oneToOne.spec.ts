@@ -10,10 +10,13 @@ import * as admin from 'firebase-admin';
 
 import { FirebaseDataSource } from '@gqlify/firebase';
 import { FirestoreDataSource } from '@gqlify/firestore';
+import { MongodbDataSourceGroup } from '@gqlify/mongodb';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 
 import faker from 'faker';
 import { createApp } from './createApp';
+
+const TEST_MONGODB_URI = process.env.TEST_MONGODB_URI;
 
 const expect = chai.expect;
 const sdl = readFileSync(__dirname + '/fixtures/oneToOne.graphql', {encoding: 'utf8'});
@@ -89,7 +92,7 @@ const fakeUserData = (data?: any) => {
   };
 };
 
-describe('Relation tests on fixtures/oneToOne.graphql', function() {
+describe('Relation tests on fixtures/oneToOne.graphql on Memory Data Source', function() {
   before(async () => {
     const {graphqlRequest, close} = createApp({
       sdl,
@@ -183,6 +186,47 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source
   after(async () => {
     await (this as any).close();
     await admin.app().delete();
+  });
+
+  testSuits.call(this);
+});
+
+describe('Tests on fixtures/oneModel.graphql with MongoDB Data Source', function() {
+  this.timeout(20000);
+
+  before(async () => {
+    let db;
+    const mongodbDataSourceGroup = new MongodbDataSourceGroup(TEST_MONGODB_URI, 'gqlify');
+    await mongodbDataSourceGroup.initialize();
+
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => {
+          db = mongodbDataSourceGroup.getDataSource(args.key);
+          return db;
+        },
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).db = db;
+    (this as any).mongodb = (mongodbDataSourceGroup as any).db;
+  });
+
+  afterEach(async () => {
+    const listCollectionsQuery = await (this as any).mongodb.listCollections();
+    const collections = await listCollectionsQuery.toArray();
+    await Promise.all(collections.map(async collection => {
+      await (this as any).mongodb.collection(collection.name).deleteMany({});
+    }));
+  });
+
+  after(async () => {
+    await (this as any).close();
   });
 
   testSuits.call(this);
