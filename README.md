@@ -35,10 +35,8 @@ yarn add @gqlify/server
 [![Edit GQLify Server @welcome page](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/p7wqo43zpx)
 
 
+## Documentation
 👉 [Full documentation](https://www.gqlify.com/docs)
-
-## Quick start
-> [Get Started now! 👉](https://www.gqlify.com/docs/quick-start)
 
 
 ## License
