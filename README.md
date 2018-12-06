@@ -21,6 +21,8 @@
 
 > ***Why GQLify: https://www.gqlify.com/docs/why-gqlify***
 
+> ***FQA - Compare to Prisma: https://www.gqlify.com/docs/vs-prisma***
+
 ## Installation
 ``` console
 yarn add @gqlify/server
