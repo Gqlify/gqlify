@@ -21,7 +21,7 @@
 
 > ***Why GQLify: https://www.gqlify.com/docs/why-gqlify***
 
-> ***FQA - Compare to Prisma: https://www.gqlify.com/docs/vs-prisma***
+> ***FAQ - Compare to Prisma: https://www.gqlify.com/docs/vs-prisma***
 
 ## Installation
 ``` console
