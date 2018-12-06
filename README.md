@@ -38,48 +38,8 @@ yarn add @gqlify/server
 👉 [Full documentation](https://www.gqlify.com/docs)
 
 ## Quick start
-> [Walk through quickstart in document](https://www.gqlify.com/docs/quick-start)
+> [Get Started now! 👉](https://www.gqlify.com/docs/quick-start)
 
-### Datamodel
-Your datamodel file is written in GraphQL SDL (Schema Definition Language)
-```graphql
-type User @GQLifyModel(dataSource: "memory", key: "users") {
-  id: ID! @unique @autoGen
-  username: String!
-  email: String
-  books: [Book!]!
-}
-
-type Book @GQLifyModel(dataSource: "memory", key: "books") {
-  id: ID! @unique @autoGen
-  name: String!
-  author: User!
-}
-```
-
-### Use with apollo-server
-```js
-const { ApolloServer, gql } = require("apollo-server");
-const { Gqlify, MemoryDataSource } = require("@gqlify/server");
-
-// read datamodel
-const { readFileSync } = require("fs");
-const dataModel = readFileSync("./datamodel.graphql", "utf8");
-
-// Construct GQLify
-const gqlify = new Gqlify({
-  sdl: dataModel,
-  dataSources: {
-    memory: () => new MemoryDataSource()
-  }
-});
-
-const server = new ApolloServer(gqlify.createApolloConfig());
-
-server.listen().then(({ url }) => {
-  console.log(`🚀 Server ready at ${url}`);
-});
-```
 
 ## License
 
