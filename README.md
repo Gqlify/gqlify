@@ -31,6 +31,17 @@ yarn add @gqlify/server
 ## Demo
 [![Edit GQLify Server @welcome page](https://codesandbox.io/static/img/play-codesandbox.svg)](https://codesandbox.io/s/p7wqo43zpx)
 
+## Features
+* [Build GraphQL API with GraphQL SDL (Schema Definition Language)](https://www.gqlify.com/docs/quick-start)
+* [Auto-generated GraphQL Schema](https://www.gqlify.com/docs/graphql-api-overview)
+* [Unifying multiple data-sources](https://www.gqlify.com/docs/data-source-overview)
+* [Relationship made easy](https://www.gqlify.com/docs/relationship-overview)
+* [Extensible framework](https://www.gqlify.com/docs/graphql-api-plugins)
+
+## Supported data-sources
+* [Firebase](https://www.gqlify.com/docs/firebase)
+* [Firestore](https://www.gqlify.com/docs/firestore)
+* [MongoDB](https://www.gqlify.com/docs/mongodb)
 
 ## Documentation
 👉 [Full documentation](https://www.gqlify.com/docs)
