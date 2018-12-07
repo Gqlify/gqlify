@@ -74,7 +74,7 @@ export default class OneToMany {
   }
 
   public async removeIdFromOneSide(oneSideId: string, manySideId: string) {
-    await this.manySideModel.getDataSource().update({id: {[Operator.eq]: manySideId}}, {[this.foreignKey]: oneSideId});
+    await this.manySideModel.getDataSource().update({id: {[Operator.eq]: manySideId}}, {[this.foreignKey]: null});
   }
 
   public async deleteRecordFromOneSide(manySideId: string) {

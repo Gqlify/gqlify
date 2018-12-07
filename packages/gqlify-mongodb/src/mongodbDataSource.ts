@@ -99,7 +99,6 @@ export class MongodbDataSource implements DataSource {
     );
 
     // add foreignKey to  newOwner
-    const tmp = await this.db.collection(this.collectionName).findOne({ id });
     await this.db.collection(this.collectionName).findOneAndUpdate(
       { id },
       { $set: { [foreignKey]: foreignId } },

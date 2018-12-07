@@ -19,7 +19,7 @@ import { createApp } from './createApp';
 const TEST_MONGODB_URI = process.env.TEST_MONGODB_URI;
 
 const expect = chai.expect;
-const sdl = readFileSync(__dirname + '/fixtures/oneToOne.graphql', {encoding: 'utf8'});
+const sdl = readFileSync(__dirname + '/fixtures/oneToMany.graphql', {encoding: 'utf8'});
 const serviceAccount = readFileSync(process.env.TEST_FIREBASE_CERT, {encoding: 'utf8'});
 
 const userFields = `
@@ -57,7 +57,7 @@ const userWithBookFields = `
     title
     text
   }
-  oneBook {
+  books {
     ${bookFields}
   }
 `;
@@ -72,7 +72,7 @@ const bookWithUserFields = `
 const teamFields = `
   id
   name
-  onePlayer {
+  players {
     ${userFields}
   }
 `;
@@ -92,7 +92,7 @@ const fakeUserData = (data?: any) => {
   };
 };
 
-describe('Relation tests on fixtures/oneToOne.graphql on Memory Data Source', function() {
+describe('Relation tests on fixtures/oneToMany.graphql on Memory Data Source', function() {
   before(async () => {
     const {graphqlRequest, close} = createApp({
       sdl,
@@ -114,7 +114,7 @@ describe('Relation tests on fixtures/oneToOne.graphql on Memory Data Source', fu
   testSuits.call(this);
 });
 
-describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source', function() {
+describe('Relation tests on fixtures/oneToMany.graphql with Firebase Data Source', function() {
   this.timeout(25000);
 
   before(async () => {
@@ -146,7 +146,7 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firebase Data Source'
   testSuits.call(this);
 });
 
-describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source', function() {
+describe('Relation tests on fixtures/oneToMany.graphql with Firestore Data Source', function() {
   this.timeout(25000);
 
   before(async () => {
@@ -191,7 +191,7 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source
   testSuits.call(this);
 });
 
-describe('Tests on fixtures/oneToOne.graphql with MongoDB Data Source', function() {
+describe('Tests on fixtures/oneToMany.graphql with MongoDB Data Source', function() {
   this.timeout(20000);
 
   before(async () => {
@@ -233,7 +233,7 @@ describe('Tests on fixtures/oneToOne.graphql with MongoDB Data Source', function
 });
 
 export function testSuits() {
-  it('should create unconnected item with uni-1-to-1', async () => {
+  it('should create unconnected item with uni-1-to-*', async () => {
     const createTeamQuery = `
       mutation ($data: TeamCreateInput!) {
         createTeam (data: $data) {${teamFields}}
@@ -248,13 +248,13 @@ export function testSuits() {
 
     expect(createTeam).to.have.property('id');
     // tslint:disable-next-line:no-unused-expression
-    expect(createTeam.onePlayer).to.be.null;
+    expect(createTeam.players).to.be.an('array').that.is.empty;
     expect(createTeam).to.deep.include({
       name: createTeamVariables.data.name,
     });
   });
 
-  it('should create connected item with uni-1-to-1', async () => {
+  it('should create connected item with uni-1-to-*', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -275,8 +275,10 @@ export function testSuits() {
     const createTeamVariables = {
       data: {
         name: faker.internet.userName(),
-        onePlayer: {
-          connect: {id: createUser.id},
+        players: {
+          connect: [
+            {id: createUser.id},
+          ],
         },
       },
     };
@@ -285,11 +287,11 @@ export function testSuits() {
     expect(createTeam).to.have.property('id');
     expect(createTeam).to.deep.include({
       name: createTeamVariables.data.name,
-      onePlayer: createUser,
+      players: [createUser],
     });
   });
 
-  it('should update connect on unconnected item with uni-1-to-1', async () => {
+  it('should update connect on multi unconnected item with uni-1-to-*', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -300,6 +302,7 @@ export function testSuits() {
       }
     `;
     const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
+    const {createUser: anotherUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
 
     const createTeamQuery = `
       mutation ($data: TeamCreateInput!) {
@@ -313,7 +316,7 @@ export function testSuits() {
     };
     const {createTeam} = await (this as any).graphqlRequest(createTeamQuery, createTeamVariables);
     // tslint:disable-next-line:no-unused-expression
-    expect(createTeam.onePlayer).to.be.null;
+    expect(createTeam.players).to.be.an('array').that.is.empty;
 
     // update to-one relation
     const updateTeamQuery = `
@@ -324,8 +327,11 @@ export function testSuits() {
     const updateTeamVariables = {
       where: { id: createTeam.id },
       data: {
-        onePlayer: {
-          connect: {id: createUser.id},
+        players: {
+          connect: [
+            { id: createUser.id },
+            { id: anotherUser.id },
+          ],
         },
       },
     };
@@ -342,10 +348,10 @@ export function testSuits() {
       where: { id: updateTeam.id },
     };
     const {team} = await (this as any).graphqlRequest(getTeamQuery, getTeamVariables);
-    expect(team.onePlayer).to.be.eql(createUser);
+    expect(team.players).to.have.deep.members([createUser, anotherUser]);
   });
 
-  it('should update connect on connected item with uni-1-to-1', async () => {
+  it('should update unconnected and disconnect connected item in one query with uni-1-to-*', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -366,8 +372,10 @@ export function testSuits() {
     const createTeamVariables = {
       data: {
         name: faker.internet.userName(),
-        onePlayer: {
-          connect: {id: createUser.id},
+        players: {
+          connect: [
+            { id: createUser.id },
+          ],
         },
       },
     };
@@ -388,8 +396,13 @@ export function testSuits() {
     const updateTeamVariables = {
       where: { id: createTeam.id },
       data: {
-        onePlayer: {
-          connect: {id: newUser.id},
+        players: {
+          connect: [
+            { id: newUser.id },
+          ],
+          disconnect: [
+            { id: createUser.id },
+          ],
         },
       },
     };
@@ -406,10 +419,10 @@ export function testSuits() {
       where: { id: updateTeam.id },
     };
     const {team} = await (this as any).graphqlRequest(getTeamQuery, getTeamVariables);
-    expect(team.onePlayer).to.be.eql(newUser);
+    expect(team.players).to.have.deep.members([newUser]);
   });
 
-  it('should disconnect connected item with uni-1-to-1', async () => {
+  it('should disconnect connected item with uni-1-to-*', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -430,8 +443,10 @@ export function testSuits() {
     const createTeamVariables = {
       data: {
         name: faker.internet.userName(),
-        onePlayer: {
-          connect: {id: createUser.id},
+        players: {
+          connect: [
+            { id: createUser.id },
+          ],
         },
       },
     };
@@ -446,8 +461,10 @@ export function testSuits() {
     const updateTeamVariables = {
       where: { id: createTeam.id },
       data: {
-        onePlayer: {
-          disconnect: true,
+        players: {
+          disconnect: [
+            { id: createUser.id },
+          ],
         },
       },
     };
@@ -465,12 +482,12 @@ export function testSuits() {
     };
     const {team} = await (this as any).graphqlRequest(getTeamQuery, getTeamVariables);
     // tslint:disable-next-line:no-unused-expression
-    expect(team.onePlayer).to.be.null;
+    expect(team.players).to.be.an('array').that.is.empty;
   });
 
   it('should disconnect unconnected item with uni-1-to-1');
 
-  it('should create unconnected item with bi-1-to-1 from one side', async () => {
+  it('should create unconnected item with bi-1-to-* from one side', async () => {
     const createBookQuery = `
       mutation ($data: BookCreateInput!) {
         createBook (data: $data) {${bookWithUserFields}}
@@ -489,7 +506,7 @@ export function testSuits() {
     expect(createBook.name).to.be.eql(createBookVariables.data.name);
   });
 
-  it('should create connected item with bi-1-to-1 from one side', async () => {
+  it('should create connected item with bi-1-to-* from one side', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -511,7 +528,7 @@ export function testSuits() {
       data: {
         name: faker.internet.userName(),
         author: {
-          connect: {id: createUser.id},
+          connect: { id: createUser.id },
         },
       },
     };
@@ -524,7 +541,7 @@ export function testSuits() {
     });
   });
 
-  it('should update connect on unconnected item with bi-1-to-1 from one side', async () => {
+  it('should update connect on unconnected item with bi-1-to-* from one side', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -584,7 +601,7 @@ export function testSuits() {
     });
   });
 
-  it('should update connect on connected item with bi-1-to-1 from one side', async () => {
+  it('should update connect on connected item with bi-1-to-* from one side', async () => {
     // create user
     const createUserVariables = {
       data: fakeUserData(),
@@ -727,10 +744,10 @@ export function testSuits() {
     const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
     expect(createUser).to.have.property('id');
     // tslint:disable-next-line:no-unused-expression
-    expect(createUser.oneBook).to.be.null;
+    expect(createUser.books).to.be.an('array').that.is.empty;
   });
 
-  it('should create connected item with bi-1-to-1 from the other side', async () => {
+  it('should create connected item with bi-1-to-* from the other side', async () => {
     // create book
     const createBookQuery = `
       mutation ($data: BookCreateInput!) {
@@ -748,8 +765,10 @@ export function testSuits() {
     const createUserVariables = {
       data: {
         ...fakeUserData(),
-        oneBook: {
-          connect: { id: createBook.id },
+        books: {
+          connect: [
+            { id: createBook.id },
+          ],
         },
       },
     };
@@ -762,7 +781,7 @@ export function testSuits() {
     expect(createUser).to.have.property('id');
     expect(createUser).to.deep.include({
       ...createUserVariables.data,
-      oneBook: createBook,
+      books: [createBook],
     });
   });
 
@@ -800,8 +819,10 @@ export function testSuits() {
     const updateUserVariables = {
       where: { id: createUser.id },
       data: {
-        oneBook: {
-          connect: { id: createBook.id },
+        books: {
+          connect: [
+            { id: createBook.id },
+          ],
         },
       },
     };
@@ -818,7 +839,7 @@ export function testSuits() {
       where: { id: createUser.id },
     };
     const {user} = await (this as any).graphqlRequest(getUserQuery, getUserVariable);
-    expect(user.oneBook).to.be.eql(createBook);
+    expect(user.books).to.have.deep.members([createBook]);
   });
 
   it('should update connect on connected item with bi-1-to-1 from one side', async () => {
@@ -839,7 +860,7 @@ export function testSuits() {
     const createUserVariables = {
       data: {
         ...fakeUserData(),
-        oneBook: {
+        books: {
           connect: { id: createBook.id },
         },
       },
@@ -868,8 +889,13 @@ export function testSuits() {
     const updateUserVariables = {
       where: { id: createUser.id },
       data: {
-        oneBook: {
-          connect: { id: newBook.id },
+        books: {
+          connect: [
+            { id: newBook.id },
+          ],
+          disconnect: [
+            { id: createBook.id },
+          ],
         },
       },
     };
@@ -886,7 +912,7 @@ export function testSuits() {
       where: { id: createUser.id },
     };
     const {user} = await (this as any).graphqlRequest(getUserQuery, getUserVariable);
-    expect(user.oneBook).to.be.eql(newBook);
+    expect(user.books).to.have.deep.members([newBook]);
   });
 
   it('should disconnect connected item with bi-1-to-1 from one side', async () => {
@@ -907,7 +933,7 @@ export function testSuits() {
     const createUserVariables = {
       data: {
         ...fakeUserData(),
-        oneBook: {
+        books: {
           connect: { id: createBook.id },
         },
       },
@@ -919,7 +945,7 @@ export function testSuits() {
     `;
     const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
     // tslint:disable-next-line:no-unused-expression
-    expect(createUser.oneBook).to.not.be.null;
+    expect(createUser.books).to.not.be.null;
 
     // update user
     const updateUserQuery = `
@@ -930,8 +956,10 @@ export function testSuits() {
     const updateUserVariables = {
       where: { id: createUser.id },
       data: {
-        oneBook: {
-          disconnect: true,
+        books: {
+          disconnect: [
+            { id: createBook.id },
+          ],
         },
       },
     };
@@ -949,7 +977,7 @@ export function testSuits() {
     };
     const {user} = await (this as any).graphqlRequest(getUserQuery, getUserVariable);
     // tslint:disable-next-line:no-unused-expression
-    expect(user.oneBook).to.be.null;
+    expect(user.books).to.be.an('array').that.is.empty;
   });
 
   it('should disconnect unconnected item with bi-1-to-1 from one side');

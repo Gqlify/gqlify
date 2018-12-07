@@ -43,7 +43,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // create data
         const dataWithoutRelation = omit(data, oneSideField);
         context.data = dataWithoutRelation;
-        const created = await createOperation();
+        await createOperation();
+        const created  = context.response;
 
         // bind relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -70,7 +71,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // update first
         const dataWithoutRelation = omit(data, oneSideField);
         context.data = dataWithoutRelation;
-        const updated = await updateOperation();
+        await updateOperation();
+        const updated  = context.response;
 
         // bind relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
