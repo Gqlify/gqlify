@@ -6,7 +6,7 @@ import {
   DataSource,
 } from './interface';
 import { filter, createFilter, paginate, sort } from '../helper';
-import { first, last, assign, remove, isUndefined, get, pull, unset } from 'lodash';
+import { first, last, assign, remove, isNil, isUndefined, get, pull, unset } from 'lodash';
 
 export default class MemoryDataSource implements DataSource {
   private defaultData: any[];
@@ -70,7 +70,10 @@ export default class MemoryDataSource implements DataSource {
   // ManyToManyRelation
   public findManyFromManyRelation = async (sourceSideName: string, targetSideName: string, sourceSideId: string) => {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
-    return get(this.relationTable, [relationTableName, sourceSideId]) || [];
+    const ids = get(this.relationTable, [relationTableName, sourceSideId]) || [];
+    return isNil(ids)
+      ? []
+      : ids.filter(id => !isNil(id)).map(id => this.findOneById(id));
   };
 
   public addIdToManyRelation = async (
