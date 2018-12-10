@@ -1,6 +1,6 @@
 // import { initializeApp, credential } from 'firebase-admin';
 import * as admin from 'firebase-admin';
-import { first, isEmpty, isUndefined, get, pull } from 'lodash';
+import { first, isEmpty, isNil, isUndefined, get, pull } from 'lodash';
 
 import {
   Where,
@@ -16,7 +16,7 @@ import {
 export class FirebaseDataSource implements DataSource {
   private db: admin.database.Database;
   private path: string;
-  private relationTable: Record<string, Record<string, string[]>> = {};
+  private relationPath: string = '__relation';
 
   constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
     this.db = isEmpty(admin.apps)
@@ -102,31 +102,71 @@ export class FirebaseDataSource implements DataSource {
   // ManyToManyRelation
   public async findManyFromManyRelation(sourceSideName: string, targetSideName: string, sourceSideId: string) {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
-    return get(this.relationTable, [relationTableName, sourceSideId]) || [];
+    const ref = this.db.ref(`/${this.relationPath}/${relationTableName}`);
+    const relationTableSnapshot = await ref.once('value');
+    const relationTable = relationTableSnapshot.val();
+    const ids = (relationTable && relationTable[sourceSideId]) || [];
+    return isNil(ids)
+      ? []
+      : Promise.all(ids.filter(id => !isNil(id)).map(id => this.findOneById(id)));
   }
 
   public async addIdToManyRelation(
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
-    if (!this.relationTable[relationTableName]) {
-      this.relationTable[relationTableName] = {[sourceSideId]: []};
+
+    let relationRef = this.db.ref(`/${this.relationPath}`);
+    const relationSnapshot = await relationRef.once('value');
+    const relation = relationSnapshot.val();
+    if (!relation) {
+      relationRef = this.db.ref(`/${this.relationPath}`);
+      await relationRef.set({
+        [relationTableName]: {
+          [sourceSideId]: [targetSideId],
+        },
+      });
     }
 
-    if (isUndefined(this.relationTable[relationTableName][sourceSideId])) {
-      this.relationTable[relationTableName][sourceSideId] = [];
+    const relationTableRef = this.db.ref(`/${this.relationPath}/${relationTableName}`);
+    const relationTableSnapshot = await relationTableRef.once('value');
+    const relationTable = relationTableSnapshot.val();
+    if (!relationTable) {
+      await relationRef.update({
+        [relationTableName]: {
+          [sourceSideId]: [targetSideId],
+        },
+      });
     }
 
-    this.relationTable[relationTableName][sourceSideId].push(targetSideId);
+    const sourceSideIdRef = this.db.ref(`/${this.relationPath}/${relationTableName}/${sourceSideId}`);
+    const sourceSideIdSnapshot = await sourceSideIdRef.once('value');
+    const relationIds = sourceSideIdSnapshot.val();
+    if (!relationIds) {
+      await sourceSideIdRef.set([targetSideId]);
+    }
+
+    if (relationIds && relationIds.indexOf(targetSideId) === -1) {
+      relationIds.push(targetSideId);
+      await sourceSideIdRef.set(relationIds);
+    }
   }
 
   public async removeIdFromManyRelation(
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
-    if (!this.relationTable[relationTableName] ||
-      isUndefined(this.relationTable[relationTableName][sourceSideId])) {
+    const ref = this.db.ref(`/${this.relationPath}/${relationTableName}`);
+    const relationTableSnapshot = await ref.once('value');
+    const relationTable = relationTableSnapshot.val();
+    if (!relationTable || isUndefined(relationTable[sourceSideId])) {
       return;
     }
 
-    pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
+    // remove Id and save result in relationIds
+    const relationIds = relationTable[sourceSideId];
+    pull(relationIds, targetSideId);
+
+    // overwrite relationIds value of relationTable[sourceSideId]
+    const sourceSideIdRef = ref.child(sourceSideId);
+    await sourceSideIdRef.set(relationIds);
   }
 }
