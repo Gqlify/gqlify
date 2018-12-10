@@ -109,37 +109,37 @@ describe('Relation tests on fixtures/manyToMany.graphql on Memory Data Source', 
   testSuits.call(this);
 });
 
-// describe('Relation tests on fixtures/manyToMany.graphql with Firebase Data Source', function() {
-//   this.timeout(25000);
+describe('Relation tests on fixtures/manyToMany.graphql with Firebase Data Source', function() {
+  this.timeout(25000);
 
-//   before(async () => {
-//     const serviceAccountJson = JSON.parse(serviceAccount);
-//     const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
-//     const {graphqlRequest, close} = createApp({
-//       sdl,
-//       dataSources: {
-//         memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
-//       },
-//       scalars: {
-//         JSON: GraphQLJSON,
-//       },
-//     });
-//     (this as any).graphqlRequest = graphqlRequest;
-//     (this as any).close = close;
-//     (this as any).firebase = admin.app().database();
-//   });
+  before(async () => {
+    const serviceAccountJson = JSON.parse(serviceAccount);
+    const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => new FirebaseDataSource(serviceAccountJson, dbUrl, args.key),
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).firebase = admin.app().database();
+  });
 
-//   afterEach(async () => {
-//     await (this as any).firebase.ref('/').remove();
-//   });
+  afterEach(async () => {
+    await (this as any).firebase.ref('/').remove();
+  });
 
-//   after(async () => {
-//     await (this as any).close();
-//     await admin.app().delete();
-//   });
+  after(async () => {
+    await (this as any).close();
+    await admin.app().delete();
+  });
 
-//   testSuits.call(this);
-// });
+  testSuits.call(this);
+});
 
 // describe('Relation tests on fixtures/manyToMany.graphql with Firestore Data Source', function() {
 //   this.timeout(25000);
@@ -296,6 +296,12 @@ export function testSuits() {
     `;
     const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
 
+    // create new user
+    const createNewUserVariables = {
+      data: fakeUserData(),
+    };
+    const {createUser: newUser} = await (this as any).graphqlRequest(createUserQuery, createNewUserVariables);
+
     // create group
     const createGroupQuery = `
       mutation ($data: GroupCreateInput!) {
@@ -323,6 +329,7 @@ export function testSuits() {
         members: {
           connect: [
             { id: createUser.id },
+            { id: newUser.id },
           ],
         },
       },
@@ -342,7 +349,7 @@ export function testSuits() {
     const {group} = await (this as any).graphqlRequest(getGroupQuery, getGroupVariables);
     expect(group).to.deep.include({
       name: createGroupVariables.data.name,
-      members: [createUser],
+      members: [createUser, newUser],
     });
   });
 
