@@ -141,91 +141,91 @@ describe('Relation tests on fixtures/manyToMany.graphql with Firebase Data Sourc
   testSuits.call(this);
 });
 
-// describe('Relation tests on fixtures/manyToMany.graphql with Firestore Data Source', function() {
-//   this.timeout(25000);
+describe('Relation tests on fixtures/manyToMany.graphql with Firestore Data Source', function() {
+  this.timeout(25000);
 
-//   before(async () => {
-//     const serviceAccountJson = JSON.parse(serviceAccount);
-//     const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
-//     const {graphqlRequest, close} = createApp({
-//       sdl,
-//       dataSources: {
-//         memory: args => new FirestoreDataSource(serviceAccountJson, dbUrl, args.key),
-//       },
-//       scalars: {
-//         JSON: GraphQLJSON,
-//       },
-//     });
-//     (this as any).graphqlRequest = graphqlRequest;
-//     (this as any).close = close;
-//     (this as any).firestore = admin.app().firestore();
-//   });
+  before(async () => {
+    const serviceAccountJson = JSON.parse(serviceAccount);
+    const dbUrl = `https://${serviceAccountJson.project_id}.firebaseio.com`;
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => new FirestoreDataSource(serviceAccountJson, dbUrl, args.key),
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).firestore = admin.app().firestore();
+  });
 
-//   afterEach(async () => {
-//     const collections = await (this as any).firestore.getCollections();
-//     await Promise.all(collections.map(async collection => {
-//       const collectionRef = (this as any).firestore.collection('users');
-//       const querySnapshot = await collectionRef.get();
-//       const docPaths = [];
-//       querySnapshot.forEach(documentSnapshot => {
-//         docPaths.push(documentSnapshot.ref.path);
-//       });
+  afterEach(async () => {
+    const collections = await (this as any).firestore.getCollections();
+    await Promise.all(collections.map(async collection => {
+      const collectionRef = (this as any).firestore.collection(collection.id);
+      const querySnapshot = await collectionRef.get();
+      const docPaths = [];
+      querySnapshot.forEach(documentSnapshot => {
+        docPaths.push(documentSnapshot.ref.path);
+      });
 
-//       await Promise.all(docPaths.map(async docPath => {
-//         const docRef = (this as any).firestore.doc(docPath);
-//         await docRef.delete();
-//       }));
-//     }));
-//   });
+      await Promise.all(docPaths.map(async docPath => {
+        const docRef = (this as any).firestore.doc(docPath);
+        await docRef.delete();
+      }));
+    }));
+  });
 
-//   after(async () => {
-//     await (this as any).close();
-//     await admin.app().delete();
-//   });
+  after(async () => {
+    await (this as any).close();
+    await admin.app().delete();
+  });
 
-//   testSuits.call(this);
-// });
+  testSuits.call(this);
+});
 
-// describe('Tests on fixtures/manyToMany.graphql with MongoDB Data Source', function() {
-//   this.timeout(20000);
+describe('Tests on fixtures/manyToMany.graphql with MongoDB Data Source', function() {
+  this.timeout(20000);
 
-//   before(async () => {
-//     let db;
-//     const mongodbDataSourceGroup = new MongodbDataSourceGroup(TEST_MONGODB_URI, 'gqlify');
-//     await mongodbDataSourceGroup.initialize();
+  before(async () => {
+    let db;
+    const mongodbDataSourceGroup = new MongodbDataSourceGroup(TEST_MONGODB_URI, 'gqlify');
+    await mongodbDataSourceGroup.initialize();
 
-//     const {graphqlRequest, close} = createApp({
-//       sdl,
-//       dataSources: {
-//         memory: args => {
-//           db = mongodbDataSourceGroup.getDataSource(args.key);
-//           return db;
-//         },
-//       },
-//       scalars: {
-//         JSON: GraphQLJSON,
-//       },
-//     });
-//     (this as any).graphqlRequest = graphqlRequest;
-//     (this as any).close = close;
-//     (this as any).db = db;
-//     (this as any).mongodb = (mongodbDataSourceGroup as any).db;
-//   });
+    const {graphqlRequest, close} = createApp({
+      sdl,
+      dataSources: {
+        memory: args => {
+          db = mongodbDataSourceGroup.getDataSource(args.key);
+          return db;
+        },
+      },
+      scalars: {
+        JSON: GraphQLJSON,
+      },
+    });
+    (this as any).graphqlRequest = graphqlRequest;
+    (this as any).close = close;
+    (this as any).db = db;
+    (this as any).mongodb = (mongodbDataSourceGroup as any).db;
+  });
 
-//   afterEach(async () => {
-//     const listCollectionsQuery = await (this as any).mongodb.listCollections();
-//     const collections = await listCollectionsQuery.toArray();
-//     await Promise.all(collections.map(async collection => {
-//       await (this as any).mongodb.collection(collection.name).deleteMany({});
-//     }));
-//   });
+  afterEach(async () => {
+    const listCollectionsQuery = await (this as any).mongodb.listCollections();
+    const collections = await listCollectionsQuery.toArray();
+    await Promise.all(collections.map(async collection => {
+      await (this as any).mongodb.collection(collection.name).deleteMany({});
+    }));
+  });
 
-//   after(async () => {
-//     await (this as any).close();
-//   });
+  after(async () => {
+    await (this as any).close();
+  });
 
-//   testSuits.call(this);
-// });
+  testSuits.call(this);
+});
 
 export function testSuits() {
   it('should create unconnected item with bi-*-to-* from one side', async () => {
