@@ -115,11 +115,10 @@ export class FirebaseDataSource implements DataSource {
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
     const relationTableName = `${sourceSideName}_${targetSideName}`;
 
-    let relationRef = this.db.ref(`/${this.relationPath}`);
+    const relationRef = this.db.ref(`/${this.relationPath}`);
     const relationSnapshot = await relationRef.once('value');
     const relation = relationSnapshot.val();
     if (!relation) {
-      relationRef = this.db.ref(`/${this.relationPath}`);
       await relationRef.set({
         [relationTableName]: {
           [sourceSideId]: [targetSideId],
