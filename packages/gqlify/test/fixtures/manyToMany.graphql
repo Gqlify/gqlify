@@ -1,0 +1,35 @@
+scalar JSON
+
+enum STATUS {
+  OK
+  NOT_OK
+}
+
+type Location {
+  lng: String
+  lat: String
+}
+
+type Note {
+  title: String
+  text: String
+}
+
+type User @GQLifyModel(dataSource: "memory", key: "users") {
+  id: ID! @unique @autoGen
+  username: String!
+  email: String
+  status: STATUS
+  attributes: JSON
+  location: Location
+  note: [Note!]!
+  # bi-*-to-* relation
+  groups: [Group!]! @relation(name: "Membership")
+}
+
+type Group @GQLifyModel(dataSource: "memory", key: "groups") {
+  id: ID! @unique @autoGen
+  name: String
+  # bi-*-to-* relation
+  members: [User!]! @relation(name: "Membership")
+}

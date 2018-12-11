@@ -71,16 +71,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // create with filtered data
         const dataWithoutRelation = omit(data, modelAField);
         context.data = dataWithoutRelation;
-        const created = await createOperation();
+        await createOperation();
+        const created  = context.response;
 
         // execute relations
         if (connectWhere) {
           const connectIds = connectWhere.map(where => where.id);
-          await connectForModelA(data.id, connectIds);
+          await connectForModelA(created.id, connectIds);
         }
 
         if (createRecords) {
-          await createForModelA(data.id, createRecords);
+          await createForModelA(created.id, createRecords);
         }
 
         return created;
@@ -97,7 +98,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // update with filtered data
         const dataWithoutRelation = omit(data, modelAField);
         context.data = dataWithoutRelation;
-        const updated = await updateOperation();
+        await updateOperation();
+        const updated  = context.response;
 
         // execute relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -147,16 +149,17 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // create with filtered data
         const dataWithoutRelation = omit(data, modelBField);
         context.data = dataWithoutRelation;
-        const created = await createOperation();
+        await createOperation();
+        const created  = context.response;
 
         // execute relations
         if (connectWhere) {
           const connectIds = connectWhere.map(where => where.id);
-          await connectForModelB(data.id, connectIds);
+          await connectForModelB(created.id, connectIds);
         }
 
         if (createRecords) {
-          await createForModelB(data.id, createRecords);
+          await createForModelB(created.id, createRecords);
         }
 
         return created;
@@ -173,7 +176,8 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // update with filtered data
         const dataWithoutRelation = omit(data, modelBField);
         context.data = dataWithoutRelation;
-        const updated = await updateOperation();
+        await updateOperation();
+        const updated  = context.response;
 
         // execute relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');

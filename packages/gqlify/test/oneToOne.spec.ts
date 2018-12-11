@@ -1,5 +1,5 @@
 /**
- * OneModel is for simple CRUD test
+ * OneToOne test
  */
 import chai from 'chai';
 import chaiHttp = require('chai-http');
@@ -94,10 +94,11 @@ const fakeUserData = (data?: any) => {
 
 describe('Relation tests on fixtures/oneToOne.graphql on Memory Data Source', function() {
   before(async () => {
+    const db = new MemoryDataSource();
     const {graphqlRequest, close} = createApp({
       sdl,
       dataSources: {
-        memory: () => new MemoryDataSource(),
+        memory: () => db,
       },
       scalars: {
         JSON: GraphQLJSON,
@@ -105,10 +106,15 @@ describe('Relation tests on fixtures/oneToOne.graphql on Memory Data Source', fu
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
+    (this as any).db = db;
   });
 
   after(async () => {
     await (this as any).close();
+  });
+
+  afterEach(async () => {
+    ((this as any).db as any).defaultData = [];
   });
 
   testSuits.call(this);
@@ -169,7 +175,7 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source
   afterEach(async () => {
     const collections = await (this as any).firestore.getCollections();
     await Promise.all(collections.map(async collection => {
-      const collectionRef = (this as any).firestore.collection('users');
+      const collectionRef = (this as any).firestore.collection(collection.id);
       const querySnapshot = await collectionRef.get();
       const docPaths = [];
       querySnapshot.forEach(documentSnapshot => {
