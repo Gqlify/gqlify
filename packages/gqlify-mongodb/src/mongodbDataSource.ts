@@ -15,7 +15,7 @@ import {
 export class MongodbDataSource implements DataSource {
   private db: Db;
   private collectionName: string;
-  private relationTable: Record<string, Record<string, string[]>> = {};
+  private relationPath: string = '__relation';
 
   constructor(db: Db, collectionName: string) {
     this.db = db;
@@ -117,33 +117,44 @@ export class MongodbDataSource implements DataSource {
 
   // ManyToManyRelation
   public async findManyFromManyRelation(sourceSideName: string, targetSideName: string, sourceSideId: string) {
-    const relationTableName = `${sourceSideName}_${targetSideName}`;
-    return get(this.relationTable, [relationTableName, sourceSideId]) || [];
+    const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    const relationData = await this.db.collection(relationTableName).findOne({ sourceSideId });
+
+    const relationIds = (relationData && relationData.targetSideIds)
+      ? relationData.targetSideIds
+      : [];
+
+    return Promise.all(relationIds.map(id => this.findOneById(id)));
   }
 
   public async addIdToManyRelation(
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
-    const relationTableName = `${sourceSideName}_${targetSideName}`;
-    if (!this.relationTable[relationTableName]) {
-      this.relationTable[relationTableName] = {[sourceSideId]: []};
-    }
-
-    if (isUndefined(this.relationTable[relationTableName][sourceSideId])) {
-      this.relationTable[relationTableName][sourceSideId] = [];
-    }
-
-    this.relationTable[relationTableName][sourceSideId].push(targetSideId);
+    const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    await this.db.collection(relationTableName).updateOne(
+      { sourceSideId },
+      {
+        $set: {
+          sourceSideId,
+        },
+        $push: {
+          targetSideIds: targetSideId,
+        },
+      },
+      { upsert: true },
+    );
   }
 
   public async removeIdFromManyRelation(
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
-    const relationTableName = `${sourceSideName}_${targetSideName}`;
-    if (!this.relationTable[relationTableName] ||
-      isUndefined(this.relationTable[relationTableName][sourceSideId])) {
-      return;
-    }
-
-    pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
+    const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    await this.db.collection(relationTableName).updateOne(
+      { sourceSideId },
+      {
+        $pull: {
+          targetSideIds: targetSideId,
+        },
+      },
+    );
   }
 
   private whereToFilterQuery(where: Where): FilterQuery<any> {
