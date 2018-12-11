@@ -175,7 +175,7 @@ describe('Relation tests on fixtures/oneToOne.graphql with Firestore Data Source
   afterEach(async () => {
     const collections = await (this as any).firestore.getCollections();
     await Promise.all(collections.map(async collection => {
-      const collectionRef = (this as any).firestore.collection('users');
+      const collectionRef = (this as any).firestore.collection(collection.id);
       const querySnapshot = await collectionRef.get();
       const docPaths = [];
       querySnapshot.forEach(documentSnapshot => {
