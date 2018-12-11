@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { first, isEmpty, isUndefined, get, pull } from 'lodash';
+import { first, isEmpty, isNil, isUndefined, get, pull } from 'lodash';
 
 import {
   Where,
@@ -15,7 +15,6 @@ import {
 export class FirestoreDataSource implements DataSource {
   private db: admin.firestore.Firestore;
   private path: string;
-  private relationTable: Record<string, Record<string, string[]>> = {};
 
   constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
     this.db = isEmpty(admin.apps)
@@ -121,32 +120,33 @@ export class FirestoreDataSource implements DataSource {
 
   // ManyToManyRelation
   public async findManyFromManyRelation(sourceSideName: string, targetSideName: string, sourceSideId: string) {
-    const relationTableName = `${sourceSideName}_${targetSideName}`;
-    return get(this.relationTable, [relationTableName, sourceSideId]) || [];
+    const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    const ref = this.db.doc(`${relationTableName}/${sourceSideId}`);
+    const doc = await ref.get();
+    const docData = doc.data();
+
+    return !docData
+      ? []
+      : isEmpty(docData.targetSideIds)
+        ? []
+        : Promise.all(docData.targetSideIds.filter(id => !isNil(id)).map(id => this.findOneById(id)));
   }
 
   public async addIdToManyRelation(
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
-    const relationTableName = `${sourceSideName}_${targetSideName}`;
-    if (!this.relationTable[relationTableName]) {
-      this.relationTable[relationTableName] = {[sourceSideId]: []};
-    }
-
-    if (isUndefined(this.relationTable[relationTableName][sourceSideId])) {
-      this.relationTable[relationTableName][sourceSideId] = [];
-    }
-
-    this.relationTable[relationTableName][sourceSideId].push(targetSideId);
+    const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    const sourceSideRef = this.db.doc(`${relationTableName}/${sourceSideId}`);
+    await sourceSideRef.set({
+      targetSideIds: admin.firestore.FieldValue.arrayUnion(targetSideId),
+    }, { merge: true });
   }
 
   public async removeIdFromManyRelation(
     sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string) {
-    const relationTableName = `${sourceSideName}_${targetSideName}`;
-    if (!this.relationTable[relationTableName] ||
-      isUndefined(this.relationTable[relationTableName][sourceSideId])) {
-      return;
-    }
-
-    pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
+    const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    const ref = this.db.doc(`${relationTableName}/${sourceSideId}`);
+    await ref.set({
+      targetSideIds: admin.firestore.FieldValue.arrayRemove(targetSideId),
+    }, { merge: true });
   }
 }
