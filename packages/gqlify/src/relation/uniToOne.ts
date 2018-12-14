@@ -1,12 +1,14 @@
 import { isEmpty } from 'lodash';
-import { Model } from '../dataModel';
+import { Model, RelationType } from '../dataModel';
 import { Operator } from '../dataSource/interface';
+import { Relation, WithForeignKey } from './interface';
 
-const createForeignKey = (field: string, model: Model) =>
-  `${field.toLowerCase()}${model.getNamings().capitalSingular}Id`;
+// utils
+const createForeignKey = (field: string) =>
+  `${field.toLowerCase()}Id`;
 
-// Unidirectional One-to-One, or Many-to-One
-export default class UniToOne {
+// Unidirectional One-to-One
+export default class UniToOne implements Relation, WithForeignKey {
   private sourceModel: Model;
   private targetModel: Model;
   private relationField: string;
@@ -16,15 +18,32 @@ export default class UniToOne {
     sourceModel,
     targetModel,
     relationField,
+    foreignKey,
   }: {
     sourceModel: Model,
     targetModel: Model,
     relationField: string,
+    foreignKey?: string,
   }) {
     this.sourceModel = sourceModel;
     this.targetModel = targetModel;
     this.relationField = relationField;
-    this.foreignKey = createForeignKey(this.relationField, this.targetModel);
+    this.foreignKey = foreignKey || createForeignKey(this.relationField);
+  }
+
+  public getType() {
+    return RelationType.uniOneToOne;
+  }
+
+  public getForeignKey() {
+    return this.foreignKey;
+  }
+
+  public getForeignKeyConfig() {
+    return [{
+      model: this.sourceModel,
+      foreignKey: this.getForeignKey(),
+    }];
   }
 
   public getRelationField() {

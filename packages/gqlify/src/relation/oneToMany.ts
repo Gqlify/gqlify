@@ -1,13 +1,14 @@
 import { isEmpty } from 'lodash';
-import { Model } from '../dataModel';
+import { Model, RelationType } from '../dataModel';
 import { Operator } from '../dataSource/interface';
+import { Relation, WithForeignKey } from './interface';
 
 const createForeignKey = (model: Model) =>
   `${model.getNamings().singular}Id`;
 
 // one-to-many, can be used for unidirectional and bidirectional
 // put a foreign key on many side
-export default class OneToMany {
+export default class OneToMany implements Relation, WithForeignKey {
   private oneSideModel: Model;
   private manySideModel: Model;
   private oneSideField: string;
@@ -21,17 +22,35 @@ export default class OneToMany {
     manySideModel,
     oneSideField,
     manySideField,
+    foreignKey,
   }: {
     oneSideModel: Model,
     manySideModel: Model,
     oneSideField: string,
     manySideField?: string,
+    foreignKey?: string,
   }) {
     this.oneSideModel = oneSideModel;
     this.manySideModel = manySideModel;
     this.oneSideField = oneSideField;
     this.manySideField = manySideField;
-    this.foreignKey = createForeignKey(this.oneSideModel);
+    // foreignKey will be put on many-side record
+    this.foreignKey = foreignKey || createForeignKey(this.oneSideModel);
+  }
+
+  public getType() {
+    return this.manySideField ? RelationType.biOneToMany : RelationType.uniOneToMany;
+  }
+
+  public getForeignKey() {
+    return this.foreignKey;
+  }
+
+  public getForeignKeyConfig() {
+    return [{
+      model: this.manySideModel,
+      foreignKey: this.getForeignKey(),
+    }];
   }
 
   public getOneSideField() {

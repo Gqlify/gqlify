@@ -1,7 +1,8 @@
-import { isEmpty } from 'lodash';
-import { Model } from '../dataModel';
+import { isEmpty, sortBy } from 'lodash';
+import { Model, RelationType } from '../dataModel';
 import { supportFindOneByRelation } from '../dataSource/utils';
 import { Operator } from '../dataSource/interface';
+import { Relation, WithForeignKey } from './interface';
 
 enum relationType {
   belongsTo = 'belongsTo',
@@ -12,7 +13,7 @@ const createForeignKey = (field: string, model: Model) =>
   `${field.toLowerCase()}${model.getNamings().capitalSingular}Id`;
 
 // Bidirectional One-to-One
-export default class BiOneToOne {
+export default class BiOneToOne implements Relation, WithForeignKey {
   private owningSideModel: Model;
   private owningSideField: string;
   private refSideModel: Model;
@@ -24,11 +25,13 @@ export default class BiOneToOne {
     modelB,
     modelAField,
     modelBField,
+    foreignKey,
   }: {
     modelA: Model,
     modelB: Model,
     modelAField: string,
     modelBField: string,
+    foreignKey?: string,
   }) {
     // determine which side we save the foreign key
     // if both side dont support findOneByRelation, throw
@@ -36,19 +39,41 @@ export default class BiOneToOne {
       throw new Error(`Both ${modelA.getName()} & ${modelB.getName()} dont support findOneByRelation`);
     }
 
-    // prefer modelA to keep foreign key
-    if (supportFindOneByRelation(modelA)) {
-      this.owningSideModel = modelA;
-      this.owningSideField = modelAField;
-      this.refSideModel = modelB;
-      this.refSideField = modelBField;
+    // prefer the first-order model (alphabetically) to keep foreign key
+    const orderedModelWithField = sortBy([
+      {model: modelA, field: modelAField},
+      {model: modelB, field: modelBField},
+    ], obj => obj.model.getName());
+
+    const firstModelWithField = orderedModelWithField[0];
+    const secondModelWithField = orderedModelWithField[1];
+    if (supportFindOneByRelation(firstModelWithField.model)) {
+      this.owningSideModel = firstModelWithField.model;
+      this.owningSideField = firstModelWithField.field;
+      this.refSideModel = secondModelWithField.model;
+      this.refSideField = secondModelWithField.field;
     } else {
-      this.owningSideModel = modelB;
-      this.owningSideField = modelBField;
-      this.refSideModel = modelA;
-      this.refSideField = modelAField;
+      this.owningSideModel = secondModelWithField.model;
+      this.owningSideField = secondModelWithField.field;
+      this.refSideModel = firstModelWithField.model;
+      this.refSideField = firstModelWithField.field;
     }
-    this.foreignKey = createForeignKey(this.owningSideField, this.refSideModel);
+    this.foreignKey = foreignKey || createForeignKey(this.owningSideField, this.refSideModel);
+  }
+
+  public getType() {
+    return RelationType.biOneToOne;
+  }
+
+  public getForeignKey() {
+    return this.foreignKey;
+  }
+
+  public getForeignKeyConfig() {
+    return [{
+      model: this.owningSideModel,
+      foreignKey: this.getForeignKey(),
+    }];
   }
 
   public getOwningSide() {

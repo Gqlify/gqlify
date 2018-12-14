@@ -1,9 +1,10 @@
 import { isEmpty, isNil } from 'lodash';
-import { Model } from '../dataModel';
+import { Model, RelationType } from '../dataModel';
 import { Operator } from '../dataSource/interface';
+import { Relation } from './interface';
 
 // many-to-many
-export default class ManyToMany {
+export default class ManyToMany implements Relation {
   private modelA: Model;
   private modelB: Model;
   private modelAField: string;
@@ -24,6 +25,10 @@ export default class ManyToMany {
     this.modelB = modelB;
     this.modelAField = modelAField;
     this.modelBField = modelBField;
+  }
+
+  public getType() {
+    return RelationType.biManyToMany;
   }
 
   public getModelA() {
