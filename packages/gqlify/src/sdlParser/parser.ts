@@ -24,6 +24,7 @@ const parseNodeToSdlObjectType = (
     result[directiveNode.name.value] = parseDirectiveNode(directiveNode);
     return result;
   }, {});
+  const interfaces: string[] = node.interfaces.map(namedTypeNode => namedTypeNode.name.value);
 
   // create SdlObjectType
   const objectType = new SdlObjectType({
@@ -31,6 +32,7 @@ const parseNodeToSdlObjectType = (
     name: node.name.value,
     description: get(node, 'description.value'),
     directives,
+    interfaces,
     fields,
   });
   return objectType;
