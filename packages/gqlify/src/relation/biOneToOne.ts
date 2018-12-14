@@ -1,4 +1,4 @@
-import { isEmpty, sortBy } from 'lodash';
+import { isEmpty, sortBy, find } from 'lodash';
 import { Model, RelationType } from '../dataModel';
 import { supportFindOneByRelation } from '../dataSource/utils';
 import { Operator } from '../dataSource/interface';
@@ -26,12 +26,14 @@ export default class BiOneToOne implements Relation, WithForeignKey {
     modelAField,
     modelBField,
     foreignKey,
+    owningSideModelName,
   }: {
     modelA: Model,
     modelB: Model,
     modelAField: string,
     modelBField: string,
     foreignKey?: string,
+    owningSideModelName?: string,
   }) {
     // determine which side we save the foreign key
     // if both side dont support findOneByRelation, throw
@@ -39,25 +41,50 @@ export default class BiOneToOne implements Relation, WithForeignKey {
       throw new Error(`Both ${modelA.getName()} & ${modelB.getName()} dont support findOneByRelation`);
     }
 
-    // prefer the first-order model (alphabetically) to keep foreign key
-    const orderedModelWithField = sortBy([
-      {model: modelA, field: modelAField},
-      {model: modelB, field: modelBField},
-    ], obj => obj.model.getName());
+    if (owningSideModelName) {
+      const owningSideModelWithField = find([
+        {model: modelA, field: modelAField},
+        {model: modelB, field: modelBField},
+      ], obj => obj.model.getName() === owningSideModelName);
+      if (!owningSideModelWithField) {
+        throw new Error(`no model found from name \`${owningSideModelName}\``);
+      }
 
-    const firstModelWithField = orderedModelWithField[0];
-    const secondModelWithField = orderedModelWithField[1];
-    if (supportFindOneByRelation(firstModelWithField.model)) {
-      this.owningSideModel = firstModelWithField.model;
-      this.owningSideField = firstModelWithField.field;
-      this.refSideModel = secondModelWithField.model;
-      this.refSideField = secondModelWithField.field;
+      if (!supportFindOneByRelation(owningSideModelWithField.model)) {
+        throw new Error(`specified model \`${owningSideModelName}\` dont support findOneByRelation`);
+      }
+
+      this.owningSideModel = owningSideModelWithField.model;
+      this.owningSideField = owningSideModelWithField.field;
+
+      // other side
+      const otherSideModelField = owningSideModelWithField.model === modelA
+        ? {model: modelB, field: modelBField}
+        : {model: modelA, field: modelAField};
+      this.refSideModel = otherSideModelField.model;
+      this.refSideField = otherSideModelField.field;
     } else {
-      this.owningSideModel = secondModelWithField.model;
-      this.owningSideField = secondModelWithField.field;
-      this.refSideModel = firstModelWithField.model;
-      this.refSideField = firstModelWithField.field;
+      // prefer the first-order model (alphabetically) to keep foreign key
+      const orderedModelWithField = sortBy([
+        {model: modelA, field: modelAField},
+        {model: modelB, field: modelBField},
+      ], obj => obj.model.getName());
+
+      const firstModelWithField = orderedModelWithField[0];
+      const secondModelWithField = orderedModelWithField[1];
+      if (supportFindOneByRelation(firstModelWithField.model)) {
+        this.owningSideModel = firstModelWithField.model;
+        this.owningSideField = firstModelWithField.field;
+        this.refSideModel = secondModelWithField.model;
+        this.refSideField = secondModelWithField.field;
+      } else {
+        this.owningSideModel = secondModelWithField.model;
+        this.owningSideField = secondModelWithField.field;
+        this.refSideModel = firstModelWithField.model;
+        this.refSideField = firstModelWithField.field;
+      }
     }
+
     this.foreignKey = foreignKey || createForeignKey(this.owningSideField, this.refSideModel);
   }
 
