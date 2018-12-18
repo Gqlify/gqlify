@@ -1,13 +1,34 @@
+scalar JSON
+
+enum STATUS {
+  OK
+  NOT_OK
+}
+
+type Location {
+  lng: String
+  lat: String
+}
+
+type Note {
+  title: String
+  text: String
+}
+
 type AuthorRelation implements Relation
-  @config({
+  @config(
     name: "Author"
     foreignKey: "theAuthor"
-  })
+  )
 
 type User @GQLifyModel(dataSource: "memory", key: "users") {
   id: ID! @unique @autoGen
   username: String!
   email: String
+  status: STATUS
+  attributes: JSON
+  location: Location
+  note: [Note!]!
   # bi-one-to-* relation
   books: [Book!]! @relation(with: AuthorRelation)
 }
