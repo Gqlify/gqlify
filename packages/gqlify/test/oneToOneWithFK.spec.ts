@@ -1,5 +1,5 @@
 /**
- * OneToMany test
+ * OneToOneWithFK test
  */
 import chai from 'chai';
 import chaiHttp = require('chai-http');
@@ -9,12 +9,12 @@ import { FirebaseDataSource } from '@gqlify/firebase';
 import { FirestoreDataSource } from '@gqlify/firestore';
 import { MongodbDataSourceGroup } from '@gqlify/mongodb';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
-import { sdl, testSuits } from './testsuites/oneToMany';
+import { sdl, testSuits } from './testsuites/oneToOneWithFK';
 import { createGqlifyApp, prepareConfig } from './testsuites/utils';
 
 const {serviceAccount, mongoUri} = prepareConfig();
 
-describe('Relation tests on fixtures/oneToMany.graphql on Memory Data Source', function() {
+describe('Relation tests on fixtures/oneToOneWithFK.graphql on Memory Data Source', function() {
   before(async () => {
     const db = new MemoryDataSource();
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
@@ -36,7 +36,7 @@ describe('Relation tests on fixtures/oneToMany.graphql on Memory Data Source', f
   testSuits.call(this);
 });
 
-describe('Relation tests on fixtures/oneToMany.graphql with Firebase Data Source', function() {
+describe('Relation tests on fixtures/oneToOneWithFK.graphql with Firebase Data Source', function() {
   this.timeout(25000);
 
   before(async () => {
@@ -61,7 +61,7 @@ describe('Relation tests on fixtures/oneToMany.graphql with Firebase Data Source
   testSuits.call(this);
 });
 
-describe('Relation tests on fixtures/oneToMany.graphql with Firestore Data Source', function() {
+describe('Relation tests on fixtures/oneToOneWithFK.graphql with Firestore Data Source', function() {
   this.timeout(25000);
 
   before(async () => {
@@ -99,7 +99,7 @@ describe('Relation tests on fixtures/oneToMany.graphql with Firestore Data Sourc
   testSuits.call(this);
 });
 
-describe('Tests on fixtures/oneToMany.graphql with MongoDB Data Source', function() {
+describe('Tests on fixtures/oneToOneWithFK.graphql with MongoDB Data Source', function() {
   this.timeout(20000);
 
   before(async () => {

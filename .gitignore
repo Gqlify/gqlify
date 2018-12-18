@@ -5,3 +5,4 @@ lib
 yarn-error.log
 .DS_Store
 *.env
+serviceAccountKey.json

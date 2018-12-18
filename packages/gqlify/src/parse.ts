@@ -25,12 +25,17 @@ import { SdlEnumType, SdlObjectType } from './sdlParser/namedType';
 import { BasicFieldMiddware, MetadataMiddleware, SdlMiddleware } from './sdlParser/middlewares';
 import { SdlField, SdlFieldType } from './sdlParser/field/interface';
 import { DataModelType } from './dataModel/type';
-import { mapValues, forEach, values, reduce } from 'lodash';
+import { mapValues, forEach, values, reduce, get } from 'lodash';
 import { SdlNamedType } from './sdlParser/namedType/interface';
-import { MODEL_DIRECTIVE } from './constants';
+import { MODEL_DIRECTIVE, RELATION_INTERFACE_NAME, RELATION_DIRECTIVE_NAME, RELATION_WITH } from './constants';
+import { InputValue } from './sdlParser/inputValue/interface';
 
 const isGqlifyModel = (sdlNamedType: SdlNamedType) => {
   return Boolean(sdlNamedType.getDirectives()[MODEL_DIRECTIVE]);
+};
+
+const isRelationType = (sdlObjectType: SdlObjectType) => {
+  return Boolean(sdlObjectType.getInterfaces().find(interfaceName => interfaceName === RELATION_INTERFACE_NAME));
 };
 
 export const parseDataModelScalarType = (field: SdlField): DataModelType => {
@@ -59,6 +64,7 @@ export const createDataFieldFromSdlField = (
   field: SdlField,
   getModel: (name: string) => Model,
   getNamedType: (name: string) => NamedType,
+  getRelationConfig: (name: string) => Record<string, any>,
 ) => {
   const fieldMeta = {
     nonNull: field.isNonNull(),
@@ -88,8 +94,10 @@ export const createDataFieldFromSdlField = (
     case SdlFieldType.OBJECT:
       const objectField = field as SdlObjectField;
       if (isGqlifyModel(objectField.getObjectType())) {
+        const relationWith: string = get(objectField.getDirective(RELATION_DIRECTIVE_NAME), RELATION_WITH);
         return new DataRelationField({
           relationTo: () => getModel(objectField.getTypeName()),
+          relationConfig: relationWith ? null : () => getRelationConfig(relationWith),
           ...fieldMeta,
         });
       } else {
@@ -101,10 +109,17 @@ export const createDataFieldFromSdlField = (
   }
 };
 
+const parseRelationConfig = (sdlObjectType: SdlObjectType): Record<string, any> => {
+  // parse `type AdminRelation implements Relation @config(name: "name" foreignKey: "key")`
+  return mapValues(get(sdlObjectType.getDirectives(), 'config.args'),
+    (inputValue: InputValue) => inputValue.getValue());
+};
+
 export const createDataModelFromSdlObjectType = (
   sdlObjectType: SdlObjectType,
   getModel: (name: string) => Model,
   getNamedType: (name: string) => NamedType,
+  getRelationConfig: (name: string) => Record<string, any>,
   ): Model => {
   const model = new Model({
     name: sdlObjectType.getName(),
@@ -112,7 +127,7 @@ export const createDataModelFromSdlObjectType = (
 
   // append fields
   forEach(sdlObjectType.getFields(), (sdlField, key) => {
-    model.appendField(key, createDataFieldFromSdlField(sdlField, getModel, getNamedType));
+    model.appendField(key, createDataFieldFromSdlField(sdlField, getModel, getNamedType, getRelationConfig));
   });
   return model;
 };
@@ -124,6 +139,7 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
   const rootNode = new RootNode();
   const namedTypes: Record<string, NamedType> = {};
   const models: Record<string, Model> = {};
+  const relationConfigMap: Record<string, Record<string, any>> = {};
   const getModel = (name: string) => {
     return models[name];
   };
@@ -131,6 +147,8 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
   const getNamedType = (name: string) => {
     return namedTypes[name];
   };
+
+  const getRelationConfig = (name: string) => relationConfigMap[name];
 
   sdlNamedTypes.forEach(sdlNamedType => {
     const name = sdlNamedType.getName();
@@ -146,11 +164,12 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
     }
 
     // object type
-    if (sdlNamedType instanceof SdlObjectType && !isGqlifyModel(sdlNamedType)) {
+    // not GQLifyModel & RelationType
+    if (sdlNamedType instanceof SdlObjectType && !isGqlifyModel(sdlNamedType) && !isRelationType(sdlNamedType)) {
       const objectType = new ObjectType({
         name,
         fields: mapValues(sdlNamedType.getFields(), sdlField => {
-          return createDataFieldFromSdlField(sdlField, getModel, getNamedType);
+          return createDataFieldFromSdlField(sdlField, getModel, getNamedType, getRelationConfig);
         }),
       });
       namedTypes[name] = objectType;
@@ -159,8 +178,15 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
 
     // GqlifyModel
     if (sdlNamedType instanceof SdlObjectType && isGqlifyModel(sdlNamedType)) {
-      const model = createDataModelFromSdlObjectType(sdlNamedType, getModel, getNamedType);
+      const model = createDataModelFromSdlObjectType(sdlNamedType, getModel, getNamedType, getRelationConfig);
       models[name] = model;
+    }
+
+    // RelationType
+    if (sdlNamedType instanceof SdlObjectType && isRelationType(sdlNamedType)) {
+      // parse arguments to relation config
+      const relationConfig = parseRelationConfig(sdlNamedType);
+      relationConfigMap[name] = relationConfig;
     }
   });
 

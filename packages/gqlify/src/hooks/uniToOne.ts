@@ -8,6 +8,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     sourceModel: relation.source,
     targetModel: relation.target,
     relationField: relation.sourceField,
+    foreignKey: get(relation.metadata, 'foreignKey'),
   });
 
   const relationField = relationImpl.getRelationField();

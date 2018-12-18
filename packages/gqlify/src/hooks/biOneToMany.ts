@@ -9,6 +9,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     manySideModel: relation.target,
     oneSideField: relation.sourceField,
     manySideField: relation.targetField,
+    foreignKey: get(relation.metadata, 'foreignKey'),
   });
 
   // fields

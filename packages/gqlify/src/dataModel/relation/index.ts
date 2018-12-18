@@ -2,6 +2,7 @@ import { forEach, get, size } from 'lodash';
 import RelationField from '../relationField';
 import { ModelRelation, RelationType } from './types';
 import { Field, Model } from '..';
+import { RELATION_DIRECTIVE_NAME } from '../../constants';
 
 const createDefaultRelationName = (relationConfig: Partial<ModelRelation>): string => {
   const sourceName = relationConfig.source.getNamings().capitalSingular;
@@ -50,19 +51,25 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         targetModel: relationToModel,
       };
 
-      // if relation has name
-      const relationName = get(field.getMetadata('relation'), 'name');
-      // set to relationField
-      field.setRelationName(relationName);
-      if (relationName && !relationsWithName[relationName]) {
-        relationsWithName[relationName] = {sourceSide: relationField};
-        return;
-      } else if (relationName && relationsWithName[relationName]) {
-        relationsWithName[relationName].targetSide = relationField;
+      // if relation has name, or having name in relationConfig
+      // todo: think of an interface to access metadata from relationField
+      const relationName: string = get(field.getRelationConfig(), 'name') ||
+        get(field.getMetadata('relation'), 'name');
+
+      if (relationName) {
+        // set to relationField
+        field.setRelationName(relationName);
+        // relationName not exist yet, but still looking for targetSide at later iteration
+        if (!relationsWithName[relationName]) {
+          relationsWithName[relationName] = {sourceSide: relationField};
+        } else if (relationsWithName[relationName]) {
+          relationsWithName[relationName].targetSide = relationField;
+        }
         return;
       }
 
-      // relation table
+      // no relationName specified
+      // put it in relation table to find out its relation type later
       const targetRelation = relationTable[model.getName()][relationToModelName];
       if (!targetRelation) {
         relationTable[model.getName()][relationToModelName] = [];
@@ -82,6 +89,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         source: sourceSide.sourceModel,
         target: sourceSide.targetModel,
         sourceField: sourceSide.fieldName,
+        metadata: sourceSide.field.getMetadata(RELATION_DIRECTIVE_NAME),
       };
       modelRelations.push(relation);
       return;
@@ -97,6 +105,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         target: sourceSide.targetModel,
         sourceField: sourceSide.fieldName,
         targetField: targetSide.fieldName,
+        metadata: (sourceSide.field as RelationField).getRelationConfig(),
       };
     } else if (sourceSide.type === toRelation.one && targetSide.type === toRelation.many) {
       relation = {
@@ -106,6 +115,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         target: sourceSide.sourceModel,
         sourceField: targetSide.fieldName,
         targetField: sourceSide.fieldName,
+        metadata: (sourceSide.field as RelationField).getRelationConfig(),
       };
     } else if (sourceSide.type === toRelation.many && targetSide.type === toRelation.one) {
       relation = {
@@ -115,6 +125,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         target: sourceSide.targetModel,
         sourceField: sourceSide.fieldName,
         targetField: targetSide.fieldName,
+        metadata: (sourceSide.field as RelationField).getRelationConfig(),
       };
     } else if (sourceSide.type === toRelation.many && targetSide.type === toRelation.many) {
       relation = {
@@ -124,6 +135,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
         target: sourceSide.targetModel,
         sourceField: sourceSide.fieldName,
         targetField: targetSide.fieldName,
+        metadata: (sourceSide.field as RelationField).getRelationConfig(),
       };
     } else {
       throw new Error(`unknown relation type from ${sourceSide.type} to ${targetSide.type}`);
@@ -155,6 +167,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             source: fromModel,
             target: toModel,
             sourceField: fieldName,
+            metadata: field.getMetadata(RELATION_DIRECTIVE_NAME),
           };
 
           // todo: reduce duplicate code here
@@ -179,6 +192,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             target: toModel,
             sourceField: fieldName,
             targetField: otherSide.fieldName,
+            metadata: (field as RelationField).getRelationConfig(),
           };
         } else if (type === toRelation.one && otherSide.type === toRelation.many) {
           relationConfig = {
@@ -187,6 +201,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             target: fromModel,
             sourceField: otherSide.fieldName,
             targetField: fieldName,
+            metadata: (field as RelationField).getRelationConfig(),
           };
         } else if (type === toRelation.many && otherSide.type === toRelation.one) {
           relationConfig = {
@@ -195,6 +210,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             target: toModel,
             sourceField: fieldName,
             targetField: otherSide.fieldName,
+            metadata: (field as RelationField).getRelationConfig(),
           };
         } else if (type === toRelation.many && otherSide.type === toRelation.many) {
           relationConfig = {
@@ -203,6 +219,7 @@ export const createRelation = (models: Model[]): ModelRelation[] => {
             target: toModel,
             sourceField: fieldName,
             targetField: otherSide.fieldName,
+            metadata: (field as RelationField).getRelationConfig(),
           };
         } else {
           throw new Error(`unknown relation type from ${type} to ${otherSide.type}`);

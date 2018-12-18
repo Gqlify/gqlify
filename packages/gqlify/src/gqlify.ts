@@ -27,33 +27,35 @@ export class Gqlify {
   private dataSources: Record<string, (args: any) => DataSource>;
   private scalars: Record<string, GraphQLScalarType>;
   private context: any;
+  private skipPrint: boolean;
 
   constructor({
     sdl,
     dataSources,
     scalars,
     context,
+    skipPrint,
   }: {
     sdl: string,
     dataSources: Record<string, (args: any) => DataSource>,
     scalars?: Record<string, GraphQLScalarType>,
     context?: any,
+    skipPrint?: boolean,
   }) {
     this.sdl = sdl;
     this.dataSources = dataSources;
     this.scalars = scalars;
     this.context = context;
+    this.skipPrint = skipPrint;
   }
 
-  public createServerConfig(
-    settings?: {skipPrint: boolean},
-  ): {
+  public createServerConfig(): {
     typeDefs: string,
     resolvers: IResolvers,
     scalars?: Record<string, GraphQLScalarType>,
     context?: any,
   } {
-    const ifSkipPrint = get(settings, 'skipPrint', false);
+    const ifSkipPrint = get(this, 'skipPrint', false);
     if (!ifSkipPrint) {
       // tslint:disable-next-line:no-console
       console.log(chalk.magenta(`Starting Gqlify...\n`));
@@ -64,10 +66,10 @@ export class Gqlify {
 
     // bind dataSource
     models.forEach(model => {
-      // make it easy to accsss later
+      // make it easy to access later
       modelMap[model.getName()] = model;
 
-      // constuct data source
+      // construct data source
       const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
       const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
       const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];

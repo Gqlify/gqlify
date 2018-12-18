@@ -28,9 +28,9 @@ export default class SdlObjectType implements SdlNamedType<ObjectTypeDefinitionN
   }) {
     this.name = name;
     this.description = description;
-    this.interfaces = interfaces;
-    this.directives = directives;
-    this.fields = fields;
+    this.interfaces = interfaces || [];
+    this.directives = directives || {};
+    this.fields = fields || {};
     this.typeDef = typeDef;
   }
 

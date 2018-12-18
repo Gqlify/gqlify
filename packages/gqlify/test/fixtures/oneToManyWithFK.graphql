@@ -1,0 +1,27 @@
+type AuthorRelation implements Relation
+  @config({
+    name: "Author"
+    foreignKey: "theAuthor"
+  })
+
+type User @GQLifyModel(dataSource: "memory", key: "users") {
+  id: ID! @unique @autoGen
+  username: String!
+  email: String
+  # bi-one-to-* relation
+  books: [Book!]! @relation(with: AuthorRelation)
+}
+
+type Book @GQLifyModel(dataSource: "memory", key: "books") {
+  id: ID! @unique @autoGen
+  name: String
+  # bi-one-to-* relation
+  author: User @relation(with: AuthorRelation)
+}
+
+type Team @GQLifyModel(dataSource: "memory", key: "teams") {
+  id: ID! @unique @autoGen
+  name: String
+  # uni-one-to-* relation
+  players: [User!]! @relation(name: "TeamPlayers", foreignKey: "_players")
+}

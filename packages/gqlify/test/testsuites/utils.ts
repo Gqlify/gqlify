@@ -1,11 +1,14 @@
 import chai from 'chai';
 import chaiHttp = require('chai-http');
 chai.use(chaiHttp);
-import { Gqlify, DataSource } from '../src';
+import { Gqlify, DataSource } from '../../src';
 import Koa from 'koa';
 import { ApolloServer } from 'apollo-server-koa';
 import http from 'http';
 import { GraphQLScalarType } from 'graphql';
+import { readFileSync } from 'fs';
+import GraphQLJSON from 'graphql-type-json';
+import path from 'path';
 
 export const createApp = ({ sdl, dataSources, scalars, }: {
   sdl: string;
@@ -42,4 +45,31 @@ export const createApp = ({ sdl, dataSources, scalars, }: {
     graphqlRequest,
     close: () => requester.close(),
   };
+};
+
+export const createGqlifyApp = (sdl: string, dataSources: Record<string, any>) => {
+  const {graphqlRequest, close} = createApp({
+    sdl,
+    dataSources,
+    scalars: {
+      JSON: GraphQLJSON,
+    },
+  });
+  return {graphqlRequest, close};
+};
+
+export const prepareConfig = () => {
+  let mongoUri: string;
+  let serviceAccount: Record<string, any>;
+
+  if (process.env.CI) {
+    mongoUri = process.env.TEST_MONGODB_URI;
+    serviceAccount = JSON.parse(process.env.TEST_SERVICE_ACCOUNT);
+  } else {
+    // local dev
+    mongoUri = 'mongodb://localhost:27017';
+    serviceAccount = JSON.parse(readFileSync(path.resolve(__dirname, '../serviceAccountKey.json'), {encoding: 'utf8'}));
+  }
+
+  return {mongoUri, serviceAccount};
 };
