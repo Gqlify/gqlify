@@ -1,6 +1,6 @@
 // import { initializeApp, credential } from 'firebase-admin';
 import * as admin from 'firebase-admin';
-import { first, isEmpty, isNil, isUndefined, get, pull } from 'lodash';
+import { first, isEmpty, isNil, isUndefined, get, pull, reduce, values } from 'lodash';
 
 import {
   Where,
@@ -12,6 +12,14 @@ import {
   paginate,
   sort
 } from '@gqlify/server';
+
+const snapToArray = (snapshot: admin.database.DataSnapshot) => {
+  const rows = [];
+  snapshot.forEach(childSnapshot => {
+    rows.push(childSnapshot.val());
+  });
+  return rows;
+};
 
 export class FirebaseDataSource implements DataSource {
   private db: admin.database.Database;
@@ -167,5 +175,32 @@ export class FirebaseDataSource implements DataSource {
     // overwrite relationIds value of relationTable[sourceSideId]
     const sourceSideIdRef = ref.child(sourceSideId);
     await sourceSideIdRef.set(relationIds);
+  }
+
+  // Embed relation
+  public addEmbedIds(foreignKey: string, ids: string[]): Record<string, true> {
+    return reduce(ids, (map, id) => {
+      map[`/${foreignKey}/${id}`] = true;
+      return map;
+    }, {});
+  }
+
+  public removeEmbedIds(foreignKey: string, ids: string[]): Record<string, true> {
+    return reduce(ids, (map, id) => {
+      map[`/${foreignKey}/${id}`] = null;
+      return map;
+    }, {});
+  }
+
+  public async findOneByEmbedId(foreignKey: string, foreignId: string) {
+    const ref = this.db.ref(`/${this.path}`);
+    const snapshot = await ref.orderByChild(`${foreignKey}/${foreignId}`).equalTo(true).once('value');
+    return snapshot.exists() ? first(values(snapshot.val())) : null;
+  }
+
+  public async findManyByEmbedId(foreignKey: string, foreignId: string) {
+    const ref = this.db.ref(`/${this.path}`);
+    const snapshot = await ref.orderByChild(`${foreignKey}/${foreignId}`).equalTo(true).once('value');
+    return snapshot.exists() ? snapToArray(snapshot) : [];
   }
 }

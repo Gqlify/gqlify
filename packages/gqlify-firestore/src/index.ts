@@ -1,5 +1,5 @@
 import * as admin from 'firebase-admin';
-import { first, isEmpty, isNil, isUndefined, get, pull } from 'lodash';
+import { first, isEmpty, isNil, isUndefined, get, pull, reduce } from 'lodash';
 
 import {
   Where,
@@ -11,6 +11,14 @@ import {
   paginate,
   sort
 } from '@gqlify/server';
+
+const snapToArray = (snapshot: admin.firestore.QuerySnapshot) => {
+  const data = [];
+  snapshot.forEach(doc => {
+    data.push(doc.data());
+  });
+  return data;
+};
 
 export class FirestoreDataSource implements DataSource {
   private db: admin.firestore.Firestore;
@@ -148,5 +156,32 @@ export class FirestoreDataSource implements DataSource {
     await ref.set({
       targetSideIds: admin.firestore.FieldValue.arrayRemove(targetSideId),
     }, { merge: true });
+  }
+
+  // Embed relation
+  public addEmbedIds(foreignKey: string, ids: string[]): Record<string, true> {
+    return reduce(ids, (map, id) => {
+      map[`${foreignKey}.${id}`] = true;
+      return map;
+    }, {});
+  }
+
+  public removeEmbedIds(foreignKey: string, ids: string[]): Record<string, true> {
+    return reduce(ids, (map, id) => {
+      map[`${foreignKey}.${id}`] = admin.firestore.FieldValue.delete();
+      return map;
+    }, {});
+  }
+
+  public async findOneByEmbedId(foreignKey: string, foreignId: string) {
+    const ref = this.db.collection(this.path).where(foreignKey, '==', foreignId);
+    const snapshot = await ref.get();
+    return snapshot.empty ? null : first(snapToArray(snapshot));
+  }
+
+  public async findManyByEmbedId(foreignKey: string, foreignId: string) {
+    const ref = this.db.collection(this.path).where(foreignKey, '==', foreignId);
+    const snapshot = await ref.get();
+    return snapshot.empty ? null : snapToArray(snapshot);
   }
 }

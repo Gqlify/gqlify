@@ -63,11 +63,13 @@ export interface ToOneRelation {
   updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<void>;
 }
 
-// todo: support embed reference
-export interface OneToManyRelationEmbedRef {
-  serializeManyRelation?(ids: string[]): any;
-  supportEmbedRef?(): boolean;
-  findOneFromManyRelation(foreignKey: string, foreignId: string): Promise<any>;
+// data-source capable of saving to-many references in a embed list or map
+// and serving index to find one or many by embed field
+export interface EmbeddableRelation {
+  addEmbedIds?(foreignKey: string, ids: string[]): any;
+  removeEmbedIds?(foreignKey: string, ids: string[]): any;
+  findOneByEmbedId?(foreignKey: string, foreignId: string): Promise<any>;
+  findManyByEmbedId?(foreignKey: string, foreignId: string): Promise<any[]>;
 }
 
 export interface OneToManyRelation {
@@ -88,4 +90,5 @@ export type DataSource =
   ListMutable &
   ToOneRelation &
   OneToManyRelation &
-  ManyToManyRelation;
+  ManyToManyRelation &
+  EmbeddableRelation;

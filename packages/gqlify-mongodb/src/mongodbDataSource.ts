@@ -1,5 +1,5 @@
 import { Db, FilterQuery } from 'mongodb';
-import { first, isEmpty, isUndefined, get, pull, unset } from 'lodash';
+import { first, isEmpty, isUndefined, get, pull, unset, reduce } from 'lodash';
 
 import {
   Where,
