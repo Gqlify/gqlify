@@ -34,7 +34,7 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
 const createInputField = (
   model: Model,
   context: Context,
-  createInputName: string,
+  getCreateInputName: (model: Model) => string,
   getWhereInputName: (model: Model) => string,
   getWhereUniqueInputName: (model: Model) => string,
 ) => {
@@ -73,7 +73,7 @@ const createInputField = (
       const relationTo = (field as RelationField).getRelationTo();
       const relationInputName = `${capName}CreateOneInput`;
       root.addInput(`input ${relationInputName} {
-        create: ${createInputName}
+        create: ${getCreateInputName(relationTo)}
         connect: ${getWhereUniqueInputName(relationTo)}
       }`);
       content.push(`${name}: ${relationInputName}`);
@@ -85,7 +85,7 @@ const createInputField = (
       const relationTo = (field as RelationField).getRelationTo();
       const relationInputName = `${capName}CreateManyInput`;
       root.addInput(`input ${relationInputName} {
-        create: [${createInputName}]
+        create: [${getCreateInputName(relationTo)}]
         connect: [${getWhereUniqueInputName(relationTo)}]
       }`);
       content.push(`${name}: ${relationInputName}`);
@@ -156,7 +156,7 @@ export default class CreatePlugin implements Plugin {
       ${createInputField(
         model,
         context,
-        inputName,
+        this.getCreateInputName,
         this.whereInputPlugin.getWhereInputName,
         this.whereInputPlugin.getWhereUniqueInputName,
       )}

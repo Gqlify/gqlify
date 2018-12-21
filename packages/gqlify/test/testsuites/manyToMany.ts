@@ -89,6 +89,32 @@ export function testSuits() {
     expect(createGroup.members).to.be.an('array').that.is.empty;
   });
 
+  it('should create with create item with bi-*-to-* from one side', async () => {
+    // create user
+    const user = fakeUserData();
+
+    // create with to-one relation
+    const createGroupQuery = `
+      mutation ($data: GroupCreateInput!) {
+        createGroup (data: $data) {${groupWithUserFields}}
+      }
+    `;
+    const createGroupVariables = {
+      data: {
+        name: faker.internet.userName(),
+        members: {
+          create: [user],
+        },
+      },
+    };
+    const {createGroup} = await (this as any).graphqlRequest(createGroupQuery, createGroupVariables);
+    expect(createGroup).to.have.property('id');
+    expect(createGroup).to.deep.include({
+      name: createGroupVariables.data.name,
+    });
+    expect(createGroup.members[0]).to.deep.include(user);
+  });
+
   it('should create connected item with bi-*-to-* from one side', async () => {
     // create user
     const createUserVariables = {
@@ -193,6 +219,56 @@ export function testSuits() {
       name: createGroupVariables.data.name,
       members: [createUser, newUser],
     });
+  });
+
+  it('should update with create with bi-*-to-* from one side', async () => {
+    const user = fakeUserData();
+    // create group
+    const createGroupQuery = `
+      mutation ($data: GroupCreateInput!) {
+        createGroup (data: $data) {${groupWithUserFields}}
+      }
+    `;
+    const createGroupVariables = {
+      data: {
+        name: faker.internet.userName(),
+      },
+    };
+    const {createGroup} = await (this as any).graphqlRequest(createGroupQuery, createGroupVariables);
+    // tslint:disable-next-line:no-unused-expression
+    expect(createGroup.members).to.be.an('array').that.is.empty;
+
+    // update relation
+    const updateGroupQuery = `
+      mutation($where: GroupWhereUniqueInput!, $data: GroupUpdateInput!) {
+        updateGroup (where: $where, data: $data) { id }
+      }
+    `;
+    const updateGroupVariables = {
+      where: { id: createGroup.id },
+      data: {
+        members: {
+          create: [user],
+        },
+      },
+    };
+    const {updateGroup} = await (this as any).graphqlRequest(updateGroupQuery, updateGroupVariables);
+    expect(updateGroup.id).to.be.eql(createGroup.id);
+
+    // query
+    const getGroupQuery = `
+      query ($where: GroupWhereUniqueInput!) {
+        group (where: $where) { ${groupWithUserFields} }
+      }
+    `;
+    const getGroupVariables = {
+      where: { id: createGroup.id },
+    };
+    const {group} = await (this as any).graphqlRequest(getGroupQuery, getGroupVariables);
+    expect(group).to.deep.include({
+      name: createGroupVariables.data.name,
+    });
+    expect(group.members[0]).be.deep.include(user);
   });
 
   it('should connect unconnected and disconnect connected with bi-*-to-* from one side', async () => {

@@ -34,8 +34,9 @@ export const createApp = ({ sdl, dataSources, scalars, }: {
 
     if (res.body && res.body.errors) {
       // tslint:disable-next-line:no-console
-      console.log(JSON.stringify(res.body.errors, null, 2));
-      return res.body.errors;
+      // console.error(JSON.stringify(res.body.errors, null, 2));
+      // return res.body.errors;
+      throw new Error(JSON.stringify(res.body.errors, null, 2));
     }
 
     return res.body.data;

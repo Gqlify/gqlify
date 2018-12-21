@@ -3,7 +3,43 @@ import GraphQLJSON from 'graphql-type-json';
 import { readFileSync } from 'fs';
 import { Gqlify } from '../src/gqlify';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
-const sdl = readFileSync(__dirname + '/fixtures/simple.graphql', {encoding: 'utf8'});
+const sdl = `
+scalar JSON
+
+enum STATUS {
+  OK
+  NOT_OK
+}
+
+type Location {
+  lng: String
+  lat: String
+}
+
+type Note {
+  title: String
+  text: String
+}
+
+type User @GQLifyModel(dataSource: "memory", key: "users") {
+  id: ID! @unique @autoGen
+  username: String!
+  email: String
+  status: STATUS
+  attributes: JSON
+  location: Location
+  note: [Note!]!
+  # bi-*-to-* relation
+  groups: [Group!]! @relation(name: "Membership")
+}
+
+type Group @GQLifyModel(dataSource: "memory", key: "groups") {
+  id: ID! @unique @autoGen
+  name: String
+  # bi-*-to-* relation
+  members: [User!]! @relation(name: "Membership")
+}
+`;
 
 const defaultData = {
   users: [
@@ -23,7 +59,7 @@ const defaultData = {
 const gqlify = new Gqlify({
   sdl,
   dataSources: {
-    memory: (args: any) => new MemoryDataSource(defaultData[args.key]),
+    memory: (args: any) => new MemoryDataSource(),
   },
   scalars: {
     JSON: GraphQLJSON,
