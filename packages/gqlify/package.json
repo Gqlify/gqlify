@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/server",
-  "version": "1.0.8",
+  "version": "1.0.9",
   "description": "gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
@@ -33,9 +33,9 @@
   "author": "wwwy3y3",
   "license": "ISC",
   "devDependencies": {
-    "@gqlify/firebase": "^1.0.8",
-    "@gqlify/firestore": "^1.0.8",
-    "@gqlify/mongodb": "^1.0.8",
+    "@gqlify/firebase": "^1.0.9",
+    "@gqlify/firestore": "^1.0.9",
+    "@gqlify/mongodb": "^1.0.9",
     "@types/chai-http": "^3.0.5",
     "apollo-server": "^2.2.5",
     "apollo-server-koa": "^2.2.5",
