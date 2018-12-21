@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/firestore",
-  "version": "1.0.9",
+  "version": "1.0.10",
   "description": "the firestore package of gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
@@ -24,7 +24,7 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
-    "@gqlify/server": "^1.0.9",
+    "@gqlify/server": "^1.0.10",
     "firebase-admin": "^6.3.0",
     "lodash": "^4.17.11"
   },
