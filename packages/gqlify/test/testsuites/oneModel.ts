@@ -120,7 +120,7 @@ export function testSuits() {
     expect(notOkUsers).to.have.deep.members(expectedNotOkUsers);
 
     // get all data from source
-    const findAllQuery = await (this as any).db.find();
+    const findAllQuery = await (this as any).dataSources.users.find();
     const usersFromDB = findAllQuery.data;
 
     // paginate users without where

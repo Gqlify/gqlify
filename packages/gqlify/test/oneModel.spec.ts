@@ -11,18 +11,23 @@ import { MongodbDataSourceGroup } from '@gqlify/mongodb';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 import { sdl, testSuits } from './testsuites/oneModel';
 import { createGqlifyApp, prepareConfig } from './testsuites/utils';
+import { DataSource } from '../src';
+import { forEach } from 'lodash';
 
 const {serviceAccount, mongoUri} = prepareConfig();
 
 describe('Tests on fixtures/oneModel.graphql with Memory Data Source', function() {
   before(async () => {
-    const db = new MemoryDataSource();
+    const dataSources: Record<string, DataSource> = {};
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
-      memory: () => db,
+      memory: args => {
+        dataSources[args.key] = new MemoryDataSource();
+        return dataSources[args.key];
+      },
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
-    (this as any).db = db;
+    (this as any).dataSources = dataSources;
   });
 
   after(async () => {
@@ -30,7 +35,8 @@ describe('Tests on fixtures/oneModel.graphql with Memory Data Source', function(
   });
 
   afterEach(async () => {
-    ((this as any).db as any).defaultData = [];
+    forEach((this as any).dataSources, dataSource =>
+      (dataSource as any).defaultData = []);
   });
 
   testSuits.call(this);
@@ -41,16 +47,16 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
 
   before(async () => {
     const dbUrl = `https://${serviceAccount.project_id}.firebaseio.com`;
-    let db;
+    const dataSources: Record<string, DataSource> = {};
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
       memory: args => {
-        db = new FirebaseDataSource(serviceAccount, dbUrl, args.key);
-        return db;
+        dataSources[args.key] = new FirebaseDataSource(serviceAccount, dbUrl, args.key);
+        return dataSources[args.key];
       },
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
-    (this as any).db = db;
+    (this as any).dataSources = dataSources;
     (this as any).firebase = admin.app().database();
   });
 
@@ -71,16 +77,16 @@ describe('Tests on fixtures/oneModel.graphql with Firestore Data Source', functi
 
   before(async () => {
     const dbUrl = `https://${serviceAccount.project_id}.firebaseio.com`;
-    let db;
+    const dataSources: Record<string, DataSource> = {};
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
       memory: args => {
-        db = new FirestoreDataSource(serviceAccount, dbUrl, args.key);
-        return db;
+        dataSources[args.key] = new FirestoreDataSource(serviceAccount, dbUrl, args.key);
+        return dataSources[args.key];
       },
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
-    (this as any).db = db;
+    (this as any).dataSources = dataSources;
     (this as any).firestore = admin.app().firestore();
   });
 
@@ -110,19 +116,19 @@ describe('Tests on fixtures/oneModel.graphql with MongoDB Data Source', function
   this.timeout(20000);
 
   before(async () => {
-    let db;
+    const dataSources: Record<string, DataSource> = {};
     const mongodbDataSourceGroup = new MongodbDataSourceGroup(mongoUri, 'gqlify');
     await mongodbDataSourceGroup.initialize();
 
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
       memory: args => {
-        db = mongodbDataSourceGroup.getDataSource(args.key);
-        return db;
+        dataSources[args.key] = mongodbDataSourceGroup.getDataSource(args.key);
+        return dataSources[args.key];
       },
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
-    (this as any).db = db;
+    (this as any).dataSources = dataSources;
     (this as any).mongodb = (mongodbDataSourceGroup as any).db;
   });
 

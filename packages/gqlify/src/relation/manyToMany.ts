@@ -48,14 +48,14 @@ export default class ManyToMany implements Relation {
   }
 
   public async addId({modelAId, modelBId}: {modelAId: string, modelBId: string}) {
-    await this.modelA.getDataSource().addIdToManyRelation(
+    await this.modelB.getDataSource().addIdToManyRelation(
       this.modelA.getNamings().singular,
       this.modelB.getNamings().singular,
       modelAId,
       modelBId,
     );
 
-    await this.modelB.getDataSource().addIdToManyRelation(
+    await this.modelA.getDataSource().addIdToManyRelation(
       this.modelB.getNamings().singular,
       this.modelA.getNamings().singular,
       modelBId,
@@ -74,14 +74,14 @@ export default class ManyToMany implements Relation {
   }
 
   public async removeId({modelAId, modelBId}: {modelAId: string, modelBId: string}) {
-    await this.modelA.getDataSource().removeIdFromManyRelation(
+    await this.modelB.getDataSource().removeIdFromManyRelation(
       this.modelA.getNamings().singular,
       this.modelB.getNamings().singular,
       modelAId,
       modelBId,
     );
 
-    await this.modelB.getDataSource().removeIdFromManyRelation(
+    await this.modelA.getDataSource().removeIdFromManyRelation(
       this.modelB.getNamings().singular,
       this.modelA.getNamings().singular,
       modelBId,
@@ -99,6 +99,7 @@ export default class ManyToMany implements Relation {
     return this.removeId({modelAId, modelBId});
   }
 
+  // when joining data from modelB to modelA, the relationship is save at modelA datasource
   public async joinModelA(modelBId: string) {
     const records = await this.modelA.getDataSource().findManyFromManyRelation(
       this.modelB.getNamings().singular,
@@ -108,6 +109,7 @@ export default class ManyToMany implements Relation {
     return isEmpty(records) ? [] : records.filter(record => !isNil(record));
   }
 
+  // when joining data from modelA to modelB, the relationship is save at modelB datasource
   public async joinModelB(modelAId: string) {
     const records = await this.modelB.getDataSource().findManyFromManyRelation(
       this.modelA.getNamings().singular,

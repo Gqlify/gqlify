@@ -11,18 +11,23 @@ import { MongodbDataSourceGroup } from '@gqlify/mongodb';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 import { sdl, testSuits } from './testsuites/oneToOneWithFK';
 import { createGqlifyApp, prepareConfig } from './testsuites/utils';
+import { DataSource } from '../src';
+import { forEach } from 'lodash';
 
 const {serviceAccount, mongoUri} = prepareConfig();
 
 describe('Relation tests on fixtures/oneToOneWithFK.graphql on Memory Data Source', function() {
   before(async () => {
-    const db = new MemoryDataSource();
+    const dataSources: Record<string, DataSource> = {};
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
-      memory: () => db,
+      memory: args => {
+        dataSources[args.key] = new MemoryDataSource();
+        return dataSources[args.key];
+      },
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
-    (this as any).db = db;
+    (this as any).dataSources = dataSources;
   });
 
   after(async () => {
@@ -30,7 +35,8 @@ describe('Relation tests on fixtures/oneToOneWithFK.graphql on Memory Data Sourc
   });
 
   afterEach(async () => {
-    ((this as any).db as any).defaultData = [];
+    forEach((this as any).dataSources, dataSource =>
+      (dataSource as any).defaultData = []);
   });
 
   testSuits.call(this);
@@ -103,19 +109,14 @@ describe('Tests on fixtures/oneToOneWithFK.graphql with MongoDB Data Source', fu
   this.timeout(20000);
 
   before(async () => {
-    let db;
     const mongodbDataSourceGroup = new MongodbDataSourceGroup(mongoUri, 'gqlify');
     await mongodbDataSourceGroup.initialize();
 
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
-      memory: args => {
-        db = mongodbDataSourceGroup.getDataSource(args.key);
-        return db;
-      },
+      memory: args => mongodbDataSourceGroup.getDataSource(args.key),
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
-    (this as any).db = db;
     (this as any).mongodb = (mongodbDataSourceGroup as any).db;
   });
 

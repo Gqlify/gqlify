@@ -4,40 +4,17 @@ import { readFileSync } from 'fs';
 import { Gqlify } from '../src/gqlify';
 import MemoryDataSource from '../src/dataSource/memoryDataSource';
 const sdl = `
-scalar JSON
-
-enum STATUS {
-  OK
-  NOT_OK
-}
-
-type Location {
-  lng: String
-  lat: String
-}
-
-type Note {
-  title: String
-  text: String
-}
-
-type User @GQLifyModel(dataSource: "memory", key: "users") {
+type Book @GQLifyModel(dataSource: "memory", key: "Book") {
   id: ID! @unique @autoGen
-  username: String!
-  email: String
-  status: STATUS
-  attributes: JSON
-  location: Location
-  note: [Note!]!
-  # bi-*-to-* relation
-  groups: [Group!]! @relation(name: "Membership")
+  name: String!
+  categories: [Category]
 }
 
-type Group @GQLifyModel(dataSource: "memory", key: "groups") {
+
+type Category @GQLifyModel(dataSource: "memory", key: "Category") {
   id: ID! @unique @autoGen
-  name: String
-  # bi-*-to-* relation
-  members: [User!]! @relation(name: "Membership")
+  name: String!
+  books: [Book]
 }
 `;
 
