@@ -132,12 +132,17 @@ export default class CreatePlugin implements Plugin {
 
     return {
       [mutationName]: async (root, args, context) => {
+        // args may not have `hasOwnProperty`.
+        // https://github.com/Canner/gqlify/issues/29
+        const data = {...args.data};
+
+        // no relationship or other hooks
         if (!wrapCreate) {
-          return dataSource.create(args.data);
+          return dataSource.create(data);
         }
 
         // wrap
-        const createContext: CreateContext = {data: args.data, response: {}};
+        const createContext: CreateContext = {data, response: {}};
         await wrapCreate(createContext, async ctx => {
           ctx.response = await dataSource.create(ctx.data);
         });

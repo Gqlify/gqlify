@@ -144,13 +144,18 @@ export default class UpdatePlugin implements Plugin {
     return {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
+        // args may not have `hasOwnProperty`.
+        // https://github.com/Canner/gqlify/issues/29
+        const data = {...args.data};
+
+        // no relationship or other hooks
         if (!wrapUpdate) {
-          await dataSource.update(whereUnique, args.data);
+          await dataSource.update(whereUnique, data);
           return args.where;
         }
 
         // wrap
-        const updateContext: UpdateContext = {where: args.where, data: args.data, response: {}};
+        const updateContext: UpdateContext = {where: args.where, data, response: {}};
         await wrapUpdate(updateContext, async ctx => {
           await dataSource.update(whereUnique, ctx.data);
         });

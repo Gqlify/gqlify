@@ -66,7 +66,6 @@ export class FirestoreDataSource implements DataSource {
   }
 
   public async create(payload: any): Promise<any> {
-    payload = Object.assign({}, payload);
     const ref = await this.db.collection(this.path).add(payload);
     await ref.update({ id: ref.id });
     const doc = await ref.get();

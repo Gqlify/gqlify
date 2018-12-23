@@ -80,6 +80,37 @@ export function testSuits() {
     expect(user).to.deep.equal(createUser);
   });
 
+  it('should create record with args', async () => {
+    const userData = {
+      username: 'wwwy3y3',
+      email: 'wwwy3y3@canner.io',
+    };
+    const query = `
+      mutation {
+        createUser (data: {username: "${userData.username}", email: "${userData.email}"}) {${fields}}
+      }
+    `;
+    const {createUser} = await (this as any).graphqlRequest(query);
+    expect(createUser).to.have.property('id');
+    expect(createUser).to.deep.include(userData);
+
+    // query to see if exists
+    const {users: createdUsers} = await (this as any).graphqlRequest(`
+      query {
+        users {${fields}}
+      }
+    `);
+    expect(createdUsers[0]).to.deep.equal(createUser);
+
+    // query one
+    const {user} = await (this as any).graphqlRequest(`
+      query {
+        user(where: {id: "${createUser.id}"}) {${fields}}
+      }
+    `);
+    expect(user).to.deep.equal(createUser);
+  });
+
   it('should create many records to test where & pagination filter', async () => {
     // create 20 users, make 10 of them having status NOT_OK
     const createdUsers = await Promise.all(
@@ -182,6 +213,34 @@ export function testSuits() {
       }
     `);
     expect(certainUser.username).to.deep.equal(updateUserVariables.data.username);
+  });
+
+  it('should update with args', async () => {
+    const createUserVariables = {
+      data: fakeUserData(),
+    };
+    const createUserQuery = `
+      mutation ($data: UserCreateInput!) {
+        createUser (data: $data) {${fields}}
+      }
+    `;
+    const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
+
+    const newUsername = faker.internet.userName();
+    const updateUserQuery = `
+      mutation {
+        updateUser (where: {id: "${createUser.id}"}, data: {username: "${newUsername}"}) { id }
+      }
+    `;
+    const {updateUser} = await (this as any).graphqlRequest(updateUserQuery);
+    expect(updateUser.id).to.be.equal(createUser.id);
+
+    const {user: certainUser} = await (this as any).graphqlRequest(`
+      query {
+        user(where: {id: "${createUser.id}"}) {${fields}}
+      }
+    `);
+    expect(certainUser.username).to.deep.equal(newUsername);
   });
 
   it('should delete', async () => {

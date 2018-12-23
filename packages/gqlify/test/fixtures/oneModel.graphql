@@ -22,5 +22,5 @@ type User @GQLifyModel(dataSource: "memory", key: "users") {
   status: STATUS
   attributes: JSON
   location: Location
-  note: [Note!]!
+  note: [Note!]
 }
