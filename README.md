@@ -48,7 +48,7 @@ yarn add @gqlify/server
 
 ## Join community
 
- [Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/canner/gqlify)
+[[Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/canner/gqlify)
 
 
 ## License
