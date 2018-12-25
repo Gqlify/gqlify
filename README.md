@@ -12,7 +12,7 @@
 </div>
 <br/>
 
-> Build GraphQL servers with hybrid APIs in seconds.
+> Create GraphQL server connecting hybrid APIs fast and easy.
 
 * Official Website: [gqlify.com](https://www.gqlify.com/)
 
@@ -45,6 +45,10 @@ yarn add @gqlify/server
 
 ## Documentation
 👉 [Full documentation](https://www.gqlify.com/docs)
+
+## Join community
+
+[Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/canner/gqlify)
 
 
 ## License
