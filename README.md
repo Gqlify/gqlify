@@ -7,12 +7,12 @@
 
 <div align="center">
 
-[![npm version](https://badge.fury.io/js/%40gqlify%2Fserver.svg)](https://badge.fury.io/js/%40gqlify%2Fserver) [![](https://img.shields.io/gitter/room/nwjs/nw.js.svg)](https://gitter.im/Canner/gqlify?utm_source=share-link&utm_medium=link&utm_campaign=share-link) [![Twitter Follow](https://img.shields.io/twitter/follow/cannerIO.svg?style=social&label=Follow)](https://twitter.com/cannerIO)
+[![npm version](https://badge.fury.io/js/%40gqlify%2Fserver.svg)](https://badge.fury.io/js/%40gqlify%2Fserver) [![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/canner/gqlify) [![Twitter Follow](https://img.shields.io/twitter/follow/cannerIO.svg?style=social&label=Follow)](https://twitter.com/cannerIO)
 
 </div>
 <br/>
 
-> Build GraphQL servers with hybrid APIs in seconds.
+> Create GraphQL server connecting hybrid APIs fast and easy.
 
 * Official Website: [gqlify.com](https://www.gqlify.com/)
 
@@ -45,6 +45,10 @@ yarn add @gqlify/server
 
 ## Documentation
 👉 [Full documentation](https://www.gqlify.com/docs)
+
+## Join community
+
+[![Join the community on Spectrum](https://withspectrum.github.io/badge/badge.svg)](https://spectrum.chat/canner/gqlify)
 
 
 ## License
