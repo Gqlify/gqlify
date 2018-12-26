@@ -9,3 +9,4 @@ export { default as QueryPlugin } from './query';
 export { default as CreatePlugin } from './create';
 export { default as UpdatePlugin } from './update';
 export { default as DeletePlugin } from './delete';
+export { default as RelayPlugin } from './relay';

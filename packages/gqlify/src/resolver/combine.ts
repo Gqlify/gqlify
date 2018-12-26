@@ -1,10 +1,12 @@
 import {Plugin, Context} from '../plugins/interface';
 import Model from '../dataModel/model';
+import { IResolverObject } from 'graphql-tools';
 
-export default (plugins: Plugin[], models: Model[]) => {
+export default (defaultResolvers: IResolverObject, plugins: Plugin[], models: Model[]) => {
   let resolvers: any = {
     Query: {},
     Mutation: {},
+    ...defaultResolvers,
   };
   models.forEach(model => {
     plugins.forEach(plugin => {

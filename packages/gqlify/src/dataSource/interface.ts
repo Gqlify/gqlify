@@ -11,11 +11,15 @@ export interface Pagination {
   page?: number;
 }
 
+type PromiseOrScalar<T> = T | (() => Promise<T>);
+
 export interface PaginatedResponse {
   data: any[];
-  total: number;
-  hasNextPage: boolean;
-  hasPreviousPage: boolean;
+  // total, hasNextPage and hasPreviousPage might be async request to data-source
+  // for example: firebase will not respond filtered data with these information
+  total: PromiseOrScalar<number>;
+  hasNextPage: PromiseOrScalar<boolean>;
+  hasPreviousPage: PromiseOrScalar<boolean>;
 }
 
 export enum Operator {

@@ -2,7 +2,7 @@ import chai from 'chai';
 import faker from 'faker';
 import { readFileSync } from 'fs';
 import path from 'path';
-import { times } from 'lodash';
+import { times, first as _first, last as _last } from 'lodash';
 const expect = chai.expect;
 
 const fields = `
@@ -18,6 +18,21 @@ const fields = `
   note {
     title
     text
+  }
+`;
+
+const relayFields = `
+  pageInfo {
+    hasNextPage
+    hasPreviousPage
+    startCursor
+    endCursor
+  }
+  edges {
+    cursor
+    node {
+      ${fields}
+    }
   }
 `;
 
@@ -113,7 +128,7 @@ export function testSuits() {
 
   it('should create many records to test where & pagination filter', async () => {
     // create 20 users, make 10 of them having status NOT_OK
-    const createdUsers = await Promise.all(
+    await Promise.all(
       times(20, index => {
         const data = index < 10 ? fakeUserData({status: 'NOT_OK'}) : fakeUserData();
         return data;
@@ -132,8 +147,12 @@ export function testSuits() {
           .then(res => res.createUser);
     }));
 
+    // get all data from source
+    const findAllQuery = await (this as any).dataSources.users.find();
+    const usersFromDB = findAllQuery.data;
+
     // find 5th user
-    const expectCertainUser = createdUsers[4];
+    const expectCertainUser = usersFromDB[4];
     const {user: certainUser} = await (this as any).graphqlRequest(`
       query {
         user(where: {id: "${expectCertainUser.id}"}) {${fields}}
@@ -142,17 +161,13 @@ export function testSuits() {
     expect(certainUser).to.deep.equal(expectCertainUser);
 
     // find users with status NOT_OK
-    const expectedNotOkUsers = createdUsers.filter(user => user.status === 'NOT_OK');
+    const expectedNotOkUsers = usersFromDB.filter(user => user.status === 'NOT_OK');
     const {users: notOkUsers} = await (this as any).graphqlRequest(`
       query {
         users(where: {status: NOT_OK}) {${fields}}
       }
     `);
     expect(notOkUsers).to.have.deep.members(expectedNotOkUsers);
-
-    // get all data from source
-    const findAllQuery = await (this as any).dataSources.users.find();
-    const usersFromDB = findAllQuery.data;
 
     // paginate users without where
     const first = 5;
@@ -180,6 +195,103 @@ export function testSuits() {
     `);
     expect(pageUsersWithWhere).to.have.deep.members(expectedPageUsersWithWhere);
     expect(pageUsersWithWhere.length).to.be.equal(expectedPageUsersWithWhere.length);
+  });
+
+  it('should create many records to test relay style api', async () => {
+    // create 20 users, make 10 of them having status NOT_OK
+    await Promise.all(
+      times(20, index => {
+        const data = index < 10 ? fakeUserData({status: 'NOT_OK'}) : fakeUserData();
+        return data;
+      })
+      .map(userData => {
+        const variables = {
+          data: userData,
+        };
+
+        const query = `
+          mutation ($data: UserCreateInput!) {
+            createUser (data: $data) {${fields}}
+          }
+        `;
+        return (this as any).graphqlRequest(query, variables)
+          .then(res => res.createUser);
+    }));
+
+    // get all data from source
+    const findAllQuery = await (this as any).dataSources.users.find();
+    const usersFromDB = findAllQuery.data;
+
+    // find users with status NOT_OK
+    const expectedNotOkUsers = usersFromDB.filter(user => user.status === 'NOT_OK');
+    const {usersConnection: notOkUserResponse} = await (this as any).graphqlRequest(`
+      query {
+        usersConnection(where: {status: NOT_OK}) {${relayFields}}
+      }
+    `);
+    expect(notOkUserResponse.pageInfo).to.be.eql({
+      hasNextPage: false,
+      hasPreviousPage: false,
+      startCursor: _first<any>(expectedNotOkUsers).id,
+      endCursor: _last<any>(expectedNotOkUsers).id,
+    });
+    expect(notOkUserResponse.edges).to.have.deep
+      .members(expectedNotOkUsers.map(user => {
+        return {
+          cursor: user.id,
+          node: user,
+        };
+      }));
+
+    // pagination query
+    // skip first one
+    const first = 5;
+    const after = usersFromDB[0].id;
+    const expectedPageUsers = usersFromDB.slice(1, first + 1);
+    const {usersConnection: pageUserResponse} = await (this as any).graphqlRequest(`
+      query {
+        usersConnection(first: ${first}, after: "${after}") {${relayFields}}
+      }
+    `);
+    expect(pageUserResponse.pageInfo).to.be.eql({
+      hasNextPage: true,
+      hasPreviousPage: true,
+      startCursor: _first<any>(expectedPageUsers).id,
+      endCursor: _last<any>(expectedPageUsers).id,
+    });
+    expect(pageUserResponse.edges).to.have.deep
+      .members(expectedPageUsers.map(user => {
+        return {
+          cursor: user.id,
+          node: user,
+        };
+      }));
+    expect(pageUserResponse.edges.length).to.be.equal(expectedPageUsers.length);
+
+    // paginate users with where
+    const last = 3;
+    const before = expectedNotOkUsers[5].id;
+    const expectedPageUsersWithWhere = expectedNotOkUsers
+      .slice(2, expectedNotOkUsers.findIndex(user => user.id === before));
+    const {usersConnection: pageUsersWithWhereResponse} = await (this as any).graphqlRequest(`
+      query {
+        usersConnection(last: ${last}, before: "${before}", where: {status: NOT_OK}) {${relayFields}}
+      }
+    `);
+    expect(pageUsersWithWhereResponse.pageInfo).to.be.eql({
+      hasNextPage: true,
+      hasPreviousPage: true,
+      startCursor: _first<any>(expectedPageUsersWithWhere).id,
+      endCursor: _last<any>(expectedPageUsersWithWhere).id,
+    });
+    expect(pageUsersWithWhereResponse.edges).to.have.deep
+      .members(expectedPageUsersWithWhere.map(user => {
+        return {
+          cursor: user.id,
+          node: user,
+        };
+      }));
+    expect(pageUsersWithWhereResponse.edges.length).to.be.equal(expectedPageUsersWithWhere.length);
   });
 
   it('should update', async () => {

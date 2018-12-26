@@ -36,6 +36,7 @@ import {
 import { ObjectType, NamedType, EnumType } from './dataModel';
 import Field from './dataModel/field';
 import { compose } from 'lodash/fp';
+import { IResolverObject } from 'graphql-tools';
 // tslint:disable-next-line:no-var-requires
 const { ASTDefinitionBuilder } = require('graphql/utilities/buildASTSchema');
 
@@ -83,6 +84,7 @@ const buildTypeNodeFromField = (field: Field): TypeNode => {
 
 export default class RootNode {
   private defBuilder: any;
+  private resolvers: IResolverObject = {};
   // todo: figure out GraphQLFieldConfig general type
   private queryMap: Record<string, () => GraphQLFieldConfig<any, any>> = {};
   private mutationMap: Record<string, () => GraphQLFieldConfig<any, any>> = {};
@@ -98,6 +100,25 @@ export default class RootNode {
       throw new Error(`Type "${typeRef.name.value}" not found in document.`);
     });
   }
+
+  /**
+   * Resolver related
+   */
+
+  public addResolver(resolverObject: IResolverObject) {
+    this.resolvers = {
+      ...this.resolvers,
+      ...resolverObject,
+    };
+  }
+
+  public getResolvers() {
+    return this.resolvers;
+  }
+
+  /**
+   * GraphQL API related
+   */
 
   // query could be queryName(args): type, or a GraphQLFieldConfig
   public addQuery(query: string | {name: string, field: () => GraphQLFieldConfig<any, any>}) {

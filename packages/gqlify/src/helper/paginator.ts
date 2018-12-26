@@ -1,10 +1,10 @@
-import { isEmpty, isUndefined } from 'lodash';
+import { isEmpty, isUndefined, first as _first, last as _last, get, isNil } from 'lodash';
 import { takeWhile, takeRightWhile, take, takeRight, slice, flow } from 'lodash/fp';
 import { Pagination } from '../dataSource/interface';
 
 export const paginate = (rows: any[], pagination?: Pagination):
   {data: any[], total: number, hasNextPage: boolean, hasPreviousPage: boolean} => {
-  if (isEmpty(pagination)) {
+  if (isEmpty(pagination) || isEmpty(rows)) {
     return {
       data: rows,
       total: rows.length,
@@ -14,7 +14,7 @@ export const paginate = (rows: any[], pagination?: Pagination):
   }
 
   const transforms = [];
-  // numbered pagintation
+  // numbered pagination
   if (pagination.perPage && pagination.page) {
     const skip = pagination.perPage * (pagination.page - 1);
     const limit = pagination.perPage;
@@ -54,10 +54,15 @@ export const paginate = (rows: any[], pagination?: Pagination):
     transforms.push(takeRight(last));
   }
   const data = flow(transforms)(rows);
+
+  const firstRowId = get(_first(rows), 'id');
+  const firstFilteredDataId = get(_first(data), 'id');
+  const lastRowId = get(_last(rows), 'id');
+  const lastFilteredDataId = get(_last(data), 'id');
   return {
     data,
     total: rows.length,
-    hasNextPage: (!isUndefined(first) && rows.length > first),
-    hasPreviousPage: (!isUndefined(last) && rows.length > last),
+    hasNextPage: (!isNil(lastRowId) && !isNil(lastFilteredDataId) && lastRowId !== lastFilteredDataId),
+    hasPreviousPage: (!isNil(firstRowId) && !isNil(firstFilteredDataId) && firstRowId !== firstFilteredDataId),
   };
 };

@@ -5,6 +5,7 @@ import {
   CreatePlugin,
   UpdatePlugin,
   DeletePlugin,
+  RelayPlugin,
 } from './plugins';
 import { createRelation, Model } from './dataModel';
 import { parse } from './parse';
@@ -101,6 +102,7 @@ export class Gqlify {
       new BaseTypePlugin(),
       new WhereInputPlugin(),
       new QueryPlugin(),
+      new RelayPlugin(),
       new CreatePlugin({hook: hookMap}),
       new UpdatePlugin({hook: hookMap}),
       new DeletePlugin({hook: hookMap}),
@@ -123,7 +125,7 @@ export class Gqlify {
 
     // construct graphql server config
     const generator = new Generator({ plugins, rootNode });
-    const resolvers = combine(plugins, models);
+    const resolvers = combine(rootNode.getResolvers(), plugins, models);
     const typeDefs = generator.generate(models);
 
     return {
