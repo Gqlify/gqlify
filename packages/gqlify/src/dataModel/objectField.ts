@@ -3,7 +3,7 @@ import { DataModelType } from './type';
 import { capitalize, mapValues, isFunction } from 'lodash';
 import ObjectType from './namedType/objectType';
 
-export type ObjectTypeOrThunk = () => ObjectType | ObjectType;
+export type ObjectTypeOrThunk = ObjectType | (() => ObjectType) ;
 
 export default class ObjectField extends Field {
   private objectType: ObjectTypeOrThunk;
