@@ -3,7 +3,7 @@ import { DataModelType } from './type';
 import EnumType from './namedType/enumType';
 import { isFunction } from 'lodash';
 
-export type EnumTypeOrThunk = () => EnumType | EnumType;
+export type EnumTypeOrThunk = EnumType | (() => EnumType);
 
 export default class EnumField extends Field {
   private enumType: EnumTypeOrThunk;
