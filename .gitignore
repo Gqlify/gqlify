@@ -6,3 +6,5 @@ yarn-error.log
 .DS_Store
 *.env
 serviceAccountKey.json
+.pnpm-store
+pnpm-debug.log
