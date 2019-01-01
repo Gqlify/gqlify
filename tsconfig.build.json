@@ -1,6 +1,8 @@
 {
   "compilerOptions": {
-    "composite": true
+    "composite": true,
+    "importHelpers": true,
+    "noEmitHelpers": true
   },
   "files": [],
   "include": [],
@@ -8,6 +10,6 @@
     { "path": "./packages/gqlify" },
     { "path": "./packages/gqlify-firebase" },
     { "path": "./packages/gqlify-firestore" },
-    { "path": "./packages/gqlify-mongodb" },
+    { "path": "./packages/gqlify-mongodb" }
   ]
 }

@@ -28,7 +28,8 @@
     "graphql-tag": "^2.10.0",
     "graphql-tools": "^4.0.2",
     "lodash": "^4.17.10",
-    "pluralize": "^7.0.0"
+    "pluralize": "^7.0.0",
+    "tslib": "^1.9.3"
   },
   "author": "wwwy3y3",
   "license": "ISC",

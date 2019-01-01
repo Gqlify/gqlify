@@ -26,7 +26,8 @@
   "dependencies": {
     "@gqlify/server": "^1.1.2",
     "firebase-admin": "^6.3.0",
-    "lodash": "^4.17.11"
+    "lodash": "^4.17.11",
+    "tslib": "^1.9.3"
   },
   "publishConfig": {
     "access": "public"
