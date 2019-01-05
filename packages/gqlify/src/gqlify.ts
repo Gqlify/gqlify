@@ -43,7 +43,7 @@ export class Gqlify {
     models,
   }: {
     sdl?: string,
-    dataSources: Record<string, (args: any) => DataSource>,
+    dataSources?: Record<string, (args: any) => DataSource>,
     scalars?: Record<string, GraphQLScalarType>,
     context?: any,
     skipPrint?: boolean,
@@ -88,18 +88,20 @@ export class Gqlify {
       // make it easy to access later
       modelMap[model.getName()] = model;
 
-      // construct data source
-      const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
-      const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
-      const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
-      if (!createDataSource) {
-        throw new Error(`dataSource ${dataSourceIdentifier} does not exist`);
-      }
-      const args = omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME);
-      const dataSource = createDataSource(args);
+      if (!model.getDataSource()) {
+        // construct data source
+        const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
+        const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
+        const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
+        if (!createDataSource) {
+          throw new Error(`dataSource ${dataSourceIdentifier} does not exist`);
+        }
+        const args = omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME);
+        const dataSource = createDataSource(args);
 
-      // set to model
-      model.setDataSource(dataSource);
+        // set to model
+        model.setDataSource(dataSource);
+      }
     });
 
     // create relation hooks
