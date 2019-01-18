@@ -21,19 +21,21 @@ const snapToArray = (snapshot: admin.database.DataSnapshot) => {
   return rows;
 };
 
+export interface FirebaseOption {
+  config?: admin.AppOptions;
+  path: string;
+}
+
 export class FirebaseDataSource implements DataSource {
   private db: admin.database.Database;
   private path: string;
   private relationPath: string = '__relation';
 
-  constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
+  constructor(option: FirebaseOption) {
     this.db = isEmpty(admin.apps)
-      ? admin.initializeApp({
-        credential: admin.credential.cert(cert),
-        databaseURL: dbUrl,
-      }).database()
+      ? admin.initializeApp(option.config).database()
       : admin.app().database();
-    this.path = path;
+    this.path = option.path;
   }
 
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {

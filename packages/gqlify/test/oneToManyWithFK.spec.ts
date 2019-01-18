@@ -46,9 +46,15 @@ describe('Relation tests on fixtures/oneToManyWithFK.graphql with Firebase Data 
   this.timeout(25000);
 
   before(async () => {
-    const dbUrl = `https://${serviceAccount.project_id}.firebaseio.com`;
+    const databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
-      memory: args => new FirebaseDataSource(serviceAccount, dbUrl, args.key),
+      memory: args => new FirebaseDataSource({
+        config: {
+          credential: admin.credential.cert(serviceAccount),
+          databaseURL,
+        },
+        path: args.key,
+      }),
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;
@@ -71,9 +77,15 @@ describe('Relation tests on fixtures/oneToManyWithFK.graphql with Firestore Data
   this.timeout(25000);
 
   before(async () => {
-    const dbUrl = `https://${serviceAccount.project_id}.firebaseio.com`;
+    const databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
-      memory: args => new FirestoreDataSource(serviceAccount, dbUrl, args.key),
+      memory: args => new FirestoreDataSource({
+        config: {
+          credential: admin.credential.cert(serviceAccount),
+          databaseURL,
+        },
+        path: args.key,
+      }),
     });
     (this as any).graphqlRequest = graphqlRequest;
     (this as any).close = close;

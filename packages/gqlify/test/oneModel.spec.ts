@@ -46,11 +46,17 @@ describe('Tests on fixtures/oneModel.graphql with Firebase Data Source', functio
   this.timeout(20000);
 
   before(async () => {
-    const dbUrl = `https://${serviceAccount.project_id}.firebaseio.com`;
+    const databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
     const dataSources: Record<string, DataSource> = {};
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
       memory: args => {
-        dataSources[args.key] = new FirebaseDataSource(serviceAccount, dbUrl, args.key);
+        dataSources[args.key] = new FirebaseDataSource({
+          config: {
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL,
+          },
+          path: args.key,
+        });
         return dataSources[args.key];
       },
     });
@@ -76,11 +82,17 @@ describe('Tests on fixtures/oneModel.graphql with Firestore Data Source', functi
   this.timeout(20000);
 
   before(async () => {
-    const dbUrl = `https://${serviceAccount.project_id}.firebaseio.com`;
+    const databaseURL = `https://${serviceAccount.project_id}.firebaseio.com`;
     const dataSources: Record<string, DataSource> = {};
     const {graphqlRequest, close} = createGqlifyApp(sdl, {
       memory: args => {
-        dataSources[args.key] = new FirestoreDataSource(serviceAccount, dbUrl, args.key);
+        dataSources[args.key] = new FirestoreDataSource({
+          config: {
+            credential: admin.credential.cert(serviceAccount),
+            databaseURL,
+          },
+          path: args.key,
+        });
         return dataSources[args.key];
       },
     });

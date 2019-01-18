@@ -20,18 +20,20 @@ const snapToArray = (snapshot: admin.firestore.QuerySnapshot) => {
   return data;
 };
 
+export interface FirestoreOption {
+  config?: admin.AppOptions;
+  path: string;
+}
+
 export class FirestoreDataSource implements DataSource {
   private db: admin.firestore.Firestore;
   private path: string;
 
-  constructor(cert: admin.ServiceAccount, dbUrl: string, path: string) {
+  constructor(option: FirestoreOption) {
     this.db = isEmpty(admin.apps)
-      ? admin.initializeApp({
-        credential: admin.credential.cert(cert),
-        databaseURL: dbUrl,
-      }).firestore()
+      ? admin.initializeApp(option.config).firestore()
       : admin.app().firestore();
-    this.path = path;
+    this.path = option.path;
   }
 
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
