@@ -32,8 +32,10 @@
   },
   "gitHead": "0548648380a2bb7996307825f1fd61415f16b812",
   "devDependencies": {
-    "@gqlify/server": "file:../gqlify",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0"
+  },
+  "peerDependencies": {
+    "@gqlify/server": "^1.1.6"
   }
 }
