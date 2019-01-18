@@ -24,7 +24,6 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
-    "firebase-admin": "^6.3.0",
     "lodash": "^4.17.11"
   },
   "publishConfig": {
@@ -36,6 +35,7 @@
     "tslint": "^5.11.0"
   },
   "peerDependencies": {
+    "firebase-admin": "^6.3.0",
     "@gqlify/server": "2.x"
   }
 }
