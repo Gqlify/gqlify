@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/firebase",
-  "version": "1.1.6",
+  "version": "1.1.7",
   "description": "the firebase packages for @canner/gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
