@@ -36,7 +36,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@gqlify/server": "^1.1.6"
+    "@gqlify/server": "2.x"
   },
   "gitHead": "0548648380a2bb7996307825f1fd61415f16b812"
 }
