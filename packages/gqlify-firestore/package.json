@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/firestore",
-  "version": "2.0.1",
+  "version": "2.0.2",
   "description": "the firestore package of gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
@@ -35,7 +35,7 @@
     "tslint": "^5.11.0"
   },
   "peerDependencies": {
-    "firebase-admin": "^6.3.0",
-    "@gqlify/server": "2.x"
+    "@gqlify/server": "2.x",
+    "firebase-admin": "^6.3.0"
   }
 }
