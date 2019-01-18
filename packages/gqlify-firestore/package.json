@@ -24,7 +24,6 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
-    "@gqlify/server": "^1.1.5",
     "firebase-admin": "^6.3.0",
     "lodash": "^4.17.11"
   },
@@ -35,5 +34,8 @@
   "devDependencies": {
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0"
+  },
+  "peerDependencies": {
+    "@gqlify/server": "file:../gqlify"
   }
 }

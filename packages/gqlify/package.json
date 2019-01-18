@@ -33,9 +33,9 @@
   "author": "wwwy3y3",
   "license": "ISC",
   "devDependencies": {
-    "@gqlify/firebase": "^1.1.5",
-    "@gqlify/firestore": "^1.1.5",
-    "@gqlify/mongodb": "^1.1.5",
+    "@gqlify/firebase": "file:../gqlify-firebase",
+    "@gqlify/firestore": "file:../gqlify-firestore",
+    "@gqlify/mongodb": "file:../gqlify-mongodb",
     "@types/chai-http": "^3.0.5",
     "apollo-server": "^2.2.5",
     "apollo-server-koa": "^2.2.5",

@@ -24,7 +24,6 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
-    "@gqlify/server": "^1.1.5",
     "lodash": "^4.17.11",
     "mongodb": "^3.1.10"
   },
@@ -33,6 +32,7 @@
   },
   "gitHead": "0548648380a2bb7996307825f1fd61415f16b812",
   "devDependencies": {
+    "@gqlify/server": "file:../gqlify",
     "rimraf": "^2.6.2",
     "tslint": "^5.11.0"
   }

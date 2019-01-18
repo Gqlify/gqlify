@@ -152,6 +152,36 @@
     through2 "^2.0.0"
     xdg-basedir "^3.0.0"
 
+"@gqlify/firebase@file:packages/gqlify-firebase":
+  version "1.1.5"
+  dependencies:
+    firebase-admin "^6.3.0"
+    lodash "^4.17.11"
+
+"@gqlify/firestore@file:packages/gqlify-firestore":
+  version "1.1.5"
+  dependencies:
+    firebase-admin "^6.3.0"
+    lodash "^4.17.11"
+
+"@gqlify/mongodb@file:packages/gqlify-mongodb":
+  version "1.1.5"
+  dependencies:
+    lodash "^4.17.11"
+    mongodb "^3.1.10"
+
+"@gqlify/server@file:packages/gqlify":
+  version "1.1.5"
+  dependencies:
+    axios "^0.18.0"
+    bluebird "^3.5.1"
+    chalk "^2.4.1"
+    graphql "~14.1.1"
+    graphql-tag "^2.10.0"
+    graphql-tools "^4.0.2"
+    lodash "^4.17.10"
+    pluralize "^7.0.0"
+
 "@grpc/grpc-js@^0.3.0":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@grpc/grpc-js/-/grpc-js-0.3.2.tgz#8adcf22154bfd4a0903296d6656420c2ff86e388"
