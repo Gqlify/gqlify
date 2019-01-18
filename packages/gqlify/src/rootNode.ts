@@ -31,7 +31,8 @@ import {
   Kind,
   TypeNode,
   NonNullTypeNode,
-  ListTypeNode
+  ListTypeNode,
+  NameNode
 } from 'graphql';
 import { ObjectType, NamedType, EnumType } from './dataModel';
 import Field from './dataModel/field';
@@ -39,6 +40,16 @@ import { compose } from 'lodash/fp';
 import { IResolverObject } from 'graphql-tools';
 // tslint:disable-next-line:no-var-requires
 const { ASTDefinitionBuilder } = require('graphql/utilities/buildASTSchema');
+
+const keyByNameNode = (
+  list: Array<{name: NameNode}>,
+  valFn: (item: {name: NameNode}) => any,
+) => {
+  return reduce(list, (result, field) => {
+    result[field.name.value] = valFn(field);
+    return result;
+  }, {});
+};
 
 const buildTypeNodeFromField = (field: Field): TypeNode => {
   const wrapped: Array<(node: TypeNode) => TypeNode> = [];
@@ -215,11 +226,13 @@ export default class RootNode {
   }
 
   private buildObjectTypeConfig(typeDef: ObjectTypeDefinitionNode): GraphQLObjectTypeConfig<any, any> {
-    const interfaces: NamedTypeNode[] = typeDef.interfaces;
+    const { fields, interfaces } = typeDef;
     return {
       name: typeDef.name.value,
       description: getDescription(typeDef, {}),
-      fields: () => this.defBuilder._makeFieldDefMap(typeDef),
+      fields: fields
+        ? () => keyByNameNode(fields, field => this.defBuilder.buildInputField(field))
+        : {},
       // Note: While this could make early assertions to get the correctly
       // typed values, that would throw immediately while type system
       // validation with validateSchema() will produce more actionable results.
@@ -234,25 +247,33 @@ export default class RootNode {
     return {
       name: def.name.value,
       description: getDescription(def, {}),
-      fields: () => def.fields ? this.defBuilder._makeInputValues(def.fields) : {},
+      fields: () => def.fields ? keyByNameNode(def.fields, field => this.defBuilder.buildInputField(field)) : {},
       astNode: def,
     };
   }
 
   private buildInterfaceTypeConfig(def: InterfaceTypeDefinitionNode): GraphQLInterfaceTypeConfig<any, any> {
+    const fieldNodes = def.fields;
+
+    const fields =
+      fieldNodes && fieldNodes.length > 0
+        ? () => keyByNameNode(fieldNodes, field => this.defBuilder.buildField(field))
+        : {};
+
     return {
       name: def.name.value,
       description: getDescription(def, {}),
-      fields: () => this.defBuilder._makeFieldDefMap(def),
+      fields,
       astNode: def,
     };
   }
 
   private buildEnumTypeConfig(def: EnumTypeDefinitionNode): GraphQLEnumTypeConfig {
+    const valueNodes = def.values || [];
     return {
       name: def.name.value,
       description: getDescription(def, {}),
-      values: this.defBuilder._makeValueDefMap(def),
+      values: keyByNameNode(valueNodes, value => this.defBuilder.buildEnumValue(value)),
       astNode: def,
     };
   }
