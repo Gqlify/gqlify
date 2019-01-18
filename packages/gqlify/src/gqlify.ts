@@ -10,7 +10,7 @@ import {
 import { createRelation, Model } from './dataModel';
 import { parse } from './parse';
 import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_NAME } from './constants';
-import { omit, forEach, values, get } from 'lodash';
+import { omit, forEach, values, get, isUndefined, isEmpty } from 'lodash';
 import Generator from './generator';
 import { createRelationHooks } from './hooks/relationHook';
 import mergeHooks from './hooks/mergeHooks';
@@ -22,12 +22,15 @@ import { GraphQLScalarType } from 'graphql';
 import { Config } from 'apollo-server';
 import { printModels, printRelations } from './printer';
 import chalk from 'chalk';
+import RootNode from './rootNode';
 
 export class Gqlify {
   private sdl: string;
   private dataSources: Record<string, (args: any) => DataSource>;
   private scalars: Record<string, GraphQLScalarType>;
   private context: any;
+  private rootNode: RootNode;
+  private models: Model[];
   private skipPrint: boolean;
 
   constructor({
@@ -36,18 +39,24 @@ export class Gqlify {
     scalars,
     context,
     skipPrint,
+    rootNode,
+    models,
   }: {
-    sdl: string,
-    dataSources: Record<string, (args: any) => DataSource>,
+    sdl?: string,
+    dataSources?: Record<string, (args: any) => DataSource>,
     scalars?: Record<string, GraphQLScalarType>,
     context?: any,
     skipPrint?: boolean,
+    rootNode?: RootNode,
+    models?: Model[];
   }) {
     this.sdl = sdl;
     this.dataSources = dataSources;
     this.scalars = scalars;
     this.context = context;
     this.skipPrint = skipPrint;
+    this.rootNode = rootNode;
+    this.models = models;
   }
 
   public createServerConfig(): {
@@ -62,7 +71,16 @@ export class Gqlify {
       console.log(chalk.magenta(`Starting Gqlify...\n`));
     }
 
-    const {rootNode, models} = parse(this.sdl);
+    let rootNode: RootNode;
+    let models: Model[] = [];
+    if (isUndefined(this.rootNode) || isEmpty(this.models)) {
+      const parseResult = parse(this.sdl);
+      rootNode = parseResult.rootNode;
+      models = parseResult.models;
+    } else {
+      rootNode = this.rootNode;
+      models = this.models;
+    }
     const modelMap: Record<string, Model> = {};
 
     // bind dataSource
@@ -70,18 +88,20 @@ export class Gqlify {
       // make it easy to access later
       modelMap[model.getName()] = model;
 
-      // construct data source
-      const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
-      const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
-      const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
-      if (!createDataSource) {
-        throw new Error(`dataSource ${dataSourceIdentifier} does not exist`);
-      }
-      const args = omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME);
-      const dataSource = createDataSource(args);
+      if (!model.getDataSource()) {
+        // construct data source
+        const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
+        const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
+        const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
+        if (!createDataSource) {
+          throw new Error(`dataSource ${dataSourceIdentifier} does not exist`);
+        }
+        const args = omit(dataSourceArgs, MODEL_DIRECTIVE_SOURCE_NAME);
+        const dataSource = createDataSource(args);
 
-      // set to model
-      model.setDataSource(dataSource);
+        // set to model
+        model.setDataSource(dataSource);
+      }
     });
 
     // create relation hooks
