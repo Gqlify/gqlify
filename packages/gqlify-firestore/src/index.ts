@@ -22,23 +22,23 @@ const snapToArray = (snapshot: admin.firestore.QuerySnapshot) => {
 
 export interface FirestoreOption {
   config?: admin.AppOptions;
-  path: string;
+  collection: string;
 }
 
 export class FirestoreDataSource implements DataSource {
   private db: admin.firestore.Firestore;
-  private path: string;
+  private collection: string;
 
   constructor(option: FirestoreOption) {
     this.db = isEmpty(admin.apps)
       ? admin.initializeApp(option.config).firestore()
       : admin.app().firestore();
-    this.path = option.path;
+    this.collection = option.collection;
   }
 
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
     const { pagination, where, orderBy = {} } = args || {} as any;
-    const ref = this.db.collection(this.path);
+    const ref = this.db.collection(this.collection);
     const snapshot = await ref.get();
     const data = [];
     snapshot.forEach(doc => {
@@ -49,7 +49,7 @@ export class FirestoreDataSource implements DataSource {
   }
 
   public async findOne({ where }: { where: Where }): Promise<any> {
-    const ref = this.db.collection(this.path);
+    const ref = this.db.collection(this.collection);
     const snapshot = await ref.get();
     const data = [];
     snapshot.forEach(doc => {
@@ -59,7 +59,7 @@ export class FirestoreDataSource implements DataSource {
   }
 
   public async findOneById(id: string): Promise<any> {
-    const ref = this.db.collection(this.path).doc(id);
+    const ref = this.db.collection(this.collection).doc(id);
     const doc = await ref.get();
     if (!doc.exists) {
       return;
@@ -68,7 +68,7 @@ export class FirestoreDataSource implements DataSource {
   }
 
   public async create(payload: any): Promise<any> {
-    const ref = await this.db.collection(this.path).add(payload);
+    const ref = await this.db.collection(this.collection).add(payload);
     await ref.update({ id: ref.id });
     const doc = await ref.get();
     return doc.data();
@@ -79,18 +79,18 @@ export class FirestoreDataSource implements DataSource {
     if (isEmpty(payload)) {
       return;
     }
-    const ref = this.db.collection(this.path).doc(where.id.eq);
+    const ref = this.db.collection(this.collection).doc(where.id.eq);
     await ref.update(payload);
   }
 
   public async delete(where: Where): Promise<any> {
     // WARNING: where may not contain id
-    await this.db.collection(this.path).doc(where.id.eq).delete();
+    await this.db.collection(this.collection).doc(where.id.eq).delete();
   }
 
   // ToOneRelation
   public async findOneByRelation(foreignKey: string, foreignId: string): Promise<any> {
-    const ref = this.db.collection(this.path);
+    const ref = this.db.collection(this.collection);
     const snapshot = await ref.get();
     const data = [];
     snapshot.forEach(doc => {
@@ -101,7 +101,7 @@ export class FirestoreDataSource implements DataSource {
 
   // ToOneRelation
   public async updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<any> {
-    const ref = this.db.collection(this.path);
+    const ref = this.db.collection(this.collection);
     const snapshot = await ref.get();
     const data = [];
     snapshot.forEach(doc => {
@@ -109,17 +109,17 @@ export class FirestoreDataSource implements DataSource {
     });
     const oldOwner = first(filter(data, {[foreignKey]: {[Operator.eq]: foreignId}}));
     if (oldOwner) {
-      const oldRef = this.db.doc(`${this.path}/${(oldOwner as any).id}`);
+      const oldRef = this.db.doc(`${this.collection}/${(oldOwner as any).id}`);
       await oldRef.update({[foreignKey]: admin.firestore.FieldValue.delete()});
     }
 
-    const newRef = this.db.doc(`${this.path}/${id}`);
+    const newRef = this.db.doc(`${this.collection}/${id}`);
     await newRef.update({[foreignKey]: foreignId});
   }
 
   // OneToManyRelation
   public async findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]> {
-    const ref = this.db.collection(this.path);
+    const ref = this.db.collection(this.collection);
     const snapshot = await ref.get();
     const data = [];
     snapshot.forEach(doc => {
@@ -176,13 +176,13 @@ export class FirestoreDataSource implements DataSource {
   }
 
   public async findOneByEmbedId(foreignKey: string, foreignId: string) {
-    const ref = this.db.collection(this.path).where(foreignKey, '==', foreignId);
+    const ref = this.db.collection(this.collection).where(foreignKey, '==', foreignId);
     const snapshot = await ref.get();
     return snapshot.empty ? null : first(snapToArray(snapshot));
   }
 
   public async findManyByEmbedId(foreignKey: string, foreignId: string) {
-    const ref = this.db.collection(this.path).where(foreignKey, '==', foreignId);
+    const ref = this.db.collection(this.collection).where(foreignKey, '==', foreignId);
     const snapshot = await ref.get();
     return snapshot.empty ? null : snapToArray(snapshot);
   }

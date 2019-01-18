@@ -72,7 +72,7 @@ describe('Relation tests on fixtures/manyToMany.graphql with Firestore Data Sour
           credential: admin.credential.cert(serviceAccount),
           databaseURL,
         },
-        path: args.key,
+        collection: args.key,
       }),
     });
     (this as any).graphqlRequest = graphqlRequest;

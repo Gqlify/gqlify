@@ -84,7 +84,7 @@ describe('Relation tests on fixtures/oneToMany.graphql with Firestore Data Sourc
           credential: admin.credential.cert(serviceAccount),
           databaseURL,
         },
-        path: args.key,
+        collection: args.key,
       }),
     });
     (this as any).graphqlRequest = graphqlRequest;

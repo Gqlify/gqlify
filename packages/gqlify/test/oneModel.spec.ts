@@ -91,7 +91,7 @@ describe('Tests on fixtures/oneModel.graphql with Firestore Data Source', functi
             credential: admin.credential.cert(serviceAccount),
             databaseURL,
           },
-          path: args.key,
+          collection: args.key,
         });
         return dataSources[args.key];
       },
