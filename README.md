@@ -12,7 +12,7 @@
 </div>
 <br/>
 
-> Create GraphQL server connecting hybrid APIs fast and easy.
+> Businesses usually involving a broad spectrum of applications, that aren't integrated and requiring human intervention at almost every step of the process this lack of integration and automation. **GQLify make API integration simple and easy.**
 
 * Official Website: [gqlify.com](https://www.gqlify.com/)
 
