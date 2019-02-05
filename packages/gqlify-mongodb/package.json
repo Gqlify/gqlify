@@ -1,6 +1,6 @@
 {
   "name": "@gqlify/mongodb",
-  "version": "2.0.1",
+  "version": "3.0.0",
   "description": "the mongodb package of gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
