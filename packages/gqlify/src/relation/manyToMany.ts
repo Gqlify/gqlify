@@ -64,12 +64,14 @@ export default class ManyToMany implements Relation {
   }
 
   public async createAndAddIdForModelA({modelAId, modelBData}: {modelAId: string, modelBData: Record<string, any>}) {
-    const record = await this.modelB.getDataSource().create(modelBData);
+    const mutation = this.modelB.getCreateMutationFactory().createMutation(modelBData);
+    const record = await this.modelB.getDataSource().create(mutation);
     return this.addId({modelAId, modelBId: record.id});
   }
 
   public async createAndAddIdForModelB({modelBId, modelAData}: {modelBId: string, modelAData: Record<string, any>}) {
-    const record = await this.modelA.getDataSource().create(modelAData);
+    const mutation = this.modelA.getCreateMutationFactory().createMutation(modelAData);
+    const record = await this.modelA.getDataSource().create(mutation);
     return this.addId({modelBId, modelAId: record.id});
   }
 

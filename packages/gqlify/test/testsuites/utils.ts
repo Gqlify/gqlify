@@ -9,6 +9,7 @@ import { GraphQLScalarType } from 'graphql';
 import { readFileSync } from 'fs';
 import GraphQLJSON from 'graphql-type-json';
 import path from 'path';
+import { mapValues, isArray } from 'lodash';
 
 export const createApp = ({ sdl, dataSources, scalars, }: {
   sdl: string;
@@ -73,4 +74,14 @@ export const prepareConfig = () => {
   }
 
   return {mongoUri, serviceAccount};
+};
+
+export const wrapSetToArrayField = (data: Record<string, any>) => {
+  return mapValues(data, value => {
+    if (isArray(value)) {
+      return {set: value};
+    }
+
+    return value;
+  });
 };

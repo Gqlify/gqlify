@@ -43,6 +43,7 @@
     "chai-http": "^4.2.0",
     "faker": "^4.1.0",
     "firebase-admin": "^6.3.0",
+    "graphql": "~14.1.0",
     "graphql-type-json": "^0.2.1",
     "koa": "^2.6.2",
     "mongodb": "^3.1.10",

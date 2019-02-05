@@ -56,11 +56,37 @@ export interface ListReadable {
   findOneById(id: string): Promise<any>;
 }
 
+/**
+ * ListMutable
+ */
+
+export enum ArrayOperator {
+  set = 'set',
+  add = 'add',
+  remove = 'remove',
+}
+
+export interface ArrayOperation {
+  fieldName: string;
+  value: any;
+  operator: ArrayOperator;
+}
+
+export interface Mutation {
+  getData(): Record<string, any>;
+  addField(name: string, value: any): void;
+  getArrayOperations(): ArrayOperation[];
+}
+
 export interface ListMutable {
-  create(payload: any): Promise<any>;
-  update(where: Where, payload: any): Promise<any>;
+  create(mutation: Mutation): Promise<any>;
+  update(where: Where, mutation: Mutation): Promise<any>;
   delete(where: Where): Promise<any>;
 }
+
+/**
+ * Relation
+ */
 
 export interface ToOneRelation {
   findOneByRelation(foreignKey: string, foreignId: string): Promise<any>;

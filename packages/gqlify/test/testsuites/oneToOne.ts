@@ -2,6 +2,7 @@ import chai from 'chai';
 import faker from 'faker';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { wrapSetToArrayField } from './utils';
 const expect = chai.expect;
 
 const userFields = `
@@ -101,7 +102,7 @@ export function testSuits() {
   it('should create connected item with uni-1-to-1', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -136,7 +137,7 @@ export function testSuits() {
   it('should update connect on unconnected item with uni-1-to-1', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -192,7 +193,7 @@ export function testSuits() {
   it('should update connect on connected item with uni-1-to-1', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -219,7 +220,7 @@ export function testSuits() {
 
     // new user
     const createNewUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const {createUser: newUser} = await (this as any).graphqlRequest(createUserQuery, createNewUserVariables);
 
@@ -256,7 +257,7 @@ export function testSuits() {
   it('should disconnect connected item with uni-1-to-1', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -336,7 +337,7 @@ export function testSuits() {
   it('should create connected item with bi-1-to-1 from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -371,7 +372,7 @@ export function testSuits() {
   it('should update connect on unconnected item with bi-1-to-1 from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -431,7 +432,7 @@ export function testSuits() {
   it('should update connect on connected item with bi-1-to-1 from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -459,7 +460,7 @@ export function testSuits() {
 
     // create new user
     const createNewUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const {createUser: newUser} = await (this as any).graphqlRequest(createUserQuery, createNewUserVariables);
 
@@ -499,7 +500,7 @@ export function testSuits() {
   it('should disconnect connected item with bi-1-to-1 from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -561,7 +562,7 @@ export function testSuits() {
   it('should create unconnected item with bi-1-to-1 from the other side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -589,9 +590,10 @@ export function testSuits() {
     const {createBook} = await (this as any).graphqlRequest(createBookQuery, createBookVariables);
 
     // create user
+    const data = fakeUserData();
     const createUserVariables = {
       data: {
-        ...fakeUserData(),
+        ...wrapSetToArrayField(data),
         oneBook: {
           connect: { id: createBook.id },
         },
@@ -605,7 +607,7 @@ export function testSuits() {
     const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
     expect(createUser).to.have.property('id');
     expect(createUser).to.deep.include({
-      ...createUserVariables.data,
+      ...data,
       oneBook: createBook,
     });
   });
@@ -626,7 +628,7 @@ export function testSuits() {
 
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -682,7 +684,7 @@ export function testSuits() {
     // create user
     const createUserVariables = {
       data: {
-        ...fakeUserData(),
+        ...wrapSetToArrayField(fakeUserData()),
         oneBook: {
           connect: { id: createBook.id },
         },
@@ -750,7 +752,7 @@ export function testSuits() {
     // create user
     const createUserVariables = {
       data: {
-        ...fakeUserData(),
+        ...wrapSetToArrayField(fakeUserData()),
         oneBook: {
           connect: { id: createBook.id },
         },

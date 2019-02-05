@@ -9,7 +9,9 @@ import {
   DataSource,
   filter,
   paginate,
-  iterateWhere
+  iterateWhere,
+  Mutation,
+  ArrayOperator
 } from '@gqlify/server';
 
 export class MongodbDataSource implements DataSource {
@@ -50,7 +52,8 @@ export class MongodbDataSource implements DataSource {
     return first(filteredData);
   }
 
-  public async create(payload: any): Promise<any> {
+  public async create(mutation: Mutation): Promise<any> {
+    const payload = this.transformMutation(mutation);
     const insertedItem = await this.db.collection(this.collectionName).insertOne(payload);
     if (insertedItem) {
       const updatedItem = await this.db.collection(this.collectionName).findOneAndUpdate(
@@ -69,7 +72,8 @@ export class MongodbDataSource implements DataSource {
     }
   }
 
-  public async update(where: Where, payload: any): Promise<any> {
+  public async update(where: Where, mutation: Mutation): Promise<any> {
+    const payload = this.transformMutation(mutation);
     const filterQuery = this.whereToFilterQuery(where);
     if (!isEmpty(payload)) {
       await this.db.collection(this.collectionName).updateOne(filterQuery, { $set: payload });
@@ -185,4 +189,20 @@ export class MongodbDataSource implements DataSource {
 
     return filterQuery;
   }
+
+  private transformMutation = (mutation: Mutation) => {
+    const payload = mutation.getData();
+    mutation.getArrayOperations().forEach(operation => {
+      const { fieldName, operator, value } = operation;
+
+      // only deal with set for now
+      // add add, remove in following version
+      if (operator !== ArrayOperator.set) {
+        return;
+      }
+      payload[fieldName] = value;
+    });
+
+    return payload;
+  };
 }

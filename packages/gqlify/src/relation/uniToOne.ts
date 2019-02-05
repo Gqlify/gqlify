@@ -55,7 +55,8 @@ export default class UniToOne implements Relation, WithForeignKey {
   }
 
   public async createAndSetForeignKey(targetData: Record<string, any>) {
-    const created = await this.targetModel.getDataSource().create(targetData);
+    const mutation = this.targetModel.getCreateMutationFactory().createMutation(targetData);
+    const created = await this.targetModel.getDataSource().create(mutation);
     return this.setForeignKey(created.id);
   }
 

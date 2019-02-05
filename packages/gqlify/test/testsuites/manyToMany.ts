@@ -2,6 +2,7 @@ import chai from 'chai';
 import faker from 'faker';
 import { readFileSync } from 'fs';
 import path from 'path';
+import { wrapSetToArrayField } from './utils';
 const expect = chai.expect;
 
 const userFields = `
@@ -103,7 +104,7 @@ export function testSuits() {
       data: {
         name: faker.internet.userName(),
         members: {
-          create: [user],
+          create: [wrapSetToArrayField(user)],
         },
       },
     };
@@ -118,7 +119,7 @@ export function testSuits() {
   it('should create connected item with bi-*-to-* from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -155,7 +156,7 @@ export function testSuits() {
   it('should connect unconnected with bi-*-to-* from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -166,7 +167,7 @@ export function testSuits() {
 
     // create new user
     const createNewUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const {createUser: newUser} = await (this as any).graphqlRequest(createUserQuery, createNewUserVariables);
 
@@ -217,8 +218,8 @@ export function testSuits() {
     const {group} = await (this as any).graphqlRequest(getGroupQuery, getGroupVariables);
     expect(group).to.deep.include({
       name: createGroupVariables.data.name,
-      members: [createUser, newUser],
     });
+    expect(group.members).to.have.deep.members([createUser, newUser]);
   });
 
   it('should update with create with bi-*-to-* from one side', async () => {
@@ -248,7 +249,7 @@ export function testSuits() {
       where: { id: createGroup.id },
       data: {
         members: {
-          create: [user],
+          create: [wrapSetToArrayField(user)],
         },
       },
     };
@@ -274,7 +275,7 @@ export function testSuits() {
   it('should connect unconnected and disconnect connected with bi-*-to-* from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -304,7 +305,7 @@ export function testSuits() {
 
     // create new user
     const createNewUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const {createUser: newUser} = await (this as any).graphqlRequest(createUserQuery, createNewUserVariables);
 
@@ -349,7 +350,7 @@ export function testSuits() {
   it('should disconnect connected item with bi-*-to-* from one side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -415,7 +416,7 @@ export function testSuits() {
   it('should create unconnected item with bi-*-to-* from the other side', async () => {
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -443,9 +444,10 @@ export function testSuits() {
     const {createGroup} = await (this as any).graphqlRequest(createGroupQuery, createGroupVariables);
 
     // create user
+    const data = fakeUserData();
     const createUserVariables = {
       data: {
-        ...fakeUserData(),
+        ...wrapSetToArrayField(data),
         groups: {
           connect: [
             { id: createGroup.id },
@@ -461,7 +463,7 @@ export function testSuits() {
     const {createUser} = await (this as any).graphqlRequest(createUserQuery, createUserVariables);
     expect(createUser).to.have.property('id');
     expect(createUser).to.deep.include({
-      ...createUserVariables.data,
+      ...data,
       groups: [createGroup],
     });
   });
@@ -474,7 +476,7 @@ export function testSuits() {
     // create user
     const createUserVariables = {
       data: {
-        ...user,
+        ...wrapSetToArrayField(user),
         groups: {
           create: [group],
         },
@@ -507,7 +509,7 @@ export function testSuits() {
 
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -554,7 +556,7 @@ export function testSuits() {
     };
     // create user
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -610,7 +612,7 @@ export function testSuits() {
     // create user
     const createUserVariables = {
       data: {
-        ...fakeUserData(),
+        ...wrapSetToArrayField(fakeUserData()),
         groups: {
           connect: [
             { id: createGroup.id },
@@ -685,7 +687,7 @@ export function testSuits() {
     // create user
     const createUserVariables = {
       data: {
-        ...fakeUserData(),
+        ...wrapSetToArrayField(fakeUserData()),
         groups: {
           connect: [
             { id: createGroup.id },

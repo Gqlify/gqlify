@@ -3,6 +3,8 @@ import faker from 'faker';
 import { readFileSync } from 'fs';
 import path from 'path';
 import { times, first as _first, last as _last } from 'lodash';
+import { wrapSetToArrayField } from './utils';
+
 const expect = chai.expect;
 
 const fields = `
@@ -65,8 +67,9 @@ export function testSuits() {
   });
 
   it('should create record', async () => {
+    const data = fakeUserData();
     const variables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(data),
     };
 
     const query = `
@@ -76,7 +79,7 @@ export function testSuits() {
     `;
     const {createUser} = await (this as any).graphqlRequest(query, variables);
     expect(createUser).to.have.property('id');
-    expect(createUser).to.deep.include(variables.data);
+    expect(createUser).to.deep.include(data);
 
     // query to see if exists
     const {users: createdUsers} = await (this as any).graphqlRequest(`
@@ -135,7 +138,7 @@ export function testSuits() {
       })
       .map(userData => {
         const variables = {
-          data: userData,
+          data: wrapSetToArrayField(userData),
         };
 
         const query = `
@@ -206,7 +209,7 @@ export function testSuits() {
       })
       .map(userData => {
         const variables = {
-          data: userData,
+          data: wrapSetToArrayField(userData),
         };
 
         const query = `
@@ -296,7 +299,7 @@ export function testSuits() {
 
   it('should update', async () => {
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -309,6 +312,9 @@ export function testSuits() {
       where: { id: createUser.id },
       data: {
         username: faker.internet.userName(),
+        note: {
+          set: [{title: faker.lorem.slug(10), text: faker.lorem.sentence(100)}],
+        },
       },
     };
     const updateUserQuery = `
@@ -325,11 +331,12 @@ export function testSuits() {
       }
     `);
     expect(certainUser.username).to.deep.equal(updateUserVariables.data.username);
+    expect(certainUser.note).to.eql(updateUserVariables.data.note.set);
   });
 
   it('should update with args', async () => {
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {
@@ -357,7 +364,7 @@ export function testSuits() {
 
   it('should delete', async () => {
     const createUserVariables = {
-      data: fakeUserData(),
+      data: wrapSetToArrayField(fakeUserData()),
     };
     const createUserQuery = `
       mutation ($data: UserCreateInput!) {

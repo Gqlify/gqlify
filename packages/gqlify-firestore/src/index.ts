@@ -9,7 +9,9 @@ import {
   DataSource,
   filter,
   paginate,
-  sort
+  sort,
+  Mutation,
+  ArrayOperator
 } from '@gqlify/server';
 
 const snapToArray = (snapshot: admin.firestore.QuerySnapshot) => {
@@ -67,14 +69,16 @@ export class FirestoreDataSource implements DataSource {
     return doc.data();
   }
 
-  public async create(payload: any): Promise<any> {
+  public async create(mutation: Mutation): Promise<any> {
+    const payload = this.transformMutation(mutation);
     const ref = await this.db.collection(this.collection).add(payload);
     await ref.update({ id: ref.id });
     const doc = await ref.get();
     return doc.data();
   }
 
-  public async update(where: Where, payload: any): Promise<any> {
+  public async update(where: Where, mutation: Mutation): Promise<any> {
+    const payload = this.transformMutation(mutation);
     // WARNING: where may not contain id
     if (isEmpty(payload)) {
       return;
@@ -186,4 +190,20 @@ export class FirestoreDataSource implements DataSource {
     const snapshot = await ref.get();
     return snapshot.empty ? null : snapToArray(snapshot);
   }
+
+  private transformMutation = (mutation: Mutation) => {
+    const payload = mutation.getData();
+    mutation.getArrayOperations().forEach(operation => {
+      const { fieldName, operator, value } = operation;
+
+      // only deal with set for now
+      // add add, remove in following version
+      if (operator !== ArrayOperator.set) {
+        return;
+      }
+      payload[fieldName] = value;
+    });
+
+    return payload;
+  };
 }

@@ -124,7 +124,8 @@ export default class BiOneToOne implements Relation, WithForeignKey {
   }
 
   public async createAndSetForeignKeyOnOwningSide(targetData: Record<string, any>) {
-    const created = await this.refSideModel.getDataSource().create(targetData);
+    const mutation = this.refSideModel.getCreateMutationFactory().createMutation(targetData);
+    const created = await this.refSideModel.getDataSource().create(mutation);
     return this.setForeignKeyOnOwningSide(created.id);
   }
 
@@ -149,13 +150,15 @@ export default class BiOneToOne implements Relation, WithForeignKey {
 
   public async createAndConnectOnRefSide(refSideId: string, data: Record<string, any>) {
     data[this.foreignKey] = refSideId;
-    await this.owningSideModel.getDataSource().create(data);
+    const mutation = this.owningSideModel.getCreateMutationFactory().createMutation(data);
+    await this.owningSideModel.getDataSource().create(mutation);
   }
 
   public async disconnectOnRefSide(refSideId: string) {
     const owningSideDataSource = this.owningSideModel.getDataSource();
     const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId);
-    await owningSideDataSource.update({id: {[Operator.eq]: owningSideRecord.id}}, {[this.foreignKey]: null});
+    const mutation = this.owningSideModel.getUpdateMutationFactory().createMutation({[this.foreignKey]: null});
+    await owningSideDataSource.update({id: {[Operator.eq]: owningSideRecord.id}}, mutation);
   }
 
   public async deleteAndDisconnectOnRefSide(refSideId: string) {

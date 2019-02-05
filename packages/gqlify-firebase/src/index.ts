@@ -10,7 +10,9 @@ import {
   DataSource,
   filter,
   paginate,
-  sort
+  sort,
+  Mutation,
+  ArrayOperator
 } from '@gqlify/server';
 
 const snapToArray = (snapshot: admin.database.DataSnapshot) => {
@@ -61,17 +63,19 @@ export class FirebaseDataSource implements DataSource {
     return snapshot.val();
   }
 
-  public async create(payload: any): Promise<any> {
+  public async create(mutation: Mutation): Promise<any> {
     const ref = this.db.ref(`/${this.path}`);
+    const payload = this.transformMutation(mutation);
     const newItem = await ref.push(payload);
     await newItem.update({ id: newItem.key });
     const snapshot = await this.db.ref(`/${this.path}/${newItem.key}`).once('value');
     return snapshot.val();
   }
 
-  public async update(where: Where, payload: any): Promise<any> {
+  public async update(where: Where, mutation: Mutation): Promise<any> {
     // WARNING: where may not contain id
     const ref = this.db.ref(`/${this.path}`).child(where.id.eq);
+    const payload = this.transformMutation(mutation);
     await ref.update(payload);
   }
 
@@ -205,4 +209,20 @@ export class FirebaseDataSource implements DataSource {
     const snapshot = await ref.orderByChild(`${foreignKey}/${foreignId}`).equalTo(true).once('value');
     return snapshot.exists() ? snapToArray(snapshot) : [];
   }
+
+  private transformMutation = (mutation: Mutation) => {
+    const payload = mutation.getData();
+    mutation.getArrayOperations().forEach(operation => {
+      const { fieldName, operator, value } = operation;
+
+      // only deal with set for now
+      // add add, remove in following version
+      if (operator !== ArrayOperator.set) {
+        return;
+      }
+      payload[fieldName] = value;
+    });
+
+    return payload;
+  };
 }

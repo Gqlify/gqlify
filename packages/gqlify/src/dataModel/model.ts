@@ -3,6 +3,7 @@ import * as pluralize from 'pluralize';
 import { capitalize, isEmpty, pickBy, mapValues, isFunction } from 'lodash';
 import { IResolverObject } from 'graphql-tools';
 import { DataSource } from '../dataSource/interface';
+import { MutationFactory } from '../plugins/mutation';
 
 export default class Model {
   private name: string;
@@ -21,6 +22,10 @@ export default class Model {
 
   // other metadata
   private metadata: Record<string, any> = {};
+
+  // mutation Factory
+  private createMutationFactory: MutationFactory = new MutationFactory();
+  private updateMutationFactory: MutationFactory = new MutationFactory();
 
   constructor({
     name,
@@ -96,4 +101,16 @@ export default class Model {
   public getDataSource() {
     return this.dataSource;
   }
+
+  // since mutationFactory is tightly bind with model schema
+  // and is shared between plugins & relation hooks,
+  // we put it in model.
+  // todo: find a better way to share this variable
+  public getCreateMutationFactory = () => {
+    return this.createMutationFactory;
+  };
+
+  public getUpdateMutationFactory = () => {
+    return this.updateMutationFactory;
+  };
 }

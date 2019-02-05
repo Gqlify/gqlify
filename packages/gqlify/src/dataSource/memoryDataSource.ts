@@ -4,6 +4,8 @@ import {
   ListFindQuery,
   Operator,
   DataSource,
+  Mutation,
+  ArrayOperator,
 } from './interface';
 import { filter, createFilter, paginate, sort } from '../helper';
 import { first, last, assign, remove, isNil, isUndefined, get, pull, unset } from 'lodash';
@@ -30,17 +32,21 @@ export default class MemoryDataSource implements DataSource {
     return first(filter(this.defaultData, {id: {[Operator.eq]: id}}));
   };
 
-  public create = async (payload: any): Promise<any> => {
+  public create = async (mutation: Mutation): Promise<any> => {
     const lastRecord = last(this.defaultData);
     const nextId = lastRecord ? parseInt(lastRecord.id, 10) + 1 : 0;
+    const payload = this.transformMutation(mutation);
     payload.id = nextId.toString();
     this.defaultData.push(payload);
     return payload;
   };
 
-  public update = async (where: Where, payload: any): Promise<any> => {
-    const user = first(filter(this.defaultData, where));
-    assign(user, payload);
+  public update = async (where: Where, mutation: Mutation): Promise<any> => {
+    const row = first(filter(this.defaultData, where));
+
+    // override current value
+    const payload = this.transformMutation(mutation);
+    assign(row, payload);
   };
 
   public delete = async (where: Where): Promise<any> => {
@@ -99,5 +105,21 @@ export default class MemoryDataSource implements DataSource {
     }
 
     pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
+  };
+
+  private transformMutation = (mutation: Mutation) => {
+    const payload = mutation.getData();
+    mutation.getArrayOperations().forEach(operation => {
+      const { fieldName, operator, value } = operation;
+
+      // only deal with set for now
+      // add add, remove in following version
+      if (operator !== ArrayOperator.set) {
+        return;
+      }
+      payload[fieldName] = value;
+    });
+
+    return payload;
   };
 }
