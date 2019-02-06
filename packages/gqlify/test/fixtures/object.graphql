@@ -1,0 +1,25 @@
+scalar JSON
+
+enum STATUS {
+  OK
+  NOT_OK
+}
+
+type Location {
+  lng: String
+  lat: String
+}
+
+type Note {
+  title: String
+  text: String
+}
+
+type Profile @GQLifyObject(dataSource: "memory", key: "profile") {
+  username: String
+  email: String
+  status: STATUS
+  attributes: JSON
+  location: Location
+  note: [Note!]
+}
