@@ -85,6 +85,18 @@ export interface ListMutable {
 }
 
 /**
+ * Map
+ */
+
+export interface MapReadable {
+  getMap?(key: string): Promise<Record<string, any>>;
+}
+
+export interface MapMutable {
+  updateMap?(key: string, mutation: Mutation): Promise<void>;
+}
+
+/**
  * Relation
  */
 
@@ -118,6 +130,8 @@ export interface ManyToManyRelation {
 export type DataSource =
   ListReadable &
   ListMutable &
+  MapReadable &
+  MapMutable &
   ToOneRelation &
   OneToManyRelation &
   ManyToManyRelation &

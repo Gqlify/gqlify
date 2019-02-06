@@ -12,10 +12,12 @@ import { first, last, assign, remove, isNil, isUndefined, get, pull, unset } fro
 
 export default class MemoryDataSource implements DataSource {
   private defaultData: any[];
+  private mapData: Record<string, any>;
   private relationTable: Record<string, Record<string, string[]>> = {};
 
-  constructor(defaultData?: any[]) {
+  constructor(defaultData?: any[], mapData?: Record<string, any>) {
     this.defaultData = defaultData || [];
+    this.mapData = mapData || {};
   }
 
   public find = async (args?: ListFindQuery): Promise<PaginatedResponse> => {
@@ -105,6 +107,22 @@ export default class MemoryDataSource implements DataSource {
     }
 
     pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
+  };
+
+  public getMap = async (key: string) => {
+    return this.mapData[key];
+  };
+
+  public updateMap = async (key: string, mutation: Mutation) => {
+    const map = this.mapData[key];
+    const payload = this.transformMutation(mutation);
+    if (!map) {
+      this.mapData[key] = payload;
+      return;
+    }
+
+    // override current value
+    assign(map, payload);
   };
 
   private transformMutation = (mutation: Mutation) => {
