@@ -2,7 +2,7 @@ import Model from '../dataModel/model';
 import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
-import { ListReadable } from '../dataSource/interface';
+import { ListReadable, MapReadable } from '../dataSource/interface';
 import { pick } from 'lodash';
 
 const parsePaginationFromArgs = (args: Record<string, any>) => {
@@ -28,6 +28,13 @@ export default class QueryPlugin implements Plugin {
     const { root } = context;
     const modelType = this.baseTypePlugin.getTypename(model);
 
+    // object query
+    if (model.isObjectType()) {
+      const queryName = this.createObjectQueryName(model);
+      root.addQuery(`${queryName}: ${modelType}`);
+      return;
+    }
+
     // find one query
     const findOneQueryName = this.createFindOneQueryName(model);
     const whereUniqueInputName = this.whereInputPlugin.getWhereUniqueInputName(model);
@@ -50,8 +57,17 @@ export default class QueryPlugin implements Plugin {
     dataSource,
   }: {
     model: Model,
-    dataSource: ListReadable,
+    dataSource: ListReadable & MapReadable,
   }) {
+    // object query
+    if (model.isObjectType()) {
+      const queryName = this.createObjectQueryName(model);
+      return {
+        [queryName]: () => dataSource.getMap(),
+      };
+    }
+
+    // list query
     const findOneQueryName = this.createFindOneQueryName(model);
     const findManyQueryName = this.createFindQueryName(model);
     return {
@@ -66,6 +82,10 @@ export default class QueryPlugin implements Plugin {
         return response.data;
       },
     };
+  }
+
+  private createObjectQueryName(model: Model) {
+    return model.getNamings().singular;
   }
 
   private createFindQueryName(model: Model) {

@@ -8,16 +8,19 @@ import {
   ArrayOperator,
 } from './interface';
 import { filter, createFilter, paginate, sort } from '../helper';
-import { first, last, assign, remove, isNil, isUndefined, get, pull, unset } from 'lodash';
+import { first, last, assign, remove, isNil, isUndefined, get, pull, unset, isArray, isPlainObject } from 'lodash';
 
 export default class MemoryDataSource implements DataSource {
-  private defaultData: any[];
-  private mapData: Record<string, any>;
+  private defaultData: any[] = [];
+  private mapData: Record<string, any> = {};
   private relationTable: Record<string, Record<string, string[]>> = {};
 
-  constructor(defaultData?: any[], mapData?: Record<string, any>) {
-    this.defaultData = defaultData || [];
-    this.mapData = mapData || {};
+  constructor(defaultData?: any[] | Record<string, any>) {
+    if (isArray(defaultData)) {
+      this.defaultData = defaultData;
+    } else if (isPlainObject(defaultData)) {
+      this.mapData = defaultData;
+    }
   }
 
   public find = async (args?: ListFindQuery): Promise<PaginatedResponse> => {
@@ -109,20 +112,15 @@ export default class MemoryDataSource implements DataSource {
     pull(this.relationTable[relationTableName][sourceSideId], targetSideId);
   };
 
-  public getMap = async (key: string) => {
-    return this.mapData[key];
+  public getMap = async () => {
+    return this.mapData;
   };
 
-  public updateMap = async (key: string, mutation: Mutation) => {
-    const map = this.mapData[key];
+  public updateMap = async (mutation: Mutation) => {
     const payload = this.transformMutation(mutation);
-    if (!map) {
-      this.mapData[key] = payload;
-      return;
-    }
 
     // override current value
-    assign(map, payload);
+    assign(this.mapData, payload);
   };
 
   private transformMutation = (mutation: Mutation) => {

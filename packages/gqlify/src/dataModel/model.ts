@@ -1,6 +1,6 @@
 import Field from './field';
 import * as pluralize from 'pluralize';
-import { capitalize, isEmpty, pickBy, mapValues, isFunction } from 'lodash';
+import { capitalize, isEmpty, pickBy, mapValues, isFunction, defaultTo } from 'lodash';
 import { IResolverObject } from 'graphql-tools';
 import { DataSource } from '../dataSource/interface';
 import { MutationFactory } from '../plugins/mutation';
@@ -27,12 +27,17 @@ export default class Model {
   private createMutationFactory: MutationFactory = new MutationFactory();
   private updateMutationFactory: MutationFactory = new MutationFactory();
 
+  // for object type api
+  private isObject: boolean;
+
   constructor({
     name,
     fields,
+    isObject,
   }: {
     name: string,
     fields?: Record<string, Field>,
+    isObject?: boolean,
   }) {
     this.name = name;
     // lowercase and singular it first
@@ -43,6 +48,7 @@ export default class Model {
       capitalSingular: capitalize(key),
     };
     this.fields = fields || {};
+    this.isObject = defaultTo(isObject, false);
   }
 
   public appendField(name: string, field: Field) {
@@ -112,5 +118,10 @@ export default class Model {
 
   public getUpdateMutationFactory = () => {
     return this.updateMutationFactory;
+  };
+
+  // for object api
+  public isObjectType = () => {
+    return this.isObject;
   };
 }

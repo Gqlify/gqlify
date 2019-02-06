@@ -89,11 +89,11 @@ export interface ListMutable {
  */
 
 export interface MapReadable {
-  getMap?(key: string): Promise<Record<string, any>>;
+  getMap?(): Promise<Record<string, any>>;
 }
 
 export interface MapMutable {
-  updateMap?(key: string, mutation: Mutation): Promise<void>;
+  updateMap?(mutation: Mutation): Promise<void>;
 }
 
 /**
