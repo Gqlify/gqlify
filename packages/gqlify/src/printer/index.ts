@@ -1,6 +1,6 @@
 // tslint:disable:no-console
 import { Model, Field, RelationField, ModelRelation, RelationType } from '../dataModel';
-import { mapValues, values, flatten } from 'lodash';
+import { mapValues, values, flatten, isEmpty } from 'lodash';
 import chalk from 'chalk';
 
 // constants
@@ -99,6 +99,9 @@ export const printModels = (models: Model[]) => {
 };
 
 export const printRelations = (relations: ModelRelation[]) => {
+  if (isEmpty(relations)) {
+    return;
+  }
   console.log(chalk.bold(`${SPACE.repeat(2)}- Relations`));
   relationMessages(relations).forEach(line => console.log(line));
 };
