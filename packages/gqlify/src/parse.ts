@@ -27,11 +27,21 @@ import { SdlField, SdlFieldType } from './sdlParser/field/interface';
 import { DataModelType } from './dataModel/type';
 import { mapValues, forEach, values, reduce, get } from 'lodash';
 import { SdlNamedType } from './sdlParser/namedType/interface';
-import { MODEL_DIRECTIVE, RELATION_INTERFACE_NAME, RELATION_DIRECTIVE_NAME, RELATION_WITH } from './constants';
+import {
+  MODEL_DIRECTIVE,
+  OBJECT_DIRECTIVE,
+  RELATION_INTERFACE_NAME,
+  RELATION_DIRECTIVE_NAME,
+  RELATION_WITH,
+} from './constants';
 import { InputValue } from './sdlParser/inputValue/interface';
 
 const isGqlifyModel = (sdlNamedType: SdlNamedType) => {
   return Boolean(sdlNamedType.getDirectives()[MODEL_DIRECTIVE]);
+};
+
+const isGqlifyObject = (sdlNamedType: SdlNamedType) => {
+  return Boolean(sdlNamedType.getDirectives()[OBJECT_DIRECTIVE]);
 };
 
 const isRelationType = (sdlObjectType: SdlObjectType) => {
@@ -120,9 +130,11 @@ export const createDataModelFromSdlObjectType = (
   getModel: (name: string) => Model,
   getNamedType: (name: string) => NamedType,
   getRelationConfig: (name: string) => Record<string, any>,
+  isObject: boolean,
   ): Model => {
   const model = new Model({
     name: sdlObjectType.getName(),
+    isObject,
   });
 
   // append fields
@@ -176,9 +188,10 @@ export const parse = (sdl: string): {rootNode: RootNode, models: Model[]} => {
       rootNode.addObjectType(objectType);
     }
 
-    // GqlifyModel
-    if (sdlNamedType instanceof SdlObjectType && isGqlifyModel(sdlNamedType)) {
-      const model = createDataModelFromSdlObjectType(sdlNamedType, getModel, getNamedType, getRelationConfig);
+    // GQLifyModel || GQLifyObject
+    if (sdlNamedType instanceof SdlObjectType && (isGqlifyModel(sdlNamedType) || isGqlifyObject(sdlNamedType))) {
+      const isObject = isGqlifyObject(sdlNamedType);
+      const model = createDataModelFromSdlObjectType(sdlNamedType, getModel, getNamedType, getRelationConfig, isObject);
       models[name] = model;
     }
 
