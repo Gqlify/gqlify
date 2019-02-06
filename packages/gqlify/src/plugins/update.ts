@@ -4,7 +4,7 @@ import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
 import { upperFirst, forEach, get, reduce } from 'lodash';
-import { ListMutable } from '../dataSource/interface';
+import { ListMutable, MapMutable } from '../dataSource/interface';
 import { RelationField } from '../dataModel';
 import CreatePlugin from './create';
 import { Hook, UpdateContext } from '../hooks/interface';
@@ -151,6 +151,16 @@ export default class UpdatePlugin implements Plugin {
 
   public visitModel(model: Model, context: Context) {
     const { root } = context;
+    // object
+    if (model.isObjectType()) {
+      const objectMutationName = this.getInputName(model);
+      const objectInputName = this.generateUpdateInput(model, context);
+      const objectReturnType = this.createObjectReturnType(model, context);
+      root.addMutation(`${objectMutationName}(data: ${objectInputName}!): ${objectReturnType}`);
+      return;
+    }
+
+    // list
     // const modelType = this.baseTypePlugin.getTypename(model);
     const returnType = this.createUniqueReturnType(model, context);
 
@@ -161,10 +171,36 @@ export default class UpdatePlugin implements Plugin {
     root.addMutation(`${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${returnType}`);
   }
 
-  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable & MapMutable}) {
     const mutationName = this.getInputName(model);
     const wrapUpdate = get(this.hook, [model.getName(), 'wrapUpdate']);
 
+    // object
+    if (model.isObjectType()) {
+      return {
+        [mutationName]: async (root, args, context) => {
+          const data = {...args.data};
+
+          // no relationship or other hooks
+          if (!wrapUpdate) {
+            await dataSource.updateMap(this.createMutation(model, data));
+            return {success: true};
+          }
+
+          const updateContext: UpdateContext = {
+            where: args.where,
+            data,
+            response: {},
+          };
+          await wrapUpdate(updateContext, async ctx => {
+            await dataSource.updateMap(this.createMutation(model, ctx.data));
+          });
+          return {success: true};
+        },
+      };
+    }
+
+    // list
     return {
       [mutationName]: async (root, args, context) => {
         const whereUnique = this.whereInputPlugin.parseUniqueWhere(args.where);
@@ -225,6 +261,15 @@ export default class UpdatePlugin implements Plugin {
       }, []).join(' ');
     const type = `type ${typename} {
       ${fields}
+    }`;
+    context.root.addObjectType(type);
+    return typename;
+  }
+
+  private createObjectReturnType(model: Model, context: Context) {
+    const typename = this.getReturnTypename(model);
+    const type = `type ${typename} {
+      success: Boolean
     }`;
     context.root.addObjectType(type);
     return typename;

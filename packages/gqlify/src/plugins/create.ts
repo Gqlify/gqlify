@@ -141,6 +141,10 @@ export default class CreatePlugin implements Plugin {
   }
 
   public visitModel(model: Model, context: Context) {
+    // object type model dont need create mutation
+    if (model.isObjectType()) {
+      return;
+    }
     const { root } = context;
     const modelType = this.baseTypePlugin.getTypename(model);
 
@@ -151,6 +155,10 @@ export default class CreatePlugin implements Plugin {
   }
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+    // object type model dont need create mutation
+    if (model.isObjectType()) {
+      return;
+    }
     const mutationName = this.getMutationName(model);
     const wrapCreate = get(this.hook, [model.getName(), 'wrapCreate']);
 

@@ -9,7 +9,7 @@ import {
 } from './plugins';
 import { createRelation, Model } from './dataModel';
 import { parse } from './parse';
-import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_NAME } from './constants';
+import { MODEL_DIRECTIVE, MODEL_DIRECTIVE_SOURCE_NAME, OBJECT_DIRECTIVE } from './constants';
 import { omit, forEach, values, get, isUndefined, isEmpty } from 'lodash';
 import Generator from './generator';
 import { createRelationHooks } from './hooks/relationHook';
@@ -90,7 +90,8 @@ export class Gqlify {
 
       if (!model.getDataSource()) {
         // construct data source
-        const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE);
+        // get dataSource arguments from GQLifyModel or GQLifyObject
+        const dataSourceArgs = model.getMetadata(MODEL_DIRECTIVE) || model.getMetadata(OBJECT_DIRECTIVE);
         const dataSourceIdentifier: string = dataSourceArgs[MODEL_DIRECTIVE_SOURCE_NAME];
         const createDataSource: (args: any) => DataSource = this.dataSources[dataSourceIdentifier];
         if (!createDataSource) {

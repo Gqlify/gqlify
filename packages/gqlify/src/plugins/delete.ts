@@ -27,6 +27,10 @@ export default class DeletePlugin implements Plugin {
   }
 
   public visitModel(model: Model, context: Context) {
+    // object type model dont need delete mutation
+    if (model.isObjectType()) {
+      return;
+    }
     const { root } = context;
     const modelType = this.baseTypePlugin.getTypename(model);
 
@@ -38,6 +42,10 @@ export default class DeletePlugin implements Plugin {
   }
 
   public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+    // object type model dont need delete mutation
+    if (model.isObjectType()) {
+      return;
+    }
     const inputName = this.getInputName(model);
     const wrapDelete = get(this.hook, [model.getName(), 'wrapDelete']);
 

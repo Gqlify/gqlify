@@ -3,7 +3,7 @@ import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListReadable, MapReadable } from '../dataSource/interface';
-import { pick } from 'lodash';
+import { pick, isEmpty } from 'lodash';
 
 const parsePaginationFromArgs = (args: Record<string, any>) => {
   if (!args) {
@@ -63,7 +63,11 @@ export default class QueryPlugin implements Plugin {
     if (model.isObjectType()) {
       const queryName = this.createObjectQueryName(model);
       return {
-        [queryName]: () => dataSource.getMap(),
+        [queryName]: async () => {
+          const response = await dataSource.getMap();
+          // make sure graphql query get empty object
+          return isEmpty(response) ? {} : response;
+        },
       };
     }
 
