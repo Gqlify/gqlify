@@ -22,20 +22,33 @@ const snapToArray = (snapshot: admin.firestore.QuerySnapshot) => {
   return data;
 };
 
+const defaultMapCollection = 'canner-object';
+
 export interface FirestoreOption {
   config?: admin.AppOptions;
-  collection: string;
+  collection?: string;
+  // path for map data
+  path?: string;
 }
 
 export class FirestoreDataSource implements DataSource {
   private db: admin.firestore.Firestore;
   private collection: string;
+  private path: string;
 
   constructor(option: FirestoreOption) {
     this.db = isEmpty(admin.apps)
       ? admin.initializeApp(option.config).firestore()
       : admin.app().firestore();
     this.collection = option.collection;
+    // path exists
+    if (option.path && option.path.indexOf('/') > 0) {
+      this.path = option.path;
+    } else if (option.path) {
+      this.path = option.path.startsWith('/')
+        ? `${defaultMapCollection}${option.path}`
+        : `${defaultMapCollection}/${option.path}`;
+    }
   }
 
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
@@ -189,6 +202,28 @@ export class FirestoreDataSource implements DataSource {
     const ref = this.db.collection(this.collection).where(foreignKey, '==', foreignId);
     const snapshot = await ref.get();
     return snapshot.empty ? null : snapToArray(snapshot);
+  }
+
+  /**
+   * Map
+   */
+  public async getMap(): Promise<Record<string, any>> {
+    const snapshot = await this.db.doc(this.path).get();
+    return snapshot.data();
+  }
+
+  public async updateMap(mutation: Mutation): Promise<any> {
+    const payload = this.transformMutation(mutation);
+    try {
+      await this.db.doc(this.path).update(payload);
+    } catch (e) {
+      if (/No document to update/.test(e.message)) {
+        await this.db.doc(this.path).set(payload);
+      } else {
+        // throw other error
+        throw e;
+      }
+    }
   }
 
   private transformMutation = (mutation: Mutation) => {

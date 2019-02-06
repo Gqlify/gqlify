@@ -14,14 +14,28 @@ import {
   ArrayOperator
 } from '@gqlify/server';
 
+const defaultObjectCollection = 'canner-object';
+
 export class MongodbDataSource implements DataSource {
   private db: Db;
   private collectionName: string;
+  private objectCollection: string;
+  private objectKey: string;
   private relationPath: string = '__relation';
 
-  constructor(db: Db, collectionName: string) {
+  constructor(db: Db, collectionName: string, key?: string) {
     this.db = db;
     this.collectionName = collectionName;
+
+    // determine object api collection & key
+    const splits = this.collectionName.split('/');
+    if (splits.length === 1) {
+      this.objectCollection = defaultObjectCollection;
+      this.objectKey = collectionName;
+    } else if (splits.length >= 2) {
+      this.objectCollection = splits[0];
+      this.objectKey = splits[1];
+    }
   }
 
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
@@ -159,6 +173,23 @@ export class MongodbDataSource implements DataSource {
         },
       },
     );
+  }
+
+  /**
+   * Map
+   */
+  public async getMap(): Promise<Record<string, any>> {
+    const filteredData = await this.db.collection(this.objectCollection)
+      .findOne({key: this.objectKey});
+    return filteredData;
+  }
+
+  public async updateMap(mutation: Mutation): Promise<any> {
+    const payload = this.transformMutation(mutation);
+    if (!isEmpty(payload)) {
+      await this.db.collection(this.objectCollection)
+        .updateOne({key: this.objectKey}, { $set: payload }, { upsert: true });
+    }
   }
 
   private whereToFilterQuery(where: Where): FilterQuery<any> {

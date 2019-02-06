@@ -210,6 +210,21 @@ export class FirebaseDataSource implements DataSource {
     return snapshot.exists() ? snapToArray(snapshot) : [];
   }
 
+  /**
+   * Map
+   */
+
+  public async getMap(): Promise<Record<string, any>> {
+    const snapshot = await this.db.ref(`/${this.path}`).once('value');
+    return snapshot.val();
+  }
+
+  public async updateMap(mutation: Mutation): Promise<any> {
+    const ref = this.db.ref(`/${this.path}`);
+    const payload = this.transformMutation(mutation);
+    await ref.update(payload);
+  }
+
   private transformMutation = (mutation: Mutation) => {
     const payload = mutation.getData();
     mutation.getArrayOperations().forEach(operation => {
