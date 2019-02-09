@@ -22,9 +22,6 @@
 
 * Official Website: [gqlify.com](https://www.gqlify.com/)
 
-
-![home](https://i.imgur.com/ojShV9s.png)
-
 > ***Why GQLify: https://www.gqlify.com/docs/why-gqlify***
 
 > ***FAQ - Compare to Prisma: https://www.gqlify.com/docs/vs-prisma***
