@@ -6,6 +6,7 @@ import {
   UpdatePlugin,
   DeletePlugin,
   RelayPlugin,
+  Plugin,
 } from './plugins';
 import { createRelation, Model } from './dataModel';
 import { parse } from './parse';
@@ -31,6 +32,7 @@ export class Gqlify {
   private context: any;
   private rootNode: RootNode;
   private models: Model[];
+  private userDefinedPlugins: Plugin[];
   private skipPrint: boolean;
 
   constructor({
@@ -41,6 +43,7 @@ export class Gqlify {
     skipPrint,
     rootNode,
     models,
+    plugins,
   }: {
     sdl?: string,
     dataSources?: Record<string, (args: any) => DataSource>,
@@ -48,7 +51,8 @@ export class Gqlify {
     context?: any,
     skipPrint?: boolean,
     rootNode?: RootNode,
-    models?: Model[];
+    models?: Model[],
+    plugins?: Plugin[],
   }) {
     this.sdl = sdl;
     this.dataSources = dataSources;
@@ -57,6 +61,7 @@ export class Gqlify {
     this.skipPrint = skipPrint;
     this.rootNode = rootNode;
     this.models = models;
+    this.userDefinedPlugins = plugins;
   }
 
   public createServerConfig(): {
@@ -127,6 +132,7 @@ export class Gqlify {
       new CreatePlugin({hook: hookMap}),
       new UpdatePlugin({hook: hookMap}),
       new DeletePlugin({hook: hookMap}),
+      ...this.userDefinedPlugins || [],
     ];
 
     // set resolver from hook
