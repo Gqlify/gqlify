@@ -14,10 +14,13 @@
 
 > Businesses usually involving a broad spectrum of applications, that aren't integrated and requiring human intervention at almost every step of the process this lack of integration and automation. **GQLify make API integration simple and easy.**
 
+<div align="center">
+
+✨[Blog post - Challenges and Solutions — Bridging applications and clouds](https://medium.com/cannerio/challenge-and-solution-bridging-applications-and-clouds-250e8360c236)✨
+
+</div>
+
 * Official Website: [gqlify.com](https://www.gqlify.com/)
-
-
-![home](https://i.imgur.com/ojShV9s.png)
 
 > ***Why GQLify: https://www.gqlify.com/docs/why-gqlify***
 
