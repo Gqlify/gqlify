@@ -96,6 +96,14 @@ export function testSuits() {
       }
     `);
     expect(user).to.deep.equal(createUser);
+
+    // query one with eq
+    const {users} = await (this as any).graphqlRequest(`
+      query {
+        users(where: {id_eq: "${createUser.id}"}) {${fields}}
+      }
+    `);
+    expect(users[0]).to.deep.equal(createUser);
   });
 
   it('should create record with args', async () => {

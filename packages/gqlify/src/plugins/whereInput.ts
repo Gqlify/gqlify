@@ -103,6 +103,12 @@ export default class WhereInputPlugin implements Plugin {
             fieldName: name,
             type: field.getTypename(),
           });
+
+          // eq
+          inputFields.push({
+            fieldName: `${name}_eq`,
+            type: field.getTypename(),
+          });
           break;
       }
     });
