@@ -191,6 +191,7 @@ export default class UpdatePlugin implements Plugin {
             where: args.where,
             data,
             response: {},
+            graphqlContext: context,
           };
           await wrapUpdate(updateContext, async ctx => {
             await dataSource.updateMap(this.createMutation(model, ctx.data));
@@ -210,7 +211,7 @@ export default class UpdatePlugin implements Plugin {
 
         // no relationship or other hooks
         if (!wrapUpdate) {
-          await dataSource.update(whereUnique, this.createMutation(model, data));
+          await dataSource.update(whereUnique, this.createMutation(model, data), context);
           return args.where;
         }
 
@@ -222,9 +223,10 @@ export default class UpdatePlugin implements Plugin {
           where: args.where,
           data,
           response: {},
+          graphqlContext: context,
         };
         await wrapUpdate(updateContext, async ctx => {
-          await dataSource.update(whereUnique, this.createMutation(model, ctx.data));
+          await dataSource.update(whereUnique, this.createMutation(model, ctx.data), context);
         });
         return args.where;
       },

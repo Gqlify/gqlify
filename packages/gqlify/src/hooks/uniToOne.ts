@@ -20,7 +20,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     [relation.source.getName()]: {
       // connect or create relation
       wrapCreate: async (context, createOperation) => {
-        const {data} = context;
+        const {data, graphqlContext} = context;
         const relationData = get(data, relationField);
         if (!relationData) {
           return createOperation();
@@ -37,14 +37,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         }
 
         if (createData) {
-          const dataWithCreateId = await relationImpl.createAndSetForeignKey(createData);
+          const dataWithCreateId = await relationImpl.createAndSetForeignKey(createData, graphqlContext);
           context.data = {...dataWithoutRelation, ...dataWithCreateId};
           return createOperation();
         }
       },
 
       wrapUpdate: async (context, updateOperation) => {
-        const {where, data} = context;
+        const {where, data, graphqlContext} = context;
         const relationData = get(data, relationField);
         if (!relationData) {
           return updateOperation();
@@ -62,11 +62,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         if (connectId) {
           dataWithRelationField = await relationImpl.setForeignKey(connectId);
         } else if (createData) {
-          dataWithRelationField = await relationImpl.createAndSetForeignKey(createData);
+          dataWithRelationField = await relationImpl.createAndSetForeignKey(createData, graphqlContext);
         } else if (ifDisconnect) {
           dataWithRelationField = await relationImpl.unsetForeignKey();
         } else if (ifDelete) {
-          dataWithRelationField = await relationImpl.destroyAndUnsetForeignKey(data);
+          dataWithRelationField = await relationImpl.destroyAndUnsetForeignKey(data, graphqlContext);
         }
 
         context.data = {...dataWithoutRelation, ...dataWithRelationField};
@@ -74,7 +74,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       resolveFields: {
-        [relation.sourceField]: parent => relationImpl.join(parent),
+        [relation.sourceField]: (parent, _, graphqlContext) => relationImpl.join(parent, graphqlContext),
       },
     },
   };

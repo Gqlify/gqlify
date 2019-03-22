@@ -22,7 +22,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
     [relationImpl.getOwningSide().getName()]: {
       // connect or create relation
       wrapCreate: async (context, createOperation) => {
-        const {data} = context;
+        const {data, graphqlContext} = context;
         const relationData = get(data, owningSideField);
         if (!relationData) {
           return createOperation();
@@ -39,14 +39,14 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         }
 
         if (createData) {
-          const dataWithCreateId = await relationImpl.createAndSetForeignKeyOnOwningSide(createData);
+          const dataWithCreateId = await relationImpl.createAndSetForeignKeyOnOwningSide(createData, graphqlContext);
           context.data = {...dataWithoutRelation, ...dataWithCreateId};
           return createOperation();
         }
       },
 
       wrapUpdate: async (context, updateOperation) => {
-        const {data} = context;
+        const {data, graphqlContext} = context;
         const relationData = get(data, owningSideField);
         if (!relationData) {
           return updateOperation();
@@ -64,11 +64,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         if (connectId) {
           dataWithRelationField = await relationImpl.setForeignKeyOnOwningSide(connectId);
         } else if (createData) {
-          dataWithRelationField = await relationImpl.createAndSetForeignKeyOnOwningSide(createData);
+          dataWithRelationField = await relationImpl.createAndSetForeignKeyOnOwningSide(createData, graphqlContext);
         } else if (ifDisconnect) {
           dataWithRelationField = await relationImpl.unsetForeignKeyOnOwningSide();
         } else if (ifDelete) {
-          dataWithRelationField = await relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data);
+          dataWithRelationField = await relationImpl.deleteAndUnsetForeignKeyOnOwningSide(data, graphqlContext);
         }
 
         context.data = {...dataWithoutRelation, ...dataWithRelationField};
@@ -76,14 +76,15 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       resolveFields: {
-        [relationImpl.getOwningSideField()]: parent => relationImpl.joinOnOwningSide(parent),
+        [relationImpl.getOwningSideField()]:
+          (parent, _, graphqlContext) => relationImpl.joinOnOwningSide(parent, graphqlContext),
       },
     },
 
     // ref side
     [relationImpl.getRefSide().getName()]: {
       wrapCreate: async (context, createOperation) => {
-        const {data} = context;
+        const {data, graphqlContext} = context;
         const relationData = get(data, refSideField);
         if (!relationData) {
           return createOperation();
@@ -100,16 +101,16 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         // bind relation
         if (connectId) {
-          return relationImpl.connectOnRefSide(created.id, connectId);
+          return relationImpl.connectOnRefSide(created.id, connectId, graphqlContext);
         }
 
         if (createData) {
-          return relationImpl.createAndConnectOnRefSide(created.id, createData);
+          return relationImpl.createAndConnectOnRefSide(created.id, createData, graphqlContext);
         }
       },
 
       wrapUpdate: async (context, updateOperation) => {
-        const {where, data} = context;
+        const {where, data, graphqlContext} = context;
         const relationData = get(data, refSideField);
         if (!relationData) {
           return updateOperation();
@@ -127,24 +128,24 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const ifDelete = get(relationData, 'delete');
 
         if (connectId) {
-          return relationImpl.connectOnRefSide(where.id, connectId);
+          return relationImpl.connectOnRefSide(where.id, connectId, graphqlContext);
         }
 
         if (createData) {
-          return relationImpl.createAndConnectOnRefSide(where.id, createData);
+          return relationImpl.createAndConnectOnRefSide(where.id, createData, graphqlContext);
         }
 
         if (ifDisconnect) {
-          return relationImpl.disconnectOnRefSide(where.id);
+          return relationImpl.disconnectOnRefSide(where.id, graphqlContext);
         }
 
         if (ifDelete) {
-          return relationImpl.deleteAndDisconnectOnRefSide(where.id);
+          return relationImpl.deleteAndDisconnectOnRefSide(where.id, graphqlContext);
         }
       },
 
       resolveFields: {
-        [relationImpl.getRefSideField()]: data => relationImpl.joinOnRefSide(data),
+        [relationImpl.getRefSideField()]: (data, _, graphqlContext) => relationImpl.joinOnRefSide(data, graphqlContext),
       },
     },
   };

@@ -2,17 +2,20 @@ import { IResolverObject } from 'graphql-tools';
 export interface CreateContext {
   data: any;
   response: any;
+  graphqlContext: any;
 }
 
 export interface UpdateContext {
   where: any;
   data: Record<string, any>;
   response: any;
+  graphqlContext: any;
 }
 
 export interface DeleteContext {
   where: any;
   response: any;
+  graphqlContext: any;
 }
 
 export interface Hook {

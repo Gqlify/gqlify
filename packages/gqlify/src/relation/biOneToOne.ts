@@ -123,9 +123,9 @@ export default class BiOneToOne implements Relation, WithForeignKey {
     return {[this.foreignKey]: targetId};
   }
 
-  public async createAndSetForeignKeyOnOwningSide(targetData: Record<string, any>) {
+  public async createAndSetForeignKeyOnOwningSide(targetData: Record<string, any>, context: any) {
     const mutation = this.refSideModel.getCreateMutationFactory().createMutation(targetData);
-    const created = await this.refSideModel.getDataSource().create(mutation);
+    const created = await this.refSideModel.getDataSource().create(mutation, context);
     return this.setForeignKeyOnOwningSide(created.id);
   }
 
@@ -133,52 +133,52 @@ export default class BiOneToOne implements Relation, WithForeignKey {
     return {[this.foreignKey]: null};
   }
 
-  public async deleteAndUnsetForeignKeyOnOwningSide(data: Record<string, any>) {
+  public async deleteAndUnsetForeignKeyOnOwningSide(data: Record<string, any>, context: any) {
     const foreignId = data[this.foreignKey];
     if (!foreignId) {
       return;
     }
-    await this.refSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
+    await this.refSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}}, context);
     return this.unsetForeignKeyOnOwningSide();
   }
 
-  public async connectOnRefSide(refSideId: string, owningSideId: string) {
+  public async connectOnRefSide(refSideId: string, owningSideId: string, context: any) {
     const owningSideDataSource = this.owningSideModel.getDataSource();
     // add refSideId to owningSide record
-    await owningSideDataSource.updateOneRelation(owningSideId, this.foreignKey, refSideId);
+    await owningSideDataSource.updateOneRelation(owningSideId, this.foreignKey, refSideId, context);
   }
 
-  public async createAndConnectOnRefSide(refSideId: string, data: Record<string, any>) {
+  public async createAndConnectOnRefSide(refSideId: string, data: Record<string, any>, context: any) {
     data[this.foreignKey] = refSideId;
     const mutation = this.owningSideModel.getCreateMutationFactory().createMutation(data);
-    await this.owningSideModel.getDataSource().create(mutation);
+    await this.owningSideModel.getDataSource().create(mutation, context);
   }
 
-  public async disconnectOnRefSide(refSideId: string) {
+  public async disconnectOnRefSide(refSideId: string, context: any) {
     const owningSideDataSource = this.owningSideModel.getDataSource();
-    const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId);
+    const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId, context);
     const mutation = this.owningSideModel.getUpdateMutationFactory().createMutation({[this.foreignKey]: null});
-    await owningSideDataSource.update({id: {[Operator.eq]: owningSideRecord.id}}, mutation);
+    await owningSideDataSource.update({id: {[Operator.eq]: owningSideRecord.id}}, mutation, context);
   }
 
-  public async deleteAndDisconnectOnRefSide(refSideId: string) {
+  public async deleteAndDisconnectOnRefSide(refSideId: string, context: any) {
     // simply delete the owning side
     const owningSideDataSource = this.owningSideModel.getDataSource();
-    const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId);
-    return owningSideDataSource.delete({id: {[Operator.eq]: owningSideRecord.id}});
+    const owningSideRecord = await owningSideDataSource.findOneByRelation(this.foreignKey, refSideId, context);
+    return owningSideDataSource.delete({id: {[Operator.eq]: owningSideRecord.id}}, context);
   }
 
-  public async joinOnOwningSide(data: Record<string, any>) {
+  public async joinOnOwningSide(data: Record<string, any>, context: any) {
     const targetId = data[this.foreignKey];
     if (!targetId) {
       return null;
     }
-    const toOneData = await this.refSideModel.getDataSource().findOneById(targetId);
+    const toOneData = await this.refSideModel.getDataSource().findOneById(targetId, context);
     return isEmpty(toOneData) ? null : toOneData;
   }
 
-  public async joinOnRefSide(data: Record<string, any>) {
-    const toOneData = await this.owningSideModel.getDataSource().findOneByRelation(this.foreignKey, data.id);
+  public async joinOnRefSide(data: Record<string, any>, context: any) {
+    const toOneData = await this.owningSideModel.getDataSource().findOneByRelation(this.foreignKey, data.id, context);
     return isEmpty(toOneData) ? null : toOneData;
   }
 }

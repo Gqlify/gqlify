@@ -170,7 +170,7 @@ export default class CreatePlugin implements Plugin {
 
         // no relationship or other hooks
         if (!wrapCreate) {
-          return dataSource.create(this.createMutation(model, data));
+          return dataSource.create(this.createMutation(model, data), context);
         }
 
         // wrap
@@ -180,9 +180,10 @@ export default class CreatePlugin implements Plugin {
         const createContext: CreateContext = {
           data,
           response: {},
+          graphqlContext: context,
         };
         await wrapCreate(createContext, async ctx => {
-          ctx.response = await dataSource.create(this.createMutation(model, ctx.data));
+          ctx.response = await dataSource.create(this.createMutation(model, ctx.data), context);
         });
         return createContext.response;
       },

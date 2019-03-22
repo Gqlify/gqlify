@@ -45,15 +45,11 @@ export interface ListFindQuery {
 }
 
 export interface ListReadable {
-  find(query?: ListFindQuery): Promise<PaginatedResponse>;
+  find(query?: ListFindQuery, context?: any): Promise<PaginatedResponse>;
 
-  findOne({
-    where,
-  }: {
-    where: Where,
-  }): Promise<any>;
+  findOne({where}: {where: Where}, context?: any): Promise<any>;
 
-  findOneById(id: string): Promise<any>;
+  findOneById(id: string, context?: any): Promise<any>;
 }
 
 /**
@@ -79,9 +75,9 @@ export interface Mutation {
 }
 
 export interface ListMutable {
-  create(mutation: Mutation): Promise<any>;
-  update(where: Where, mutation: Mutation): Promise<any>;
-  delete(where: Where): Promise<any>;
+  create(mutation: Mutation, context?: any): Promise<any>;
+  update(where: Where, mutation: Mutation, context?: any): Promise<any>;
+  delete(where: Where, context?: any): Promise<any>;
 }
 
 /**
@@ -101,30 +97,41 @@ export interface MapMutable {
  */
 
 export interface ToOneRelation {
-  findOneByRelation(foreignKey: string, foreignId: string): Promise<any>;
-  updateOneRelation(id: string, foreignKey: string, foreignId: string): Promise<void>;
+  findOneByRelation(foreignKey: string, foreignId: string, context: any): Promise<any>;
+  updateOneRelation(id: string, foreignKey: string, foreignId: string, context: any): Promise<void>;
 }
 
 // data-source capable of saving to-many references in a embed list or map
 // and serving index to find one or many by embed field
 export interface EmbeddableRelation {
-  addEmbedIds?(foreignKey: string, ids: string[]): any;
-  removeEmbedIds?(foreignKey: string, ids: string[]): any;
-  findOneByEmbedId?(foreignKey: string, foreignId: string): Promise<any>;
-  findManyByEmbedId?(foreignKey: string, foreignId: string): Promise<any[]>;
+  addEmbedIds?(foreignKey: string, ids: string[], context: any): any;
+  removeEmbedIds?(foreignKey: string, ids: string[], context: any): any;
+  findOneByEmbedId?(foreignKey: string, foreignId: string, context: any): Promise<any>;
+  findManyByEmbedId?(foreignKey: string, foreignId: string, context: any): Promise<any[]>;
 }
 
 export interface OneToManyRelation {
-  findManyFromOneRelation(foreignKey: string, foreignId: string): Promise<any[]>;
+  findManyFromOneRelation(foreignKey: string, foreignId: string, context: any): Promise<any[]>;
 }
 
 export interface ManyToManyRelation {
   // it's source-side data-source's responsibility to get the many relation from source-side
-  findManyFromManyRelation(sourceSideName: string, targetSideName: string, sourceSideId: string): Promise<any[]>;
+  findManyFromManyRelation(
+    sourceSideName: string, targetSideName: string, sourceSideId: string, context: any): Promise<any[]>;
   addIdToManyRelation(
-    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string): Promise<void>;
+    sourceSideName: string,
+    targetSideName: string,
+    sourceSideId: string,
+    targetSideId: string,
+    context: any,
+  ): Promise<void>;
   removeIdFromManyRelation(
-    sourceSideName: string, targetSideName: string, sourceSideId: string, targetSideId: string): Promise<void>;
+    sourceSideName: string,
+    targetSideName: string,
+    sourceSideId: string,
+    targetSideId: string,
+    context: any,
+  ): Promise<void>;
 }
 
 export type DataSource =

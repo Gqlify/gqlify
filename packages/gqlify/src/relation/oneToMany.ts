@@ -65,9 +65,9 @@ export default class OneToMany implements Relation, WithForeignKey {
     return {[this.foreignKey]: targetId};
   }
 
-  public async createAndSetForeignKeyOnManySide(targetData: Record<string, any>) {
+  public async createAndSetForeignKeyOnManySide(targetData: Record<string, any>, context: any) {
     const mutation = this.oneSideModel.getCreateMutationFactory().createMutation(targetData);
-    const created = await this.oneSideModel.getDataSource().create(mutation);
+    const created = await this.oneSideModel.getDataSource().create(mutation, context);
     return this.setForeignKeyOnManySide(created.id);
   }
 
@@ -75,46 +75,46 @@ export default class OneToMany implements Relation, WithForeignKey {
     return {[this.foreignKey]: null};
   }
 
-  public async destroyAndUnsetForeignKeyOnManySide(data: Record<string, any>) {
+  public async destroyAndUnsetForeignKeyOnManySide(data: Record<string, any>, context: any) {
     const foreignId = data[this.foreignKey];
     if (!foreignId) {
       return;
     }
-    await this.oneSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}});
+    await this.oneSideModel.getDataSource().delete({id: {[Operator.eq]: foreignId}}, context);
     return this.unsetForeignKeyOnManySide();
   }
 
-  public async addIdFromOneSide(oneSideId: string, manySideId: string) {
+  public async addIdFromOneSide(oneSideId: string, manySideId: string, context: any) {
     const mutation = this.manySideModel.getUpdateMutationFactory().createMutation({[this.foreignKey]: oneSideId});
-    await this.manySideModel.getDataSource().update({id: {[Operator.eq]: manySideId}}, mutation);
+    await this.manySideModel.getDataSource().update({id: {[Operator.eq]: manySideId}}, mutation, context);
   }
 
-  public async createAndAddFromOneSide(oneSideId: string, manySideData: any) {
+  public async createAndAddFromOneSide(oneSideId: string, manySideData: any, context: any) {
     manySideData[this.foreignKey] = oneSideId;
     const mutation = this.manySideModel.getCreateMutationFactory().createMutation(manySideData);
-    await this.manySideModel.getDataSource().create(mutation);
+    await this.manySideModel.getDataSource().create(mutation, context);
   }
 
-  public async removeIdFromOneSide(oneSideId: string, manySideId: string) {
+  public async removeIdFromOneSide(oneSideId: string, manySideId: string, context: any) {
     const mutation = this.manySideModel.getUpdateMutationFactory().createMutation({[this.foreignKey]: null});
-    await this.manySideModel.getDataSource().update({id: {[Operator.eq]: manySideId}}, mutation);
+    await this.manySideModel.getDataSource().update({id: {[Operator.eq]: manySideId}}, mutation, context);
   }
 
-  public async deleteRecordFromOneSide(manySideId: string) {
-    await this.manySideModel.getDataSource().delete({id: {[Operator.eq]: manySideId}});
+  public async deleteRecordFromOneSide(manySideId: string, context: any) {
+    await this.manySideModel.getDataSource().delete({id: {[Operator.eq]: manySideId}}, context);
   }
 
-  public async joinManyOnOneSide(data: Record<string, any>) {
-    const records = await this.manySideModel.getDataSource().findManyFromOneRelation(this.foreignKey, data.id);
+  public async joinManyOnOneSide(data: Record<string, any>, context: any) {
+    const records = await this.manySideModel.getDataSource().findManyFromOneRelation(this.foreignKey, data.id, context);
     return records;
   }
 
-  public async joinOneOnManySide(data: Record<string, any>) {
+  public async joinOneOnManySide(data: Record<string, any>, context: any) {
     const targetId = data[this.foreignKey];
     if (!targetId) {
       return null;
     }
-    const toOneData = await this.oneSideModel.getDataSource().findOneById(targetId);
+    const toOneData = await this.oneSideModel.getDataSource().findOneById(targetId, context);
     return isEmpty(toOneData) ? null : toOneData;
   }
 }

@@ -16,50 +16,50 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
   const modelBField = relationImpl.getModelBField();
 
   // A side
-  const createForModelA = (sourceId: string, records: any[]) => {
+  const createForModelA = (sourceId: string, records: any[], context: any) => {
     return Promise.all(records.map(record =>
-      relationImpl.createAndAddIdForModelA({modelAId: sourceId, modelBData: record})));
+      relationImpl.createAndAddIdForModelA({modelAId: sourceId, modelBData: record}, context)));
   };
 
-  const connectForModelA = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.addId({modelAId: sourceId, modelBId: id})));
+  const connectForModelA = (sourceId: string, ids: string[], context: any) => {
+    return Promise.all(ids.map(id => relationImpl.addId({modelAId: sourceId, modelBId: id}, context)));
   };
 
-  const disconnectForModelA = (sourceId: string, ids: string[]) => {
+  const disconnectForModelA = (sourceId: string, ids: string[], context: any) => {
     return Promise.all(ids.map(id =>
-        relationImpl.removeId({modelAId: sourceId, modelBId: id})));
+        relationImpl.removeId({modelAId: sourceId, modelBId: id}, context)));
   };
 
-  const destroyForModelA = (sourceId: string, ids: string[]) => {
+  const destroyForModelA = (sourceId: string, ids: string[], context: any) => {
     return Promise.all(ids.map(id =>
-      relationImpl.deleteAndRemoveIdFromModelB({modelAId: sourceId, modelBId: id})));
+      relationImpl.deleteAndRemoveIdFromModelB({modelAId: sourceId, modelBId: id}, context)));
   };
 
   // B side
-  const createForModelB = (sourceId: string, records: any[]) => {
+  const createForModelB = (sourceId: string, records: any[], context: any) => {
     return Promise.all(records.map(record =>
-      relationImpl.createAndAddIdForModelB({modelBId: sourceId, modelAData: record})));
+      relationImpl.createAndAddIdForModelB({modelBId: sourceId, modelAData: record}, context)));
   };
 
-  const connectForModelB = (sourceId: string, ids: string[]) => {
-    return Promise.all(ids.map(id => relationImpl.addId({modelBId: sourceId, modelAId: id})));
+  const connectForModelB = (sourceId: string, ids: string[], context: any) => {
+    return Promise.all(ids.map(id => relationImpl.addId({modelBId: sourceId, modelAId: id}, context)));
   };
 
-  const disconnectForModelB = (sourceId: string, ids: string[]) => {
+  const disconnectForModelB = (sourceId: string, ids: string[], context: any) => {
     return Promise.all(ids.map(id =>
-        relationImpl.removeId({modelAId: id, modelBId: sourceId})));
+        relationImpl.removeId({modelAId: id, modelBId: sourceId}, context)));
   };
 
-  const destroyForModelB = (sourceId: string, ids: string[]) => {
+  const destroyForModelB = (sourceId: string, ids: string[], context: any) => {
     return Promise.all(ids.map(id =>
-      relationImpl.deleteAndRemoveIdFromModelA({modelAId: id, modelBId: sourceId})));
+      relationImpl.deleteAndRemoveIdFromModelA({modelAId: id, modelBId: sourceId}, context)));
   };
 
   const hookMap: Record<string, Hook> = {
     // todo: add cascade delete support
     [relationImpl.getModelA().getName()]: {
       wrapCreate: async (context, createOperation) => {
-        const {data} = context;
+        const {data, graphqlContext} = context;
         const relationData = get(data, modelAField);
         if (!relationData) {
           return createOperation();
@@ -77,11 +77,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // execute relations
         if (connectWhere) {
           const connectIds = connectWhere.map(where => where.id);
-          await connectForModelA(created.id, connectIds);
+          await connectForModelA(created.id, connectIds, graphqlContext);
         }
 
         if (createRecords) {
-          await createForModelA(created.id, createRecords);
+          await createForModelA(created.id, createRecords, graphqlContext);
         }
 
         return created;
@@ -89,7 +89,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
       // require id in where
       wrapUpdate: async (context, updateOperation) => {
-        const {where, data} = context;
+        const {where, data, graphqlContext} = context;
         const relationData = get(data, modelAField);
         if (!relationData) {
           return updateOperation();
@@ -109,35 +109,35 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connectForModelA(where.id, connectIds);
+          await connectForModelA(where.id, connectIds, graphqlContext);
         }
 
         if (createRecords) {
-          await createForModelA(where.id, createRecords);
+          await createForModelA(where.id, createRecords, graphqlContext);
         }
 
         if (disconnectWhere) {
           const disconnectIds = disconnectWhere.map(v => v.id);
-          await disconnectForModelA(where.id, disconnectIds);
+          await disconnectForModelA(where.id, disconnectIds, graphqlContext);
         }
 
         if (deleteWhere) {
           const deleteIds = deleteWhere.map(v => v.id);
-          await destroyForModelA(where.id, deleteIds);
+          await destroyForModelA(where.id, deleteIds, graphqlContext);
         }
 
         return updated;
       },
 
       resolveFields: {
-        [relationImpl.getModelAField()]: data => relationImpl.joinModelB(data.id),
+        [relationImpl.getModelAField()]: (data, _, graphqlContext) => relationImpl.joinModelB(data.id, graphqlContext),
       },
     },
 
     // ref side
     [relationImpl.getModelB().getName()]: {
       wrapCreate: async (context, createOperation) => {
-        const {data} = context;
+        const {data, graphqlContext} = context;
         const relationData = get(data, modelBField);
         if (!relationData) {
           return createOperation();
@@ -155,11 +155,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         // execute relations
         if (connectWhere) {
           const connectIds = connectWhere.map(where => where.id);
-          await connectForModelB(created.id, connectIds);
+          await connectForModelB(created.id, connectIds, graphqlContext);
         }
 
         if (createRecords) {
-          await createForModelB(created.id, createRecords);
+          await createForModelB(created.id, createRecords, graphqlContext);
         }
 
         return created;
@@ -167,7 +167,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
       // require id in where
       wrapUpdate: async (context, updateOperation) => {
-        const {where, data} = context;
+        const {where, data, graphqlContext} = context;
         const relationData = get(data, modelBField);
         if (!relationData) {
           return updateOperation();
@@ -187,28 +187,28 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connectForModelB(where.id, connectIds);
+          await connectForModelB(where.id, connectIds, graphqlContext);
         }
 
         if (createRecords) {
-          await createForModelB(where.id, createRecords);
+          await createForModelB(where.id, createRecords, graphqlContext);
         }
 
         if (disconnectWhere) {
           const disconnectIds = disconnectWhere.map(v => v.id);
-          await disconnectForModelB(where.id, disconnectIds);
+          await disconnectForModelB(where.id, disconnectIds, graphqlContext);
         }
 
         if (deleteWhere) {
           const deleteIds = deleteWhere.map(v => v.id);
-          await destroyForModelB(where.id, deleteIds);
+          await destroyForModelB(where.id, deleteIds, graphqlContext);
         }
 
         return updated;
       },
 
       resolveFields: {
-        [relationImpl.getModelBField()]: data => relationImpl.joinModelA(data.id),
+        [relationImpl.getModelBField()]: (data, _, graphqlContext) => relationImpl.joinModelA(data.id, graphqlContext),
       },
     },
   };

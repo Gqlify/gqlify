@@ -77,12 +77,12 @@ export default class QueryPlugin implements Plugin {
     return {
       [findOneQueryName]: async (root, args, context) => {
         const where = this.whereInputPlugin.parseUniqueWhere(args.where);
-        return dataSource.findOne({where});
+        return dataSource.findOne({where}, context);
       },
       [findManyQueryName]: async (root, args, context) => {
         const where = this.whereInputPlugin.parseWhere(args.where);
         const pagination = parsePaginationFromArgs(args);
-        const response = await dataSource.find({where, pagination});
+        const response = await dataSource.find({where, pagination}, context);
         return response.data;
       },
     };
