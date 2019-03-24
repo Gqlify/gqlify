@@ -96,6 +96,13 @@ export default class Model {
     this.resolver = resolver;
   }
 
+  public mergeResolver(resolver: any) {
+    this.resolver = {
+      ...this.resolver,
+      ...resolver,
+    };
+  }
+
   public getResolver() {
     return isEmpty(this.resolver) ? null : this.resolver;
   }

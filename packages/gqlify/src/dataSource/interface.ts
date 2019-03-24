@@ -1,3 +1,4 @@
+import { IResolverObject } from 'graphql-tools';
 
 export interface Pagination {
   // cursor base
@@ -134,6 +135,11 @@ export interface ManyToManyRelation {
   ): Promise<void>;
 }
 
+// able to resolve fields and reflect to graphql resolver
+export interface FieldResolvable {
+  resolveFields?(): IResolverObject;
+}
+
 export type DataSource =
   ListReadable &
   ListMutable &
@@ -142,4 +148,5 @@ export type DataSource =
   ToOneRelation &
   OneToManyRelation &
   ManyToManyRelation &
-  EmbeddableRelation;
+  EmbeddableRelation &
+  FieldResolvable;

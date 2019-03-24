@@ -135,12 +135,19 @@ export class Gqlify {
       ...this.userDefinedPlugins || [],
     ];
 
-    // set resolver from hook
+    // merge resolver from hook
     forEach(hookMap, (hook, key) => {
       if (!modelMap[key]) {
         throw new Error(`model ${key} not found for hooks`);
       }
-      modelMap[key].overrideResolver(hook.resolveFields);
+      modelMap[key].mergeResolver(hook.resolveFields);
+    });
+
+    // merge resolver from dataSource
+    models.forEach(model => {
+      if (model.getDataSource().resolveFields) {
+        model.mergeResolver(model.getDataSource().resolveFields());
+      }
     });
 
     // add scalar to rootNode
