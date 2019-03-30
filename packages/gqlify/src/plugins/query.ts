@@ -4,6 +4,7 @@ import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import { ListReadable, MapReadable, OrderBy } from '../dataSource/interface';
 import { pick, isEmpty } from 'lodash';
+import { GraphQLScalarType } from 'graphql';
 
 const parsePaginationFromArgs = (args: Record<string, any>) => {
   if (!args) {
@@ -43,23 +44,16 @@ export default class QueryPlugin implements Plugin {
       return;
     }
 
-    // add where input
-    // const modelOrderByInputName = this.getOrderByInputName(model);
-    // var orderByScalar = new GraphQLScalarType({
-    //   name: `${modelOrderByInputName}`,
-    //   serialize: (val) => val,
-    //   parseValue: (val) => val,
-    //   parseLiteral(ast) {
-    //     if (ast.kind === Kind.String) {
-    //       return oddValue(parseInt(ast.value, 10));
-    //     }
-    //     return null;
-    //   }
-    // });
-    // console.log(modelOrderByInputName);
-    // const orderByInput = `${modelOrderByInputName}`;
-    // console.log(orderByInput)
-    // root.addScalar(orderByInput);
+    const modelOrderByInputName = this.getOrderByInputName(model);
+    const orderByScalar = new GraphQLScalarType({
+      name: `${modelOrderByInputName}`,
+      serialize: (val: string): string => val,
+      parseValue: (val: string): string => val,
+      parseLiteral(ast) {
+        return ast.value;
+      },
+    });
+    root.addScalar(orderByScalar);
 
     // find one query
     const findOneQueryName = this.createFindOneQueryName(model);
@@ -75,7 +69,7 @@ export default class QueryPlugin implements Plugin {
       last: Int,
       before: String,
       after: String,
-      orderBy: String,
+      orderBy: ${modelOrderByInputName},
     ): [${modelType}]`);
   }
 

@@ -39,11 +39,13 @@ export const paginate = (rows: any[], pagination?: Pagination):
   const { last, first, before, after } = pagination;
 
   if (!isUndefined(before)) {
-    transforms.push(takeWhile<any>(row => row.id !== before));
+    // row.id cast to string in case of mongodb ObjectID()
+    transforms.push(takeWhile<any>(row => '' + row.id !== before));
   }
 
   if (!isUndefined(after)) {
-    transforms.push(takeRightWhile<any>(row => row.id !== after));
+    // row.id cast to string in case of mongodb ObjectID()
+    transforms.push(takeRightWhile<any>(row => '' + row.id !== after));
   }
 
   if (!isUndefined(first)) {
@@ -54,7 +56,6 @@ export const paginate = (rows: any[], pagination?: Pagination):
     transforms.push(takeRight(last));
   }
   const data = flow(transforms)(rows);
-
   const firstRowId = get(_first(rows), 'id');
   const firstFilteredDataId = get(_first(data), 'id');
   const lastRowId = get(_last(rows), 'id');

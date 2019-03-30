@@ -66,6 +66,7 @@ export default class RelayPlugin implements Plugin {
     }
     const { root } = context;
     const modelType = this.baseTypePlugin.getTypename(model);
+    const modelOrderByInputName = this.getOrderByInputName(model);
 
     // add edge type
     const edgeType = this.createEdgeType(model);
@@ -94,7 +95,7 @@ export default class RelayPlugin implements Plugin {
       last: Int
       before: String
       after: String
-      orderBy: String
+      orderBy: ${modelOrderByInputName}
     ): ${connectionType}!`);
   }
 
@@ -148,5 +149,8 @@ export default class RelayPlugin implements Plugin {
 
   private createEdgeType(model: Model) {
     return `${model.getNamings().capitalSingular}Edge`;
+  }
+  private getOrderByInputName(model: Model) {
+    return `${model.getNamings().capitalSingular}OrderByInput`;
   }
 }
