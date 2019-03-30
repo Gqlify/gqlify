@@ -204,11 +204,6 @@ export default class RootNode {
     typeDefs.forEach(type => {
       this.defBuilder._cache[type.name] = type;
     });
-    console.log({
-      query: operationTypes.query,
-      mutation: operationTypes.mutation,
-      types: typeDefs,
-    })
     return new GraphQLSchema({
       query: operationTypes.query,
       mutation: operationTypes.mutation,
