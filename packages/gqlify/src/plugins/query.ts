@@ -44,10 +44,22 @@ export default class QueryPlugin implements Plugin {
     }
 
     // add where input
-    const modelOrderByInputName = this.getOrderByInputName(model);
-    const orderByInput = `input ${modelOrderByInputName} String`;
-
-    root.addInput(orderByInput);
+    // const modelOrderByInputName = this.getOrderByInputName(model);
+    // var orderByScalar = new GraphQLScalarType({
+    //   name: `${modelOrderByInputName}`,
+    //   serialize: (val) => val,
+    //   parseValue: (val) => val,
+    //   parseLiteral(ast) {
+    //     if (ast.kind === Kind.String) {
+    //       return oddValue(parseInt(ast.value, 10));
+    //     }
+    //     return null;
+    //   }
+    // });
+    // console.log(modelOrderByInputName);
+    // const orderByInput = `${modelOrderByInputName}`;
+    // console.log(orderByInput)
+    // root.addScalar(orderByInput);
 
     // find one query
     const findOneQueryName = this.createFindOneQueryName(model);

@@ -7,7 +7,7 @@ import Model from '../dataModel/model';
 import { Context, Plugin } from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
-import { ListReadable } from '../dataSource/interface';
+import { ListReadable, OrderBy } from '../dataSource/interface';
 import { pick, isFunction, first, get, last } from 'lodash';
 
 const parsePaginationFromArgs = (args: Record<string, any>) => {
@@ -15,13 +15,21 @@ const parsePaginationFromArgs = (args: Record<string, any>) => {
     return null;
   }
 
-  return pick(args, ['first', 'last', 'before', 'after']);
+  return pick(args, ['first', 'last', 'before', 'after', 'orderBy']);
 };
 
 const resolvePromiseOrScalar = <T>(promiseOrScalar: T | (() => Promise<T>)): T | Promise<T> => {
   return isFunction(promiseOrScalar) ? promiseOrScalar() : promiseOrScalar;
 };
-
+const parseOrderBy = (args: Record<string, any>): OrderBy  => {
+  if (args.orderBy) {
+    return {
+      field: args.orderBy.split('_')[0],
+      value: (args.orderBy.split('_')[1] === 'DESC') ? -1 : 1,
+    };
+  }
+  return null;
+};
 export default class RelayPlugin implements Plugin {
   private whereInputPlugin: WhereInputPlugin;
   private baseTypePlugin: BaseTypePlugin;
@@ -86,6 +94,7 @@ export default class RelayPlugin implements Plugin {
       last: Int
       before: String
       after: String
+      orderBy: String
     ): ${connectionType}!`);
   }
 
@@ -107,7 +116,8 @@ export default class RelayPlugin implements Plugin {
       [queryName]: async (root, args, context) => {
         const where = this.whereInputPlugin.parseWhere(args.where);
         const pagination = parsePaginationFromArgs(args);
-        const response = await dataSource.find({where, pagination}, context);
+        const orderBy = parseOrderBy(args);
+        const response = await dataSource.find({where, pagination, orderBy}, context);
         const connectionData = {
           pageInfo: {
             hasNextPage: response.hasNextPage,
