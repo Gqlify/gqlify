@@ -199,7 +199,15 @@ export class MongodbDataSource implements DataSource {
         case Operator.eq:
           filterQuery[field] = value;
           break;
-
+        case Operator.regex:
+          filterQuery[field] = { $regex: value, $options: 'i' };
+          break;
+        case Operator.neq:
+          filterQuery[field] = { $not: value };
+          break;
+        case Operator.near:
+          filterQuery[field] = { $near: { $geometry: {type: 'Point', coordinates: [value.lat, value.lng]}, $maxDistance: value.max, $minDistance: value.min }};
+          break;
         case Operator.gt:
           filterQuery[field] = { $gt: value };
           break;
@@ -217,7 +225,7 @@ export class MongodbDataSource implements DataSource {
           break;
       }
     });
-
+    console.log(filterQuery);
     return filterQuery;
   }
 

@@ -72,7 +72,7 @@ export default class WhereInputPlugin implements Plugin {
     if (lastUnderscoreIndex < 0) {
       return {
         fieldName: field,
-        operator: Operator.eq,
+        operator: Operator.regex,
       };
     }
 
@@ -92,6 +92,7 @@ export default class WhereInputPlugin implements Plugin {
     // create equals on scalar fields
     const inputFields: Array<{fieldName: string, type: string}> = [];
     forEach(fields, (field, name) => {
+    
       switch (field.getType()) {
         case DataModelType.STRING:
         case DataModelType.INT:
@@ -99,6 +100,7 @@ export default class WhereInputPlugin implements Plugin {
         case DataModelType.ENUM:
         case DataModelType.ID:
         case DataModelType.BOOLEAN:
+        case DataModelType.CUSTOM_SCALAR:
           inputFields.push({
             fieldName: name,
             type: field.getTypename(),
@@ -107,6 +109,29 @@ export default class WhereInputPlugin implements Plugin {
           // eq
           inputFields.push({
             fieldName: `${name}_eq`,
+            type: field.getTypename(),
+          });
+          break;
+      }
+      console.log(field)
+      switch (field.getType()) {
+        case DataModelType.INT:
+        case DataModelType.FLOAT:
+        case DataModelType.CUSTOM_SCALAR:
+          inputFields.push({
+            fieldName: `${name}_gt`,
+            type: field.getTypename(),
+          });
+          inputFields.push({
+            fieldName: `${name}_gte`,
+            type: field.getTypename(),
+          });
+          inputFields.push({
+            fieldName: `${name}_lt`,
+            type: field.getTypename(),
+          });
+          inputFields.push({
+            fieldName: `${name}_lte`,
             type: field.getTypename(),
           });
           break;

@@ -25,11 +25,13 @@ export interface PaginatedResponse {
 
 export enum Operator {
   eq = 'eq',
-  neq = 'eq',
+  neq = 'neq',
   gt = 'gt',
   gte = 'gte',
   lt = 'lt',
   lte = 'lte',
+  regex = 'regex',
+  near = 'near',
 }
 
 export type Where = Record<string, Record<string /** Operator */, any>>;

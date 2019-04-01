@@ -37,24 +37,24 @@ export const paginate = (rows: any[], pagination?: Pagination):
 
   // cursor pagination
   const { last, first, before, after } = pagination;
-
+  console.log(pagination)
   if (!isUndefined(before)) {
     // row.id cast to string in case of mongodb ObjectID()
     transforms.push(takeWhile<any>(row => '' + row.id !== before));
+  }
+  if (!isUndefined(last)) {
+    transforms.push(takeRight(last));
   }
 
   if (!isUndefined(after)) {
     // row.id cast to string in case of mongodb ObjectID()
     transforms.push(takeRightWhile<any>(row => '' + row.id !== after));
   }
-
   if (!isUndefined(first)) {
     transforms.push(take(first));
   }
 
-  if (!isUndefined(last)) {
-    transforms.push(takeRight(last));
-  }
+  
   const data = flow(transforms)(rows);
   const firstRowId = get(_first(rows), 'id');
   const firstFilteredDataId = get(_first(data), 'id');
