@@ -1,17 +1,21 @@
 import Model from '../dataModel/model';
-import { Context, Plugin } from './interface';
+import {Context, Plugin} from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
-import { upperFirst, forEach, get, reduce } from 'lodash';
-import { ListMutable, MapMutable } from '../dataSource/interface';
-import { RelationField } from '../dataModel';
+import {upperFirst, forEach, get, reduce} from 'lodash';
+import {ListMutable, MapMutable} from '../dataSource/interface';
+import {RelationField} from '../dataModel';
 import CreatePlugin from './create';
-import { Hook, UpdateContext } from '../hooks/interface';
-import { MutationFactory } from './mutation';
+import {Hook, UpdateContext} from '../hooks/interface';
+import {MutationFactory} from './mutation';
 
-const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
-  const { root } = context;
+const createObjectInputField = (
+  prefix: string,
+  field: ObjectField,
+  context: Context
+) => {
+  const {root} = context;
   const content: string[] = [];
   forEach(field.getFields(), (nestedField, name) => {
     if (nestedField.isScalar()) {
@@ -21,7 +25,11 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
 
     if (nestedField instanceof ObjectField) {
       const fieldWithPrefix = `${prefix}${upperFirst(name)}`;
-      const typeFields = createObjectInputField(fieldWithPrefix, nestedField, context);
+      const typeFields = createObjectInputField(
+        fieldWithPrefix,
+        nestedField,
+        context
+      );
       const objectInputName = `${fieldWithPrefix}UpdateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
       content.push(`${name}: ${objectInputName}`);
@@ -39,9 +47,9 @@ const createInputField = (
   getCreateInputName: (model: Model) => string,
   getWhereInputName: (model: Model) => string,
   getWhereUniqueInputName: (model: Model) => string,
-  getMutationFactoryFromModel: (model: Model) => MutationFactory,
+  getMutationFactoryFromModel: (model: Model) => MutationFactory
 ) => {
-  const { root } = context;
+  const {root} = context;
   const capName = model.getNamings().capitalSingular;
   const fields = model.getFields();
   const content: string[] = [];
@@ -57,7 +65,9 @@ const createInputField = (
         // wrap with set field
         const fieldWithPrefix = `${capName}${upperFirst(name)}`;
         const listOperationInput = `${fieldWithPrefix}UpdateInput`;
-        root.addInput(`input ${listOperationInput} {set: [${field.getTypename()}]}`);
+        root.addInput(
+          `input ${listOperationInput} {set: [${field.getTypename()}]}`
+        );
         fieldType = listOperationInput;
         mutationFactory.markArrayField(name);
       } else {
@@ -69,8 +79,14 @@ const createInputField = (
 
     if (field instanceof ObjectField) {
       // create input for nested object
-      const fieldWithPrefix = `${model.getNamings().capitalSingular}${upperFirst(name)}`;
-      const typeFields = createObjectInputField(fieldWithPrefix, field, context);
+      const fieldWithPrefix = `${
+        model.getNamings().capitalSingular
+      }${upperFirst(name)}`;
+      const typeFields = createObjectInputField(
+        fieldWithPrefix,
+        field,
+        context
+      );
       const objectInputName = `${fieldWithPrefix}UpdateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
 
@@ -78,7 +94,9 @@ const createInputField = (
       if (field.isList()) {
         // wrap with set field
         const listOperationInput = `${fieldWithPrefix}UpdateListInput`;
-        root.addInput(`input ${listOperationInput} {set: [${objectInputName}]}`);
+        root.addInput(
+          `input ${listOperationInput} {set: [${objectInputName}]}`
+        );
         fieldType = listOperationInput;
         mutationFactory.markArrayField(name);
       } else {
@@ -132,31 +150,32 @@ export default class UpdatePlugin implements Plugin {
   private createPlugin: CreatePlugin;
   private hook: Hook;
 
-  constructor({
-    hook,
-  }: {
-    hook: Hook,
-  }) {
+  constructor({hook}: {hook: Hook}) {
     this.hook = hook;
   }
 
   public setPlugins(plugins: Plugin[]) {
     this.whereInputPlugin = plugins.find(
-      plugin => plugin instanceof WhereInputPlugin) as WhereInputPlugin;
+      plugin => plugin instanceof WhereInputPlugin
+    ) as WhereInputPlugin;
     this.baseTypePlugin = plugins.find(
-      plugin => plugin instanceof BaseTypePlugin) as BaseTypePlugin;
+      plugin => plugin instanceof BaseTypePlugin
+    ) as BaseTypePlugin;
     this.createPlugin = plugins.find(
-        plugin => plugin instanceof CreatePlugin) as CreatePlugin;
+      plugin => plugin instanceof CreatePlugin
+    ) as CreatePlugin;
   }
 
   public visitModel(model: Model, context: Context) {
-    const { root } = context;
+    const {root} = context;
     // object
     if (model.isObjectType()) {
       const objectMutationName = this.getInputName(model);
       const objectInputName = this.generateUpdateInput(model, context);
       const objectReturnType = this.createObjectReturnType(model, context);
-      root.addMutation(`${objectMutationName}(data: ${objectInputName}!): ${objectReturnType}`);
+      root.addMutation(
+        `${objectMutationName}(data: ${objectInputName}!): ${objectReturnType}`
+      );
       return;
     }
 
@@ -167,11 +186,21 @@ export default class UpdatePlugin implements Plugin {
     // update
     const mutationName = this.getInputName(model);
     const inputName = this.generateUpdateInput(model, context);
-    const whereUniqueInput = this.whereInputPlugin.getWhereUniqueInputName(model);
-    root.addMutation(`${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${returnType}`);
+    const whereUniqueInput = this.whereInputPlugin.getWhereUniqueInputName(
+      model
+    );
+    root.addMutation(
+      `${mutationName}(where: ${whereUniqueInput}, data: ${inputName}!): ${returnType}`
+    );
   }
 
-  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable & MapMutable}) {
+  public resolveInMutation({
+    model,
+    dataSource
+  }: {
+    model: Model;
+    dataSource: ListMutable & MapMutable;
+  }) {
     const mutationName = this.getInputName(model);
     const wrapUpdate = get(this.hook, [model.getName(), 'wrapUpdate']);
 
@@ -191,13 +220,13 @@ export default class UpdatePlugin implements Plugin {
             where: args.where,
             data,
             response: {},
-            graphqlContext: context,
+            graphqlContext: context
           };
           await wrapUpdate(updateContext, async ctx => {
             await dataSource.updateMap(this.createMutation(model, ctx.data));
           });
           return {success: true};
-        },
+        }
       };
     }
 
@@ -211,7 +240,11 @@ export default class UpdatePlugin implements Plugin {
 
         // no relationship or other hooks
         if (!wrapUpdate) {
-          await dataSource.update(whereUnique, this.createMutation(model, data), context);
+          await dataSource.update(
+            whereUnique,
+            this.createMutation(model, data),
+            context
+          );
           return args.where;
         }
 
@@ -223,13 +256,17 @@ export default class UpdatePlugin implements Plugin {
           where: args.where,
           data,
           response: {},
-          graphqlContext: context,
+          graphqlContext: context
         };
         await wrapUpdate(updateContext, async ctx => {
-          await dataSource.update(whereUnique, this.createMutation(model, ctx.data), context);
+          await dataSource.update(
+            whereUnique,
+            this.createMutation(model, ctx.data),
+            context
+          );
         });
         return args.where;
-      },
+      }
     };
   }
 
@@ -242,7 +279,7 @@ export default class UpdatePlugin implements Plugin {
         this.createPlugin.getCreateInputName,
         this.whereInputPlugin.getWhereInputName,
         this.whereInputPlugin.getWhereUniqueInputName,
-        model.getUpdateMutationFactory,
+        model.getUpdateMutationFactory
       )}
     }`;
     context.root.addInput(input);
@@ -256,11 +293,14 @@ export default class UpdatePlugin implements Plugin {
   private createUniqueReturnType(model: Model, context: Context) {
     const uniqueFields = model.getUniqueFields();
     const typename = this.getReturnTypename(model);
-    const fields = reduce(uniqueFields,
+    const fields = reduce(
+      uniqueFields,
       (arr, field, name) => {
         arr.push(`${name}: ${field.getTypename()}`);
         return arr;
-      }, []).join(' ');
+      },
+      []
+    ).join(' ');
     const type = `type ${typename} {
       ${fields}
     }`;

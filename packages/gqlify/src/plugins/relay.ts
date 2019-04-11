@@ -4,11 +4,11 @@
  */
 
 import Model from '../dataModel/model';
-import { Context, Plugin } from './interface';
+import {Context, Plugin} from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
-import { ListReadable, OrderBy } from '../dataSource/interface';
-import { pick, isFunction, first, get, last } from 'lodash';
+import {ListReadable, OrderBy} from '../dataSource/interface';
+import {pick, isFunction, first, get, last} from 'lodash';
 
 const parsePaginationFromArgs = (args: Record<string, any>) => {
   if (!args) {
@@ -18,14 +18,16 @@ const parsePaginationFromArgs = (args: Record<string, any>) => {
   return pick(args, ['first', 'last', 'before', 'after', 'orderBy']);
 };
 
-const resolvePromiseOrScalar = <T>(promiseOrScalar: T | (() => Promise<T>)): T | Promise<T> => {
+const resolvePromiseOrScalar = <T>(
+  promiseOrScalar: T | (() => Promise<T>)
+): T | Promise<T> => {
   return isFunction(promiseOrScalar) ? promiseOrScalar() : promiseOrScalar;
 };
-const parseOrderBy = (args: Record<string, any>): OrderBy  => {
+const parseOrderBy = (args: Record<string, any>): OrderBy => {
   if (args.orderBy) {
     return {
       field: args.orderBy.split('_')[0],
-      value: (args.orderBy.split('_')[1] === 'DESC') ? -1 : 1,
+      value: args.orderBy.split('_')[1] === 'DESC' ? -1 : 1
     };
   }
   return null;
@@ -35,7 +37,7 @@ export default class RelayPlugin implements Plugin {
   private baseTypePlugin: BaseTypePlugin;
 
   public init(context: Context) {
-    const { root } = context;
+    const {root} = context;
     // add PageInfo type
     root.addObjectType(`
       type PageInfo {
@@ -46,17 +48,21 @@ export default class RelayPlugin implements Plugin {
       }`);
     root.addResolver({
       PageInfo: {
-        hasNextPage: (pageInfo: any) => resolvePromiseOrScalar<boolean>(pageInfo.hasNextPage),
-        hasPreviousPage: (pageInfo: any) => resolvePromiseOrScalar<boolean>(pageInfo.hasPreviousPage),
-      },
+        hasNextPage: (pageInfo: any) =>
+          resolvePromiseOrScalar<boolean>(pageInfo.hasNextPage),
+        hasPreviousPage: (pageInfo: any) =>
+          resolvePromiseOrScalar<boolean>(pageInfo.hasPreviousPage)
+      }
     });
   }
 
   public setPlugins(plugins: Plugin[]) {
     this.whereInputPlugin = plugins.find(
-      plugin => plugin instanceof WhereInputPlugin) as WhereInputPlugin;
+      plugin => plugin instanceof WhereInputPlugin
+    ) as WhereInputPlugin;
     this.baseTypePlugin = plugins.find(
-      plugin => plugin instanceof BaseTypePlugin) as BaseTypePlugin;
+      plugin => plugin instanceof BaseTypePlugin
+    ) as BaseTypePlugin;
   }
 
   public visitModel(model: Model, context: Context) {
@@ -64,7 +70,7 @@ export default class RelayPlugin implements Plugin {
     if (model.isObjectType()) {
       return;
     }
-    const { root } = context;
+    const {root} = context;
     const modelType = this.baseTypePlugin.getTypename(model);
     const modelOrderByInputName = this.getOrderByInputName(model);
 
@@ -101,10 +107,10 @@ export default class RelayPlugin implements Plugin {
 
   public resolveInQuery({
     model,
-    dataSource,
+    dataSource
   }: {
-    model: Model,
-    dataSource: ListReadable,
+    model: Model;
+    dataSource: ListReadable;
   }) {
     // object type model dont need relay query
     if (model.isObjectType()) {
@@ -116,27 +122,31 @@ export default class RelayPlugin implements Plugin {
     return {
       [queryName]: async (root, args, context) => {
         const where = this.whereInputPlugin.parseWhere(args.where);
+
         const pagination = parsePaginationFromArgs(args);
-        console.log({pagination})
+
         const orderBy = parseOrderBy(args);
-        const response = await dataSource.find({where, pagination, orderBy}, context);
+        const response = await dataSource.find(
+          {where, pagination, orderBy},
+          context
+        );
         const connectionData = {
           pageInfo: {
             hasNextPage: response.hasNextPage,
             hasPreviousPage: response.hasPreviousPage,
             // might change to a new design without id later
             startCursor: get(first(response.data), 'id'),
-            endCursor: get(last(response.data), 'id'),
+            endCursor: get(last(response.data), 'id')
           },
           edges: response.data.map(node => {
             return {
               cursor: node.id,
-              node,
+              node
             };
-          }),
+          })
         };
         return connectionData;
-      },
+      }
     };
   }
 
