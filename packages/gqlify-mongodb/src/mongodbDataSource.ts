@@ -1,4 +1,5 @@
 import {Db, FilterQuery} from 'mongodb';
+import moment from 'moment-timezone';
 import {
   first,
   isEmpty,
@@ -245,21 +246,6 @@ export class MongodbDataSource implements DataSource {
   }
 
   private setFilter(field: string, value, filterQuery) {
-    // let fields = field.split('.');
-
-    // let fieldToEnter = filterQuery;
-
-    // console.log('value ', value);
-
-    // forEach(fields, (f, index) => {
-    //   if (index == fields.length - 1) {
-    //     fieldToEnter[f] = value;
-    //   } else {
-    //     fieldToEnter[f] = fieldToEnter[f] || {};
-    //   }
-
-    //   fieldToEnter = fieldToEnter[f];
-    // });
     filterQuery[field] = value;
     return filterQuery;
   }
@@ -281,7 +267,6 @@ export class MongodbDataSource implements DataSource {
 
           break;
         case Operator.near:
-          console.log('VALUE MOLTO FIGO ', value);
           this.setFilter(
             field,
             {
