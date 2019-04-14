@@ -12,7 +12,8 @@
     "test": "lerna run test --stream --parallel --colors",
     "test:scope": "lerna run test --stream --parallel --scope $SCOPE -- --colors",
     "test:grep": "lerna run test:grep --stream --parallel --scope $SCOPE -- $FILE --colors ",
-    "postinstall": "npm run compile"
+    "postinstall": "npm run compile",
+    "publish": "lerna run npm publish --stream"
   },
   "devDependencies": {
     "@types/axios": "^0.14.0",

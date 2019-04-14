@@ -1,5 +1,5 @@
 {
-  "name": "@gqlify/firebase",
+  "name": "@linkcms/firebase",
   "version": "3.1.0",
   "description": "the firebase packages for @canner/gqlify",
   "main": "lib/index.js",
@@ -35,7 +35,7 @@
     "access": "public"
   },
   "peerDependencies": {
-    "@gqlify/server": "2.x",
+    "@linkcms/server": "*",
     "firebase-admin": "^6.3.0"
   },
   "gitHead": "0548648380a2bb7996307825f1fd61415f16b812"

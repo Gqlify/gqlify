@@ -13,7 +13,7 @@ import {
   sort,
   Mutation,
   ArrayOperator
-} from '@gqlify/server';
+} from '@linkcms/server';
 
 const snapToArray = (snapshot: admin.database.DataSnapshot) => {
   const rows = [];

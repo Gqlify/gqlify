@@ -22,7 +22,7 @@ import {
   iterateWhere,
   Mutation,
   ArrayOperator
-} from '@gqlify/server';
+} from '@linkcms/server';
 
 const defaultObjectCollection = 'canner-object';
 
