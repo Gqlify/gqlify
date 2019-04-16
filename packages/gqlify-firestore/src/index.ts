@@ -12,7 +12,7 @@ import {
   sort,
   Mutation,
   ArrayOperator
-} from '@gqlify/server';
+} from '@linkcms/server';
 
 const snapToArray = (snapshot: admin.firestore.QuerySnapshot) => {
   const data = [];

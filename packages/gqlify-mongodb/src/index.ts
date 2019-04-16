@@ -1,5 +1,5 @@
 import { MongoClient, Db } from 'mongodb';
-import { DataSource } from '@gqlify/server';
+import { DataSource } from '@linkcms/server';
 
 import { MongodbDataSource } from './mongodbDataSource';
 
