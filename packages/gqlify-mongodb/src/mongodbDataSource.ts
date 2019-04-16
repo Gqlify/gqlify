@@ -126,10 +126,12 @@ export class MongodbDataSource implements DataSource {
   ): Promise<any> {
     const data = await this.db
       .collection(this.collectionName)
-      .find({})
+      .find({
+        [foreignKey]: foreignId
+      })
       .project({_id: 0})
       .toArray();
-    return first(filter(data, {[foreignKey]: {[Operator.eq]: foreignId}}));
+    return data; //first(filter(data, {[foreignKey]: {[Operator.eq]: foreignId}}));
   }
 
   // ToOneRelation
@@ -163,10 +165,12 @@ export class MongodbDataSource implements DataSource {
   ): Promise<any[]> {
     const data = await this.db
       .collection(this.collectionName)
-      .find({})
+      .find({
+        [foreignKey]: foreignId
+      })
       .project({_id: 0})
       .toArray();
-    return filter(data, {[foreignKey]: {[Operator.eq]: foreignId}});
+    return data; //filter(data, {[foreignKey]: {[Operator.eq]: foreignId}});
   }
 
   // ManyToManyRelation
@@ -300,7 +304,7 @@ export class MongodbDataSource implements DataSource {
           break;
       }
     });
-    console.log('FILTER QUERY ', filterQuery);
+
     return filterQuery;
   }
 
