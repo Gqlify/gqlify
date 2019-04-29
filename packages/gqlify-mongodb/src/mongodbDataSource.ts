@@ -202,11 +202,15 @@ export class MongodbDataSource implements DataSource {
       []
     );
 
-    return this.db
-      .collection(this.collectionName)
-      .find({$or: where})
-      .project({_id: 0})
-      .toArray();
+    if (where.length) {
+      return this.db
+        .collection(this.collectionName)
+        .find({$or: where})
+        .project({_id: 0})
+        .toArray();
+    } else {
+      return [];
+    }
   }
 
   public async addIdToManyRelation(
