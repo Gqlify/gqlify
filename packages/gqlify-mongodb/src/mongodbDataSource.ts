@@ -53,6 +53,7 @@ export class MongodbDataSource implements DataSource {
     const filterQuery = this.whereToFilterQuery(where);
 
     let query = this.db.collection(this.collectionName).find(filterQuery);
+
     query = isEmpty(orderBy)
       ? query
       : query.sort({[orderBy.field]: orderBy.value});
@@ -258,6 +259,10 @@ export class MongodbDataSource implements DataSource {
     const filterQuery: object = {};
     iterateWhere(where, (field, op, value) => {
       switch (op) {
+        case Operator.json:
+          this.setFilter(field, JSON.parse(value || ''), filterQuery);
+
+          break;
         case Operator.eq:
           this.setFilter(field, value, filterQuery);
 

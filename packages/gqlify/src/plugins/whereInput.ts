@@ -140,16 +140,29 @@ export default class WhereInputPlugin implements Plugin {
       case DataModelType.ID:
       case DataModelType.BOOLEAN:
       case DataModelType.CUSTOM_SCALAR:
-        inputFields.push({
-          fieldName: completeName,
-          type: field.getTypename()
-        });
+        //console.log(field.getTypename());
 
-        // eq
-        inputFields.push({
-          fieldName: `${completeName}_eq`,
-          type: field.getTypename()
-        });
+        switch (field.getTypename()) {
+          case 'JSON':
+            inputFields.push({
+              fieldName: `${completeName}_json`,
+              type: field.getTypename()
+            });
+            break;
+
+          default:
+            inputFields.push({
+              fieldName: completeName,
+              type: field.getTypename()
+            });
+
+            // eq
+            inputFields.push({
+              fieldName: `${completeName}_eq`,
+              type: field.getTypename()
+            });
+        }
+
         break;
     }
 
@@ -157,28 +170,33 @@ export default class WhereInputPlugin implements Plugin {
       case DataModelType.INT:
       case DataModelType.FLOAT:
       case DataModelType.CUSTOM_SCALAR:
-        if (field.getTypename() === 'Location') {
-          inputFields.push({
-            fieldName: `${completeName}_near`,
-            type: field.getTypename()
-          });
-        } else {
-          inputFields.push({
-            fieldName: `${completeName}_gt`,
-            type: field.getTypename()
-          });
-          inputFields.push({
-            fieldName: `${completeName}_gte`,
-            type: field.getTypename()
-          });
-          inputFields.push({
-            fieldName: `${completeName}_lt`,
-            type: field.getTypename()
-          });
-          inputFields.push({
-            fieldName: `${completeName}_lte`,
-            type: field.getTypename()
-          });
+        switch (field.getTypename()) {
+          case 'JSON':
+            break;
+          case 'Location':
+            inputFields.push({
+              fieldName: `${completeName}_near`,
+              type: field.getTypename()
+            });
+            break;
+
+          default:
+            inputFields.push({
+              fieldName: `${completeName}_gt`,
+              type: field.getTypename()
+            });
+            inputFields.push({
+              fieldName: `${completeName}_gte`,
+              type: field.getTypename()
+            });
+            inputFields.push({
+              fieldName: `${completeName}_lt`,
+              type: field.getTypename()
+            });
+            inputFields.push({
+              fieldName: `${completeName}_lte`,
+              type: field.getTypename()
+            });
         }
 
         break;
