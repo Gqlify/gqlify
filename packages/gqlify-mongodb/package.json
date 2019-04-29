@@ -1,6 +1,6 @@
 {
   "name": "@linkcms/mongodb",
-  "version": "3.1.2",
+  "version": "3.1.3",
   "description": "the mongodb package of gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
