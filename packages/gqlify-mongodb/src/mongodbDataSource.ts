@@ -190,7 +190,23 @@ export class MongodbDataSource implements DataSource {
         ? relationData.targetSideIds
         : [];
 
-    return Promise.all(relationIds.map(id => this.findOneById(id)));
+    let where = reduce(
+      relationIds,
+      (val, id) => {
+        val.push({
+          id
+        });
+
+        return val;
+      },
+      []
+    );
+
+    return this.db
+      .collection(this.collectionName)
+      .find({$or: where})
+      .project({_id: 0})
+      .toArray();
   }
 
   public async addIdToManyRelation(
