@@ -48,6 +48,10 @@ export class MongodbDataSource implements DataSource {
     }
   }
 
+  public getDb() {
+    return this.db.collection(this.collectionName);
+  }
+
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
     const {pagination, where, orderBy = {}} = args || ({} as any);
     const filterQuery = this.whereToFilterQuery(where);
