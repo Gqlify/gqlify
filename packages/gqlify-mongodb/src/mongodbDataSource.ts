@@ -275,7 +275,10 @@ export class MongodbDataSource implements DataSource {
   }
 
   private setFilter(field: string, value, filterQuery) {
-    filterQuery[field] = value;
+    filterQuery[field] = {
+      ...(filterQuery[field] || {}),
+      ...value
+    };
     return filterQuery;
   }
 
@@ -288,7 +291,7 @@ export class MongodbDataSource implements DataSource {
 
           break;
         case Operator.eq:
-          this.setFilter(field, value, filterQuery);
+          this.setFilter(field, {$eq: value}, filterQuery);
 
           break;
         case Operator.regex:
@@ -333,6 +336,8 @@ export class MongodbDataSource implements DataSource {
           break;
       }
     });
+
+    console.log(filterQuery);
 
     return filterQuery;
   }
