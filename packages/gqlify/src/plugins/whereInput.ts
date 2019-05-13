@@ -148,6 +148,12 @@ export default class WhereInputPlugin implements Plugin {
               fieldName: `${completeName}_json`,
               type: field.getTypename()
             });
+
+            inputFields.push({
+              fieldName: `${completeName}_or`,
+              type: 'JSON'
+            });
+
             break;
 
           default:
@@ -160,6 +166,11 @@ export default class WhereInputPlugin implements Plugin {
             inputFields.push({
               fieldName: `${completeName}_eq`,
               type: field.getTypename()
+            });
+
+            inputFields.push({
+              fieldName: `${completeName}_or`,
+              type: 'JSON'
             });
         }
 

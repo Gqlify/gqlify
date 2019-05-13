@@ -11,6 +11,8 @@ import {
   forEach
 } from 'lodash';
 
+import flatten from 'flat';
+
 import {
   Where,
   PaginatedResponse,
@@ -286,8 +288,22 @@ export class MongodbDataSource implements DataSource {
     const filterQuery: object = {};
     iterateWhere(where, (field, op, value) => {
       switch (op) {
+        case Operator.or:
+          var json = JSON.parse(value || '');
+          if (Array.isArray(json)) {
+            this.setFilter(field, {$in: json}, filterQuery);
+          }
+
+          break;
         case Operator.json:
-          this.setFilter(field, JSON.parse(value || ''), filterQuery);
+          var json = JSON.parse(value || '');
+          let flat = flatten({
+            [field]: json
+          });
+
+          forEach(flat, (v, k) => {
+            filterQuery[k] = v;
+          });
 
           break;
         case Operator.eq:
@@ -336,6 +352,8 @@ export class MongodbDataSource implements DataSource {
           break;
       }
     });
+
+    //console.log(JSON.stringify(filterQuery));
 
     return filterQuery;
   }

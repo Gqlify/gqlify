@@ -24,6 +24,7 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
+    "flat": "^4.1.0",
     "lodash": "^4.17.11",
     "moment-timezone": "^0.5.23",
     "mongodb": "^3.1.10"

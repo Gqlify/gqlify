@@ -32,7 +32,8 @@ export enum Operator {
   lte = 'lte',
   regex = 'regex',
   near = 'near',
-  json = 'json'
+  json = 'json',
+  or = 'or'
 }
 
 export type Where = Record<string, Record<string /** Operator */, any>>;
