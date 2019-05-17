@@ -11,6 +11,8 @@ import {
   forEach
 } from 'lodash';
 
+import _ from 'lodash';
+
 import flatten from 'flat';
 
 import {
@@ -19,7 +21,6 @@ import {
   ListFindQuery,
   Operator,
   DataSource,
-  filter,
   paginate,
   iterateWhere,
   Mutation,
@@ -54,15 +55,74 @@ export class MongodbDataSource implements DataSource {
     return this.db.collection(this.collectionName);
   }
 
+  private getAggregationForFind({filterQuery, orderBy}) {
+    let nearFilter = undefined;
+
+    _.forEach(filterQuery, (f, key) => {
+      if (f['$near']) {
+        let near = _.cloneDeep(f['$near']['$geometry']);
+        delete f['$near']['$geometry'];
+        nearFilter = {
+          $geoNear: {
+            ..._.cloneDeep(f['$near']),
+            near: near,
+            key: key,
+            spherical: true,
+            distanceField: 'distance'
+          }
+        };
+        delete f['$near'];
+
+        if (isEmpty(f)) {
+          delete filterQuery[key];
+        }
+
+        return false;
+      }
+    });
+
+    let stages = [];
+    if (nearFilter) {
+      stages.push(nearFilter);
+    }
+
+    let match = {
+      $match: {}
+    };
+
+    _.forEach(filterQuery, (f, key) => {
+      match['$match'][key] = f;
+    });
+
+    stages.push(match);
+
+    if (!isEmpty(orderBy)) {
+      stages.push({
+        $sort: {
+          [orderBy.field]: orderBy.value
+        }
+      });
+    }
+    //console.log(JSON.stringify(stages));
+    return stages;
+
+    //let aggregation = reduce(filterQuery, (agg, filter))
+  }
+
   public async find(args?: ListFindQuery): Promise<PaginatedResponse> {
     const {pagination, where, orderBy = {}} = args || ({} as any);
     const filterQuery = this.whereToFilterQuery(where);
+    let stages = this.getAggregationForFind({
+      filterQuery,
+      orderBy
+    });
 
-    let query = this.db.collection(this.collectionName).find(filterQuery);
+    //let query = this.db.collection(this.collectionName).find(filterQuery);
+    let query = this.db.collection(this.collectionName).aggregate(stages);
 
-    query = isEmpty(orderBy)
-      ? query
-      : query.sort({[orderBy.field]: orderBy.value});
+    // query = isEmpty(orderBy)
+    //   ? query
+    //   : query.sort({[orderBy.field]: orderBy.value});
 
     const filteredData = await query.project({_id: 0}).toArray();
     return paginate(filteredData, pagination);
@@ -353,7 +413,7 @@ export class MongodbDataSource implements DataSource {
       }
     });
 
-    //console.log(JSON.stringify(filterQuery));
+    console.log(filterQuery);
 
     return filterQuery;
   }
