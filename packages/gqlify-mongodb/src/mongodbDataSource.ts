@@ -427,7 +427,7 @@ export class MongodbDataSource implements DataSource {
       }
     });
 
-    console.log(filterQuery);
+    //console.log(filterQuery);
 
     return filterQuery;
   }
