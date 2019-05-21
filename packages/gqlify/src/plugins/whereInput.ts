@@ -148,6 +148,10 @@ export default class WhereInputPlugin implements Plugin {
               fieldName: `${completeName}_json`,
               type: field.getTypename()
             });
+            inputFields.push({
+              fieldName: `${completeName}_jsonrgxp`,
+              type: field.getTypename()
+            });
 
             inputFields.push({
               fieldName: `${completeName}_or`,

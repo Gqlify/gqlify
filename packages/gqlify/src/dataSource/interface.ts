@@ -33,7 +33,8 @@ export enum Operator {
   regex = 'regex',
   near = 'near',
   json = 'json',
-  or = 'or'
+  or = 'or',
+  jsonrgxp = 'jsonrgxp'
 }
 
 export type Where = Record<string, Record<string /** Operator */, any>>;

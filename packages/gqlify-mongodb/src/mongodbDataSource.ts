@@ -357,12 +357,26 @@ export class MongodbDataSource implements DataSource {
           break;
         case Operator.json:
           var json = JSON.parse(value || '');
-          let flat = flatten({
+          var flat = flatten({
             [field]: json
           });
 
           forEach(flat, (v, k) => {
             filterQuery[k] = v;
+          });
+
+          break;
+        case Operator.jsonrgxp:
+          var json = JSON.parse(value || '');
+          var flat = flatten({
+            [field]: json
+          });
+
+          forEach(flat, (v, k) => {
+            filterQuery[k] = {
+              $regex: v,
+              $options: 'i'
+            };
           });
 
           break;
@@ -413,7 +427,7 @@ export class MongodbDataSource implements DataSource {
       }
     });
 
-    //console.log(filterQuery);
+    console.log(filterQuery);
 
     return filterQuery;
   }
