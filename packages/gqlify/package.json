@@ -1,6 +1,6 @@
 {
   "name": "@linkcms/server",
-  "version": "3.2.6",
+  "version": "3.3.0",
   "description": "gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
