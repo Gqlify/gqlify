@@ -500,8 +500,8 @@ export class MongodbDataSource implements DataSource {
       delete filterQuery['$and'];
     }
 
-    console.log(filterQuery);
-    console.log(JSON.stringify(filterQuery));
+    //console.log(filterQuery);
+    //console.log(JSON.stringify(filterQuery));
 
     return filterQuery;
   }
