@@ -62,9 +62,14 @@ export class MongodbDataSource implements DataSource {
       if (f['$near']) {
         let near = _.cloneDeep(f['$near']['$geometry']);
         delete f['$near']['$geometry'];
+
+        console.log(f['$near']);
+
         nearFilter = {
           $geoNear: {
-            ..._.cloneDeep(f['$near']),
+            // ..._.cloneDeep(f['$near']),
+            maxDistance: f['$near']['$maxDistance'],
+            minDistance: f['$near']['$minDistance'],
             near: near,
             key: key,
             spherical: true,
@@ -424,8 +429,8 @@ export class MongodbDataSource implements DataSource {
             {
               $near: {
                 $geometry: {type: value.type, coordinates: value.coordinates},
-                $maxDistance: value.max,
-                $minDistance: value.min
+                $maxDistance: value.max || 40000,
+                $minDistance: value.min || 0
               }
             },
             filterQuery
