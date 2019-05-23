@@ -157,6 +157,10 @@ export default class WhereInputPlugin implements Plugin {
               fieldName: `${completeName}_or`,
               type: 'JSON'
             });
+            inputFields.push({
+              fieldName: `${completeName}_jsonor`,
+              type: 'JSON'
+            });
 
             break;
 

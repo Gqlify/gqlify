@@ -57,13 +57,10 @@ export class MongodbDataSource implements DataSource {
 
   private getAggregationForFind({filterQuery, orderBy}) {
     let nearFilter = undefined;
-
     _.forEach(filterQuery, (f, key) => {
       if (f['$near']) {
         let near = _.cloneDeep(f['$near']['$geometry']);
         delete f['$near']['$geometry'];
-
-        console.log(f['$near']);
 
         nearFilter = {
           $geoNear: {
@@ -105,6 +102,12 @@ export class MongodbDataSource implements DataSource {
       stages.push({
         $sort: {
           [orderBy.field]: orderBy.value
+        }
+      });
+    } else if (!nearFilter) {
+      stages.push({
+        $sort: {
+          ['createdAt']: -1
         }
       });
     }
@@ -368,15 +371,19 @@ export class MongodbDataSource implements DataSource {
   }
 
   private setFilter(field: string, value, filterQuery) {
-    filterQuery[field] = {
-      ...(filterQuery[field] || {}),
-      ...value
-    };
+    filterQuery['$and'].push({
+      [field]: {
+        ...(filterQuery[field] || {}),
+        ...value
+      }
+    });
     return filterQuery;
   }
 
   private whereToFilterQuery(where: Where): FilterQuery<any> {
-    const filterQuery: object = {};
+    const filterQuery: object = {
+      $and: []
+    };
     iterateWhere(where, (field, op, value) => {
       switch (op) {
         case Operator.or:
@@ -393,8 +400,37 @@ export class MongodbDataSource implements DataSource {
           });
 
           forEach(flat, (v, k) => {
-            filterQuery[k] = v;
+            filterQuery['$and'].push({
+              [k]: v
+            });
           });
+
+          break;
+        case Operator.jsonor:
+          //[{"it": true, en: false}, {"de": true}]
+
+          var json = JSON.parse(value || '');
+
+          var or = [];
+
+          _.forEach(json, val => {
+            var flat = flatten({
+              [field]: val
+            });
+
+            let res = {};
+
+            forEach(flat, (v, k) => {
+              res[k] = v;
+            });
+
+            or.push(res);
+          });
+
+          if (or.length)
+            filterQuery['$and'].push({
+              $or: or
+            });
 
           break;
         case Operator.jsonrgxp:
@@ -404,10 +440,12 @@ export class MongodbDataSource implements DataSource {
           });
 
           forEach(flat, (v, k) => {
-            filterQuery[k] = {
-              $regex: v,
-              $options: 'i'
-            };
+            filterQuery['$and'].push({
+              [k]: {
+                $regex: v,
+                $options: 'i'
+              }
+            });
           });
 
           break;
@@ -458,7 +496,12 @@ export class MongodbDataSource implements DataSource {
       }
     });
 
-    //console.log(filterQuery);
+    if (!filterQuery['$and'].length) {
+      delete filterQuery['$and'];
+    }
+
+    console.log(filterQuery);
+    console.log(JSON.stringify(filterQuery));
 
     return filterQuery;
   }

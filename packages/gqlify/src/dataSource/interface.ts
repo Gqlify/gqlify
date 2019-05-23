@@ -33,6 +33,7 @@ export enum Operator {
   regex = 'regex',
   near = 'near',
   json = 'json',
+  jsonor = 'jsonor',
   or = 'or',
   jsonrgxp = 'jsonrgxp'
 }
