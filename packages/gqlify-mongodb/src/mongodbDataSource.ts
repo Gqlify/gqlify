@@ -149,9 +149,14 @@ export class MongodbDataSource implements DataSource {
 
   public async create(mutation: Mutation): Promise<any> {
     const payload = this.transformMutation(mutation);
+    let now = moment().toISOString();
     const insertedItem = await this.db
       .collection(this.collectionName)
-      .insertOne(payload);
+      .insertOne({
+        ...payload,
+        createdAt: now,
+        updatedAt: now
+      });
     if (insertedItem) {
       const updatedItem = await this.db
         .collection(this.collectionName)
@@ -175,9 +180,12 @@ export class MongodbDataSource implements DataSource {
     const payload = this.transformMutation(mutation);
     const filterQuery = this.whereToFilterQuery(where);
     if (!isEmpty(payload)) {
-      await this.db
-        .collection(this.collectionName)
-        .updateOne(filterQuery, {$set: payload});
+      await this.db.collection(this.collectionName).updateOne(filterQuery, {
+        $set: {
+          ...payload,
+          updatedAt: moment().toISOString()
+        }
+      });
     }
   }
 
@@ -208,11 +216,14 @@ export class MongodbDataSource implements DataSource {
     foreignId: string
   ): Promise<any> {
     // remove oldOwner foreignKey
+
+    let now = moment().toISOString();
+
     await this.db
       .collection(this.collectionName)
       .findOneAndUpdate(
         {[foreignKey]: foreignId},
-        {$unset: {[foreignKey]: ''}}
+        {$unset: {[foreignKey]: ''}, $set: {updatedAt: now}}
       );
 
     // add foreignKey to  newOwner
@@ -220,7 +231,7 @@ export class MongodbDataSource implements DataSource {
       .collection(this.collectionName)
       .findOneAndUpdate(
         {id},
-        {$set: {[foreignKey]: foreignId}},
+        {$set: {[foreignKey]: foreignId, updatedAt: now}},
         {returnOriginal: false}
       );
   }
@@ -285,12 +296,15 @@ export class MongodbDataSource implements DataSource {
     sourceSideId: string,
     targetSideId: string
   ) {
+    let now = moment().toISOString();
+
     const relationTableName = `_${sourceSideName}_${targetSideName}`;
     await this.db.collection(relationTableName).updateOne(
       {sourceSideId},
       {
         $set: {
-          sourceSideId
+          sourceSideId,
+          updatedAt: now
         },
         $push: {
           targetSideIds: targetSideId
@@ -306,12 +320,16 @@ export class MongodbDataSource implements DataSource {
     sourceSideId: string,
     targetSideId: string
   ) {
+    let now = moment().toISOString();
     const relationTableName = `_${sourceSideName}_${targetSideName}`;
     await this.db.collection(relationTableName).updateOne(
       {sourceSideId},
       {
         $pull: {
           targetSideIds: targetSideId
+        },
+        $set: {
+          updatedAt: now
         }
       }
     );
@@ -329,10 +347,18 @@ export class MongodbDataSource implements DataSource {
 
   public async updateMap(mutation: Mutation): Promise<any> {
     const payload = this.transformMutation(mutation);
+    let now = moment().toISOString();
     if (!isEmpty(payload)) {
-      await this.db
-        .collection(this.objectCollection)
-        .updateOne({key: this.objectKey}, {$set: payload}, {upsert: true});
+      await this.db.collection(this.objectCollection).updateOne(
+        {key: this.objectKey},
+        {
+          $set: {
+            ...payload,
+            updatedAt: now
+          }
+        },
+        {upsert: true}
+      );
     }
   }
 

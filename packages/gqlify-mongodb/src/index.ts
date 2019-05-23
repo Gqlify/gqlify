@@ -1,7 +1,7 @@
-import { MongoClient, Db } from 'mongodb';
-import { DataSource } from '@linkcms/server';
+import {MongoClient, Db} from 'mongodb';
+import {DataSource} from '@linkcms/server';
 
-import { MongodbDataSource } from './mongodbDataSource';
+import {MongodbDataSource} from './mongodbDataSource';
 
 export interface DataSourceGroup {
   initialize(): Promise<void>;
