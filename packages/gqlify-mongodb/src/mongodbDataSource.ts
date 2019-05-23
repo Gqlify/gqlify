@@ -57,30 +57,36 @@ export class MongodbDataSource implements DataSource {
 
   private getAggregationForFind({filterQuery, orderBy}) {
     let nearFilter = undefined;
-    _.forEach(filterQuery, (f, key) => {
-      if (f['$near']) {
-        let near = _.cloneDeep(f['$near']['$geometry']);
-        delete f['$near']['$geometry'];
 
-        nearFilter = {
-          $geoNear: {
-            // ..._.cloneDeep(f['$near']),
-            maxDistance: f['$near']['$maxDistance'],
-            minDistance: f['$near']['$minDistance'],
-            near: near,
-            key: key,
-            spherical: true,
-            distanceField: 'distance'
+    //la filter query ha questa struttura: {$and: [{ field_1: condition_1 }, {field_2: condition_2}...]}
+
+    //quindi serve un doppio ciclo per buildare l'aggregation
+    _.forEach(filterQuery['$and'], (v, index) => {
+      _.forEach(v, (f, key) => {
+        if (f['$near']) {
+          let near = _.cloneDeep(f['$near']['$geometry']);
+          delete f['$near']['$geometry'];
+
+          nearFilter = {
+            $geoNear: {
+              // ..._.cloneDeep(f['$near']),
+              maxDistance: f['$near']['$maxDistance'],
+              minDistance: f['$near']['$minDistance'],
+              near: near,
+              key: key,
+              spherical: true,
+              distanceField: 'distance'
+            }
+          };
+          delete f['$near'];
+
+          if (isEmpty(f)) {
+            delete filterQuery['$and'][index][key];
           }
-        };
-        delete f['$near'];
 
-        if (isEmpty(f)) {
-          delete filterQuery[key];
+          return false;
         }
-
-        return false;
-      }
+      });
     });
 
     let stages = [];
@@ -92,8 +98,10 @@ export class MongodbDataSource implements DataSource {
       $match: {}
     };
 
-    _.forEach(filterQuery, (f, key) => {
-      match['$match'][key] = f;
+    _.forEach(filterQuery['$and'], v => {
+      _.forEach(v, (f, key) => {
+        match['$match'][key] = f;
+      });
     });
 
     stages.push(match);
@@ -124,6 +132,9 @@ export class MongodbDataSource implements DataSource {
       filterQuery,
       orderBy
     });
+
+    // console.log(stages);
+    // console.log(JSON.stringify(stages));
 
     //let query = this.db.collection(this.collectionName).find(filterQuery);
     let query = this.db.collection(this.collectionName).aggregate(stages);
@@ -500,8 +511,8 @@ export class MongodbDataSource implements DataSource {
       delete filterQuery['$and'];
     }
 
-    //console.log(filterQuery);
-    //console.log(JSON.stringify(filterQuery));
+    // console.log(filterQuery);
+    // console.log(JSON.stringify(filterQuery));
 
     return filterQuery;
   }
