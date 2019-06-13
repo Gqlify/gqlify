@@ -35,7 +35,7 @@
     "tslint": "^5.11.0"
   },
   "peerDependencies": {
-    "@gqlify/server": "2.x",
+    "@gqlify/server": "^2.x",
     "firebase-admin": "^6.3.0"
   }
 }
