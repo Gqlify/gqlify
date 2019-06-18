@@ -1,5 +1,6 @@
 import {Db, FilterQuery} from 'mongodb';
 import moment from 'moment-timezone';
+import ActivityLogManager from './ActivityLogManager';
 import {
   first,
   isEmpty,
@@ -133,9 +134,6 @@ export class MongodbDataSource implements DataSource {
       orderBy
     });
 
-    // console.log(stages);
-    // console.log(JSON.stringify(stages));
-
     //let query = this.db.collection(this.collectionName).find(filterQuery);
     let query = this.db.collection(this.collectionName).aggregate(stages);
 
@@ -144,6 +142,7 @@ export class MongodbDataSource implements DataSource {
     //   : query.sort({[orderBy.field]: orderBy.value});
 
     const filteredData = await query.project({_id: 0}).toArray();
+
     return paginate(filteredData, pagination);
   }
 
@@ -166,9 +165,11 @@ export class MongodbDataSource implements DataSource {
     return first(filteredData);
   }
 
-  public async create(mutation: Mutation): Promise<any> {
+  public async create(mutation: Mutation, graphQlContext: any): Promise<any> {
+    const user = graphQlContext.user;
+
     const payload = this.transformMutation(mutation);
-    let now = moment().toISOString();
+    const now = moment().toDate();
     const insertedItem = await this.db
       .collection(this.collectionName)
       .insertOne({
@@ -176,6 +177,7 @@ export class MongodbDataSource implements DataSource {
         createdAt: now,
         updatedAt: now
       });
+
     if (insertedItem) {
       const updatedItem = await this.db
         .collection(this.collectionName)
@@ -191,26 +193,70 @@ export class MongodbDataSource implements DataSource {
             returnOriginal: false
           }
         );
+
+      await new ActivityLogManager(
+        this.db,
+        user,
+        this.collectionName
+      ).logCreate(insertedItem.insertedId);
+
       return updatedItem.value;
     }
   }
 
-  public async update(where: Where, mutation: Mutation): Promise<any> {
+  public async update(
+    where: Where,
+    mutation: Mutation,
+    graphQlContext: any
+  ): Promise<any> {
     const payload = this.transformMutation(mutation);
     const filterQuery = this.whereToFilterQuery(where);
     if (!isEmpty(payload)) {
-      await this.db.collection(this.collectionName).updateOne(filterQuery, {
-        $set: {
-          ...payload,
-          updatedAt: moment().toISOString()
-        }
-      });
+      const now = moment().toDate();
+      const user = graphQlContext.user;
+
+      const activityLogManager = new ActivityLogManager(
+        this.db,
+        user,
+        this.collectionName
+      );
+
+      const oldValue = await activityLogManager.getOldValue(filterQuery);
+
+      //Se abbiamo l'oldValue usiamo l'id di quello come filtro per l'update
+      //Per evitare problemi di concorrenza
+      await this.db
+        .collection(this.collectionName)
+        .updateOne(oldValue ? {id: oldValue.id} : filterQuery, {
+          $set: {
+            ...payload,
+            updatedAt: now
+          }
+        });
+
+      await activityLogManager.logUpdate();
     }
   }
 
-  public async delete(where: Where): Promise<any> {
+  public async delete(where: Where, graphQlContext: any): Promise<any> {
     const filterQuery = this.whereToFilterQuery(where);
-    await this.db.collection(this.collectionName).deleteOne(filterQuery);
+    const user = graphQlContext.user;
+    const activityLogManager = new ActivityLogManager(
+      this.db,
+      user,
+      this.collectionName
+    );
+
+    const oldValue = await activityLogManager.getOldValue(filterQuery);
+    await activityLogManager.logDelete();
+
+    await this.db.collection(this.collectionName).deleteOne(
+      oldValue
+        ? {
+            id: oldValue.id
+          }
+        : filterQuery
+    );
   }
 
   // ToOneRelation
@@ -232,27 +278,34 @@ export class MongodbDataSource implements DataSource {
   public async updateOneRelation(
     id: string,
     foreignKey: string,
-    foreignId: string
+    foreignId: string,
+    graphQlContext: any
   ): Promise<any> {
     // remove oldOwner foreignKey
 
-    let now = moment().toISOString();
-
-    await this.db
+    const now = moment().toDate();
+    const user = graphQlContext.user;
+    const oldValueUnlinkFrom = await this.db
       .collection(this.collectionName)
       .findOneAndUpdate(
         {[foreignKey]: foreignId},
         {$unset: {[foreignKey]: ''}, $set: {updatedAt: now}}
       );
 
-    // add foreignKey to  newOwner
-    await this.db
+    //Add foreign key to new owner
+    const oldValueLinkTo = await this.db
       .collection(this.collectionName)
       .findOneAndUpdate(
         {id},
         {$set: {[foreignKey]: foreignId, updatedAt: now}},
         {returnOriginal: false}
       );
+
+    await new ActivityLogManager(
+      this.db,
+      user,
+      this.collectionName
+    ).logOneRelation(oldValueUnlinkFrom, oldValueLinkTo);
   }
 
   // OneToManyRelation
@@ -313,11 +366,23 @@ export class MongodbDataSource implements DataSource {
     sourceSideName: string,
     targetSideName: string,
     sourceSideId: string,
-    targetSideId: string
+    targetSideId: string,
+    graphQlContext: any
   ) {
-    let now = moment().toISOString();
+    const user = graphQlContext.user;
+
+    const now = moment().toDate();
 
     const relationTableName = `_${sourceSideName}_${targetSideName}`;
+
+    const activityLogManager = new ActivityLogManager(
+      this.db,
+      user,
+      relationTableName
+    );
+
+    await activityLogManager.getOldValue({sourceSideId});
+
     await this.db.collection(relationTableName).updateOne(
       {sourceSideId},
       {
@@ -331,16 +396,28 @@ export class MongodbDataSource implements DataSource {
       },
       {upsert: true}
     );
+
+    await activityLogManager.logManyRelation();
   }
 
   public async removeIdFromManyRelation(
     sourceSideName: string,
     targetSideName: string,
     sourceSideId: string,
-    targetSideId: string
+    targetSideId: string,
+    graphQlContext: any
   ) {
-    let now = moment().toISOString();
+    const now = moment().toDate();
     const relationTableName = `_${sourceSideName}_${targetSideName}`;
+    const user = graphQlContext.user;
+    const activityLogManager = new ActivityLogManager(
+      this.db,
+      user,
+      relationTableName
+    );
+
+    await activityLogManager.getOldValue({sourceSideId});
+
     await this.db.collection(relationTableName).updateOne(
       {sourceSideId},
       {
@@ -352,6 +429,8 @@ export class MongodbDataSource implements DataSource {
         }
       }
     );
+
+    await activityLogManager.logManyRelation();
   }
 
   /**
@@ -366,7 +445,7 @@ export class MongodbDataSource implements DataSource {
 
   public async updateMap(mutation: Mutation): Promise<any> {
     const payload = this.transformMutation(mutation);
-    let now = moment().toISOString();
+    let now = moment().toDate();
     if (!isEmpty(payload)) {
       await this.db.collection(this.objectCollection).updateOne(
         {key: this.objectKey},
