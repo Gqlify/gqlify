@@ -1,7 +1,10 @@
-import { MongoClient, Db } from 'mongodb';
-import { DataSource } from '@gqlify/server';
+import {MongoClient, Db} from 'mongodb';
+import {DataSource} from '@linkcms/server';
 
-import { MongodbDataSource } from './mongodbDataSource';
+import {MongodbDataSource} from './mongodbDataSource';
+import ActivityLogManager from './ActivityLogManager';
+
+export {ActivityLogManager};
 
 export interface DataSourceGroup {
   initialize(): Promise<void>;
@@ -12,6 +15,10 @@ export class MongodbDataSourceGroup implements DataSourceGroup {
   private uri: string;
   private dbName: string;
   private db: Db;
+
+  public getDb() {
+    return this.db;
+  }
 
   constructor(uri: string, dbName: string) {
     this.uri = uri;

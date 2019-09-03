@@ -1,17 +1,22 @@
 import Model from '../dataModel/model';
-import { Context, Plugin } from './interface';
+import {Context, Plugin} from './interface';
 import WhereInputPlugin from './whereInput';
 import BaseTypePlugin from './baseType';
 import ObjectField from '../dataModel/objectField';
-import { upperFirst, forEach, get } from 'lodash';
-import { ListMutable } from '../dataSource/interface';
-import { RelationField, ScalarField } from '../dataModel';
-import { Hook, CreateContext } from '../hooks/interface';
-import { MutationFactory } from './mutation';
+import {upperFirst, forEach, get} from 'lodash';
+import {ListMutable} from '../dataSource/interface';
+import {RelationField, ScalarField} from '../dataModel';
+import {Hook, CreateContext} from '../hooks/interface';
+import {MutationFactory} from './mutation';
 
-const createObjectInputField = (prefix: string, field: ObjectField, context: Context) => {
-  const { root } = context;
+const createObjectInputField = (
+  prefix: string,
+  field: ObjectField,
+  context: Context
+) => {
+  const {root} = context;
   const content: string[] = [];
+
   forEach(field.getFields(), (nestedField, name) => {
     if (nestedField.isScalar()) {
       content.push(`${name}: ${nestedField.getTypename()}`);
@@ -20,15 +25,21 @@ const createObjectInputField = (prefix: string, field: ObjectField, context: Con
 
     if (nestedField instanceof ObjectField) {
       const fieldWithPrefix = `${prefix}${upperFirst(name)}`;
-      const typeFields = createObjectInputField(fieldWithPrefix, nestedField, context);
+      const typeFields = createObjectInputField(
+        fieldWithPrefix,
+        nestedField,
+        context
+      );
       const objectInputName = `${fieldWithPrefix}CreateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
+
       content.push(`${name}: ${objectInputName}`);
       return;
     }
 
     // skip relation, dont support relation in nested object for now
   });
+
   return content;
 };
 
@@ -38,9 +49,9 @@ const createInputField = (
   getCreateInputName: (model: Model) => string,
   getWhereInputName: (model: Model) => string,
   getWhereUniqueInputName: (model: Model) => string,
-  getMutationFactoryFromModel: (model: Model) => MutationFactory,
+  getMutationFactoryFromModel: (model: Model) => MutationFactory
 ) => {
-  const { root } = context;
+  const {root} = context;
   const capName = model.getNamings().capitalSingular;
   const fields = model.getFields();
   const content: string[] = [];
@@ -56,7 +67,9 @@ const createInputField = (
         // wrap with set field
         const fieldWithPrefix = `${capName}${upperFirst(name)}`;
         const listOperationInput = `${fieldWithPrefix}CreateInput`;
-        root.addInput(`input ${listOperationInput} {set: [${field.getTypename()}]}`);
+        root.addInput(
+          `input ${listOperationInput} {set: [${field.getTypename()}]}`
+        );
         fieldType = listOperationInput;
         mutationFactory.markArrayField(name);
       } else {
@@ -70,7 +83,11 @@ const createInputField = (
     if (field instanceof ObjectField) {
       // create input for nested object
       const fieldWithPrefix = `${capName}${upperFirst(name)}`;
-      const typeFields = createObjectInputField(fieldWithPrefix, field, context);
+      const typeFields = createObjectInputField(
+        fieldWithPrefix,
+        field,
+        context
+      );
       const objectInputName = `${fieldWithPrefix}CreateInput`;
       root.addInput(`input ${objectInputName} {${typeFields.join(' ')}}`);
 
@@ -78,7 +95,9 @@ const createInputField = (
       if (field.isList()) {
         // wrap with set field
         const listOperationInput = `${fieldWithPrefix}CreateListInput`;
-        root.addInput(`input ${listOperationInput} {set: [${objectInputName}]}`);
+        root.addInput(
+          `input ${listOperationInput} {set: [${objectInputName}]}`
+        );
         fieldType = listOperationInput;
         mutationFactory.markArrayField(name);
       } else {
@@ -125,19 +144,17 @@ export default class CreatePlugin implements Plugin {
   private baseTypePlugin: BaseTypePlugin;
   private hook: Hook;
 
-  constructor({
-    hook,
-  }: {
-    hook: Hook,
-  }) {
+  constructor({hook}: {hook: Hook}) {
     this.hook = hook;
   }
 
   public setPlugins(plugins: Plugin[]) {
     this.whereInputPlugin = plugins.find(
-      plugin => plugin instanceof WhereInputPlugin) as WhereInputPlugin;
+      plugin => plugin instanceof WhereInputPlugin
+    ) as WhereInputPlugin;
     this.baseTypePlugin = plugins.find(
-      plugin => plugin instanceof BaseTypePlugin) as BaseTypePlugin;
+      plugin => plugin instanceof BaseTypePlugin
+    ) as BaseTypePlugin;
   }
 
   public visitModel(model: Model, context: Context) {
@@ -145,7 +162,7 @@ export default class CreatePlugin implements Plugin {
     if (model.isObjectType()) {
       return;
     }
-    const { root } = context;
+    const {root} = context;
     const modelType = this.baseTypePlugin.getTypename(model);
 
     // create
@@ -154,11 +171,18 @@ export default class CreatePlugin implements Plugin {
     root.addMutation(`${mutationName}(data: ${inputName}!): ${modelType}`);
   }
 
-  public resolveInMutation({model, dataSource}: {model: Model, dataSource: ListMutable}) {
+  public resolveInMutation({
+    model,
+    dataSource
+  }: {
+    model: Model;
+    dataSource: ListMutable;
+  }) {
     // object type model dont need create mutation
     if (model.isObjectType()) {
       return;
     }
+
     const mutationName = this.getMutationName(model);
     const wrapCreate = get(this.hook, [model.getName(), 'wrapCreate']);
 
@@ -180,13 +204,16 @@ export default class CreatePlugin implements Plugin {
         const createContext: CreateContext = {
           data,
           response: {},
-          graphqlContext: context,
+          graphqlContext: context
         };
         await wrapCreate(createContext, async ctx => {
-          ctx.response = await dataSource.create(this.createMutation(model, ctx.data), context);
+          ctx.response = await dataSource.create(
+            this.createMutation(model, ctx.data),
+            context
+          );
         });
         return createContext.response;
-      },
+      }
     };
   }
 
@@ -203,7 +230,7 @@ export default class CreatePlugin implements Plugin {
         this.getCreateInputName,
         this.whereInputPlugin.getWhereInputName,
         this.whereInputPlugin.getWhereUniqueInputName,
-        model.getCreateMutationFactory,
+        model.getCreateMutationFactory
       )}
     }`;
     context.root.addInput(input);

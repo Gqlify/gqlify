@@ -1,33 +1,45 @@
-import { ModelRelation } from '../dataModel';
-import { Hook } from './interface';
-import { OneToManyRelation } from '../relation';
-import { get, omit } from 'lodash';
+import {ModelRelation} from '../dataModel';
+import {Hook} from './interface';
+import {OneToManyRelation} from '../relation';
+import {get, omit} from 'lodash';
 
-export const createHookMap = (relation: ModelRelation): Record<string, Hook> => {
+export const createHookMap = (
+  relation: ModelRelation
+): Record<string, Hook> => {
   const relationImpl = new OneToManyRelation({
     oneSideModel: relation.source,
     manySideModel: relation.target,
     oneSideField: relation.sourceField,
     manySideField: relation.targetField,
-    foreignKey: get(relation.metadata, 'foreignKey'),
+    foreignKey: get(relation.metadata, 'foreignKey')
   });
 
   const oneSideField = relationImpl.getOneSideField();
 
   const create = (sourceId: string, records: any[], context: any) => {
-    return Promise.all(records.map(record => relationImpl.createAndAddFromOneSide(sourceId, record, context)));
+    return Promise.all(
+      records.map(record =>
+        relationImpl.createAndAddFromOneSide(sourceId, record, context)
+      )
+    );
   };
 
   const connect = (sourceId: string, ids: string[], context: any) => {
-    return Promise.all(ids.map(id => relationImpl.addIdFromOneSide(sourceId, id, context)));
+    return Promise.all(
+      ids.map(id => relationImpl.addIdFromOneSide(sourceId, id, context))
+    );
   };
 
   const disconnect = (sourceId: string, ids: string[], context: any) => {
-    return Promise.all(ids.map(id => relationImpl.removeIdFromOneSide(sourceId, id, context)));
+    return Promise.all(
+      ids.map(id => relationImpl.removeIdFromOneSide(sourceId, id, context))
+    );
   };
 
   const destroy = (sourceId: string, ids: string[], context: any) => {
-    return Promise.all(ids.map(id => relationImpl.addIdFromOneSide(sourceId, id, context)));
+    return Promise.all(
+      ids.map(id => relationImpl.addIdFromOneSide(sourceId, id, context))
+    );
   };
 
   // todo: add cascade delete
@@ -45,7 +57,7 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const dataWithoutRelation = omit(data, oneSideField);
         context.data = dataWithoutRelation;
         await createOperation();
-        const created  = context.response;
+        const created = context.response;
 
         // bind relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
@@ -53,7 +65,11 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connect(created.id, connectIds, graphqlContext);
+          await connect(
+            created.id,
+            connectIds,
+            graphqlContext
+          );
         }
 
         if (createRecords) {
@@ -73,17 +89,24 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
         const dataWithoutRelation = omit(data, oneSideField);
         context.data = dataWithoutRelation;
         await updateOperation();
-        const updated  = context.response;
+        const updated = context.response;
 
         // bind relation
         const connectWhere: Array<{id: string}> = get(relationData, 'connect');
         const createRecords: any[] = get(relationData, 'create');
-        const disconnectWhere: Array<{id: string}> = get(relationData, 'disconnect');
+        const disconnectWhere: Array<{id: string}> = get(
+          relationData,
+          'disconnect'
+        );
         const deleteWhere: any[] = get(relationData, 'delete');
 
         if (connectWhere) {
           const connectIds = connectWhere.map(v => v.id);
-          await connect(where.id, connectIds, graphqlContext);
+          await connect(
+            where.id,
+            connectIds,
+            graphqlContext
+          );
         }
 
         if (createRecords) {
@@ -104,9 +127,10 @@ export const createHookMap = (relation: ModelRelation): Record<string, Hook> => 
       },
 
       resolveFields: {
-        [relation.sourceField]: (data, _, graphqlContext) => relationImpl.joinManyOnOneSide(data, graphqlContext),
-      },
-    },
+        [relation.sourceField]: (data, _, graphqlContext) =>
+          relationImpl.joinManyOnOneSide(data, graphqlContext)
+      }
+    }
   };
 
   return hookMap;

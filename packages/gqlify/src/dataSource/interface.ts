@@ -1,4 +1,4 @@
-import { IResolverObject } from 'graphql-tools';
+import {IResolverObject} from 'graphql-tools';
 
 export interface Pagination {
   // cursor base
@@ -25,11 +25,17 @@ export interface PaginatedResponse {
 
 export enum Operator {
   eq = 'eq',
-  neq = 'eq',
+  neq = 'neq',
   gt = 'gt',
   gte = 'gte',
   lt = 'lt',
   lte = 'lte',
+  regex = 'regex',
+  near = 'near',
+  json = 'json',
+  jsonor = 'jsonor',
+  or = 'or',
+  jsonrgxp = 'jsonrgxp'
 }
 
 export type Where = Record<string, Record<string /** Operator */, any>>;
@@ -60,7 +66,7 @@ export interface ListReadable {
 export enum ArrayOperator {
   set = 'set',
   add = 'add',
-  remove = 'remove',
+  remove = 'remove'
 }
 
 export interface ArrayOperation {
@@ -98,8 +104,17 @@ export interface MapMutable {
  */
 
 export interface ToOneRelation {
-  findOneByRelation(foreignKey: string, foreignId: string, context: any): Promise<any>;
-  updateOneRelation(id: string, foreignKey: string, foreignId: string, context: any): Promise<void>;
+  findOneByRelation(
+    foreignKey: string,
+    foreignId: string,
+    context: any
+  ): Promise<any>;
+  updateOneRelation(
+    id: string,
+    foreignKey: string,
+    foreignId: string,
+    context: any
+  ): Promise<void>;
 }
 
 // data-source capable of saving to-many references in a embed list or map
@@ -107,31 +122,47 @@ export interface ToOneRelation {
 export interface EmbeddableRelation {
   addEmbedIds?(foreignKey: string, ids: string[], context: any): any;
   removeEmbedIds?(foreignKey: string, ids: string[], context: any): any;
-  findOneByEmbedId?(foreignKey: string, foreignId: string, context: any): Promise<any>;
-  findManyByEmbedId?(foreignKey: string, foreignId: string, context: any): Promise<any[]>;
+  findOneByEmbedId?(
+    foreignKey: string,
+    foreignId: string,
+    context: any
+  ): Promise<any>;
+  findManyByEmbedId?(
+    foreignKey: string,
+    foreignId: string,
+    context: any
+  ): Promise<any[]>;
 }
 
 export interface OneToManyRelation {
-  findManyFromOneRelation(foreignKey: string, foreignId: string, context: any): Promise<any[]>;
+  findManyFromOneRelation(
+    foreignKey: string,
+    foreignId: string,
+    context: any
+  ): Promise<any[]>;
 }
 
 export interface ManyToManyRelation {
   // it's source-side data-source's responsibility to get the many relation from source-side
   findManyFromManyRelation(
-    sourceSideName: string, targetSideName: string, sourceSideId: string, context: any): Promise<any[]>;
+    sourceSideName: string,
+    targetSideName: string,
+    sourceSideId: string,
+    context: any
+  ): Promise<any[]>;
   addIdToManyRelation(
     sourceSideName: string,
     targetSideName: string,
     sourceSideId: string,
     targetSideId: string,
-    context: any,
+    context: any
   ): Promise<void>;
   removeIdFromManyRelation(
     sourceSideName: string,
     targetSideName: string,
     sourceSideId: string,
     targetSideId: string,
-    context: any,
+    context: any
   ): Promise<void>;
 }
 
@@ -140,8 +171,7 @@ export interface FieldResolvable {
   resolveFields?(): IResolverObject;
 }
 
-export type DataSource =
-  ListReadable &
+export type DataSource = ListReadable &
   ListMutable &
   MapReadable &
   MapMutable &

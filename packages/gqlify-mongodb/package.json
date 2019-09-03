@@ -1,6 +1,6 @@
 {
-  "name": "@gqlify/mongodb",
-  "version": "3.1.0",
+  "name": "@linkcms/mongodb",
+  "version": "3.2.7",
   "description": "the mongodb package of gqlify",
   "main": "lib/index.js",
   "module": "./lib/index.js",
@@ -24,7 +24,9 @@
   "author": "FrankYang0529",
   "license": "Apache-2.0",
   "dependencies": {
+    "flat": "^4.1.0",
     "lodash": "^4.17.11",
+    "moment-timezone": "^0.5.23",
     "mongodb": "^3.1.10"
   },
   "publishConfig": {
@@ -36,6 +38,6 @@
     "tslint": "^5.11.0"
   },
   "peerDependencies": {
-    "@gqlify/server": "2.x"
+    "@linkcms/server": "*"
   }
 }
